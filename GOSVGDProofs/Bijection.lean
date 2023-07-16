@@ -39,6 +39,7 @@ cases h with
     have key : f (f_inv (f a)) ≠ f a := hinj _ _ hbar
     exact key h -- (a ≠ b : a = b -> False)
 
+def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
 
 /- def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
 

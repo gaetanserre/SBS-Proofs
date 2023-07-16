@@ -39,7 +39,35 @@ cases h with
     have key : f (f_inv (f a)) ≠ f a := hinj _ _ hbar
     exact key h -- (a ≠ b : a = b -> False)
 
-def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
+def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := (∀ (b : β), f (f_inv b) = b) ∧ (∀ (a : α), f_inv (f a) = a)
+
+lemma reciprocal_of_bij_is_surj {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) (h1 : is_reciprocal f f_inv) (h2 : is_bijective f) : is_surjective f_inv :=
+by
+intro a
+use (f a)
+exact h1.right a
+
+lemma deterministic_function {α : Type _} {β : Type _} (f : α -> β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ -> a₁ ≠ a₂ := by
+intros a₁ a₂ h
+contrapose h
+push_neg at h 
+push_neg
+rw [h]
+
+lemma reciprocal_of_bij_is_inj {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) (h1 : is_reciprocal f f_inv) (h2 : is_bijective f) : is_injective f_inv :=
+by
+intros b₁ b₂ difb₁b₂
+have key1 : ∃ (a : α), f a = b₁ := h2.right b₁
+have key2 : ∃ (a : α), f a = b₂ := h2.right b₂
+cases key1 with 
+  | intro a₁ key1 =>
+    cases key2 with 
+      | intro a₂ key2 =>
+        rw [← key1, ← key2]
+        rw [h1.right a₁, h1.right a₂]
+        rw [← key1, ← key2 ] at difb₁b₂
+        exact deterministic_function f a₁ a₂ difb₁b₂
+
 
 /- def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
 

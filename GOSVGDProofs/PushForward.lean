@@ -9,6 +9,7 @@ structure Pushforward_Measure (α : Type _) (β : Type _) [MeasurableSpace α] [
 μ : Measure α
 f : Set α -> Set β
 f_inv : Set β -> Set α
+is_bij : is_bijective f
 is_reci : is_reciprocal f f_inv
 
 instance Pushforward_Measure.instCoeFun {α : Type _} {β : Type _} [MeasurableSpace α] [MeasurableSpace β] : CoeFun (Pushforward_Measure α β) fun _ => Set β → ℝ≥0∞ :=

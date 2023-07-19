@@ -36,20 +36,29 @@ noncomputable def pushforward_average (μ : Pushforward_Measure α β) [IsProbab
 def measure_integral (μ : Measure α) (A : Set α) := μ A = ∫⁻ x in A, 1 ∂μ
 
 
-def is_density {α : Type _} [MeasurableSpace α] (μ : Measure α) (ν : Measure α) (d : α -> ℝ≥0∞) := ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν
-
-lemma has_density {μ ν : Measure α} [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (h : absolutely_continuous μ ν) : ∃ (d : α -> ℝ≥0∞), ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν := by
+lemma has_density {α : Type _} [MeasurableSpace α] {μ ν : Measure α} [IsProbabilityMeasure μ] (h : absolutely_continuous μ ν) : ∃ (d : α -> ℝ≥0∞), ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν := by
 -- Radon-Nikodym
 sorry
 
-lemma push_forward_density_equality (d_mu : α -> ℝ≥0∞) (d_p_mu : α -> ℝ≥0∞) (hf1 : is_density μ_t.μ ν d_mu) (hf2 : is_density μ_t.p_μ ν d_p_mu) : ∀ (A : Set α), ∫⁻ x in A, d_mu x ∂ν = ∫⁻ x in (μ_t.f_set A), d_p_mu x ∂ν := by
-intro A
-rw [← hf1 A, ← hf2 (μ_t.f_set A)]
-rw [μ_t.measure_app]
-rw [←identity_reciprocal_set_extension μ_t.f μ_t.f_inv μ_t.f_set μ_t.f_set_inv μ_t.is_reci μ_t.is_set_ext μ_t.is_set_inv_ext A]
+def is_density {α : Type _} [MeasurableSpace α] (μ : Measure α) (ν : Measure α) (d : α -> ℝ≥0∞) := ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν
+
+lemma push_forward_density_equality : ∃ (d_mu d_p_mu : α -> ℝ≥0∞),  ∀ (A : Set α), ∫⁻ x in A, d_mu x ∂ν = ∫⁻ x in (μ_t.f_set A), d_p_mu x ∂ν :=
+by
+
+have h_density_μ : ∃ (d : α -> ℝ≥0∞), ∀ (s : Set α), μ_t.μ s = ∫⁻ x in s, d x ∂ν := has_density habs1
+
+have h_density_p_μ : ∃ (d : α -> ℝ≥0∞), ∀ (s : Set α), μ_t.p_μ s = ∫⁻ x in s, d x ∂ν := has_density habs2
+
+cases h_density_μ with
+  | intro d_μ h_density_μ =>
+    use d_μ
+    cases h_density_p_μ with
+      | intro d_p_μ h_density_p_μ =>
+        use d_p_μ
+        intro A
+        rw [← h_density_μ A, ← h_density_p_μ (μ_t.f_set A)]
+        rw [μ_t.measure_app]
+        rw [←identity_reciprocal_set_extension μ_t.f μ_t.f_inv μ_t.f_set μ_t.f_set_inv μ_t.is_reci μ_t.is_set_ext μ_t.is_set_inv_ext A]
 
 /- instance Pushforward_Measure.instCoeFun {α : Type _} {β : Type _} [MeasurableSpace α] [MeasurableSpace β] : CoeFun (Pushforward_Measure α β) fun _ => Set β → ℝ≥0∞ :=
-  ⟨fun m => m.μ.toOuterMeasure ∘ m.f_inv⟩
-
-variable (α : Type _) (β : Type _) (h1 : MeasurableSpace α) (h2 : MeasurableSpace β) (μ : Pushforward_Measure α β) (s : Set β)
-#check μ s -/
+  ⟨fun m => m.μ.toOuterMeasure ∘ m.f_inv⟩ -/

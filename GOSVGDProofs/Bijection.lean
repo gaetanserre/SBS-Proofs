@@ -43,6 +43,10 @@ def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) 
 
 lemma deterministic_function {α : Type _} {β : Type _} (f : α -> β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ -> a₁ ≠ a₂ := by
 intros a₁ a₂ h
+/- by_contra h2
+rw [h2] at h
+apply h
+exact Eq.refl (f a₂) -/
 contrapose h
 push_neg at h 
 push_neg

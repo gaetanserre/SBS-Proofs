@@ -72,6 +72,43 @@ constructor
 
 def is_set_extension {α : Type _} {β : Type _} (f : α -> β) (f_set : Set α -> Set β) := ∀ (a : Set α), f_set a = { b | ∃ x ∈ a, f x = b }
 
+lemma identity_reciprocal_set_extension (f : α -> β) (f_inv : β -> α) (f_set : Set α -> Set β) (f_set_inv : Set β -> Set α) (h1 : is_reciprocal f f_inv) (h2 : is_set_extension f f_set) (h3 : is_set_extension f_inv f_set_inv) : ∀ (A : Set α), A = f_set_inv (f_set A) :=
+by
+intro A
+ext a
+constructor
+{ 
+  intro ainA
+  rw [h3]
+  use (f a)
+  constructor
+  {
+    rw [h2]
+    use a
+    constructor
+    { exact ainA }
+    { exact Eq.refl (f a) }
+  }
+  exact h1.right a
+}
+
+{
+  intro ainF
+  rw [h3] at ainF
+  cases ainF with
+    | intro b ainF =>
+      cases ainF with
+        | intro binF r =>
+          rw [h2] at binF
+          cases binF with
+            | intro l rr =>
+              cases rr with
+                | intro rr1 rr2 =>
+                  rw [←rr2] at r
+                  rw [h1.right l] at r
+                  rwa [r] at rr1 
+}
+
 /- def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
 
 lemma deterministic_function {α : Type _} {β : Type _} (f : α -> β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ -> a₁ ≠ a₂ := by

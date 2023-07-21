@@ -1,13 +1,33 @@
 import Mathlib.Tactic
 
-def is_injective {α : Type _} {β : Type _} (f : α -> β) :=  ∀ (a₁ a₂ : α), a₁ ≠ a₂ -> f a₁ ≠ f a₂
+def is_injective {α : Type _} {β : Type _} (f : α → β) :=  ∀ (a₁ a₂ : α), a₁ ≠ a₂ → f a₁ ≠ f a₂
 
-def is_surjective {α : Type _} {β : Type _} (f : α -> β) := ∀ (b : β), ∃ (a : α), f a = b
+lemma is_inj_imp_set_inj {α : Type _} {β : Type _} (f : α → β) : is_injective f → ∀ (A : Set α), Set.InjOn f A :=
+by
+intros h A x₁ x₁InA x₂ x₂InA hf
+specialize h x₁ x₂
+by_contra xdif
+push_neg at xdif
+specialize h xdif
+exact h hf
 
-/- def is_bijective {α : Type _} {β : Type _} (f : α -> β) := ∀ (b : β),
-∃ (a : α), (f a = b) ∧ (∀ (a₂ : α), a ≠ a₂ -> f a ≠ f a₂)
+def is_surjective {α : Type _} {β : Type _} (f : α → β) := ∀ (b : β), ∃ (a : α), f a = b
 
-theorem bijective_is_inj_and_surj {α : Type _} {β : Type _} (f : α -> β) (hinj : is_injective f) (hsurj : is_surjective f) : is_bijective f := by
+lemma is_surj_imp_set_surj {α : Type _} {β : Type _} (f : α → β) : is_surjective f → Set.SurjOn f (Set.univ) (Set.univ) :=
+by
+intros h b huniv
+specialize h b
+cases h with
+  | intro a h =>
+    use a
+    constructor
+    {simp}
+    {exact h}
+
+/- def is_bijective {α : Type _} {β : Type _} (f : α → β) := ∀ (b : β),
+∃ (a : α), (f a = b) ∧ (∀ (a₂ : α), a ≠ a₂ → f a ≠ f a₂)
+
+theorem bijective_is_inj_and_surj {α : Type _} {β : Type _} (f : α → β) (hinj : is_injective f) (hsurj : is_surjective f) : is_bijective f := by
 intro b
 specialize hsurj b
 cases hsurj with
@@ -20,9 +40,21 @@ cases hsurj with
         exact hinj a a2 neqa
       } -/
 
-def is_bijective {α : Type _} {β : Type _} (f : α -> β) := is_injective f ∧ is_surjective f
+def is_bijective {α : Type _} {β : Type _} (f : α → β) := is_injective f ∧ is_surjective f
 
-lemma bijective_imp_inversible {α : Type _} {β : Type _} (f : α -> β) (h : is_bijective f) : ∃ (f_inv : β -> α), (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a) := by
+lemma is_bij_imp_set_bij {α : Type _} {β : Type _} (f : α → β) : is_bijective f → Set.BijOn f Set.univ Set.univ :=
+by
+intro h
+constructor
+{
+  intros a ha
+  simp
+}
+constructor
+{exact is_inj_imp_set_inj f h.left Set.univ}
+{exact is_surj_imp_set_surj f h.right}
+
+lemma bijective_imp_inversible {α : Type _} {β : Type _} (f : α → β) (h : is_bijective f) : ∃ (f_inv : β → α), (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a) := by
 cases h with
   | intro hinj hsurj =>
     choose f_inv h using hsurj
@@ -37,11 +69,11 @@ cases h with
     by_contra hbar
     push_neg at hbar
     have key : f (f_inv (f a)) ≠ f a := hinj _ _ hbar
-    exact key h -- (a ≠ b : a = b -> False)
+    exact key h -- (a ≠ b : a = b → False)
 
-def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := (∀ (b : β), f (f_inv b) = b) ∧ (∀ (a : α), f_inv (f a) = a)
+def is_reciprocal {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) := (∀ (b : β), f (f_inv b) = b) ∧ (∀ (a : α), f_inv (f a) = a)
 
-lemma deterministic_function {α : Type _} {β : Type _} (f : α -> β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ -> a₁ ≠ a₂ := by
+lemma deterministic_function {α : Type _} {β : Type _} (f : α → β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ → a₁ ≠ a₂ := by
 intros a₁ a₂ h
 /- by_contra h2
 rw [h2] at h
@@ -52,7 +84,7 @@ push_neg at h
 push_neg
 rw [h]
 
-lemma reciprocal_of_bij_is_bij {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) (h1 : is_reciprocal f f_inv) (h2 : is_bijective f) : is_bijective f_inv := by
+lemma reciprocal_of_bij_is_bij {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) (h1 : is_reciprocal f f_inv) (h2 : is_bijective f) : is_bijective f_inv := by
 constructor
 {
   intros b₁ b₂ difb₁b₂
@@ -74,60 +106,94 @@ constructor
   exact h1.right a
 }
 
-def is_set_extension {α : Type _} {β : Type _} (f : α -> β) (f_set : Set α -> Set β) := ∀ (a : Set α), f_set a = { b | ∃ x ∈ a, f x = b }
-
-lemma identity_reciprocal_set_extension (f : α -> β) (f_inv : β -> α) (f_set : Set α -> Set β) (f_set_inv : Set β -> Set α) (h1 : is_reciprocal f f_inv) (h2 : is_set_extension f f_set) (h3 : is_set_extension f_inv f_set_inv) : ∀ (A : Set α), A = f_set_inv (f_set A) :=
+lemma identity_reciprocal_set_extension (f : α → β) (f_inv : β → α) (h : is_reciprocal f f_inv) : (∀ (A : Set α), A = f_inv '' (f '' A)) ∧ (∀ (B : Set β), B = f '' (f_inv '' B)) :=
 by
-intro A
-ext a
 constructor
-{ 
-  intro ainA
-  rw [h3]
-  use (f a)
+{
+  intro A
+  ext a
   constructor
-  {
-    rw [h2]
-    use a
+  { 
+    intro ainA
+    unfold Set.image
+    use (f a)
     constructor
-    { exact ainA }
-    { exact Eq.refl (f a) }
+    {
+      use a
+      constructor
+      { exact ainA }
+      { exact Eq.refl (f a) }
+    }
+    exact h.right a
   }
-  exact h1.right a
+
+  {
+    intro ainF
+    unfold Set.image at ainF
+    cases ainF with
+      | intro b binF =>
+        cases binF with
+          | intro binF r =>
+            cases binF with
+              | intro a' rr =>
+                cases rr with
+                  | intro rrl rrr =>
+                    rw [←rrr] at r
+                    rw [h.right a'] at r
+                    rwa [←r]
+  }
 }
 
 {
-  intro ainF
-  rw [h3] at ainF
-  cases ainF with
-    | intro b ainF =>
-      cases ainF with
-        | intro binF r =>
-          rw [h2] at binF
-          cases binF with
-            | intro l rr =>
-              cases rr with
-                | intro rr1 rr2 =>
-                  rw [←rr2] at r
-                  rw [h1.right l] at r
-                  rwa [r] at rr1 
+  intro B
+  ext b
+  constructor
+  { 
+    intro binB
+    unfold Set.image
+    use (f_inv b)
+    constructor
+    {
+      use b
+      constructor
+      { exact binB }
+      { exact Eq.refl (f_inv b) }
+    }
+    exact h.left b
+  }
+
+  {
+    intro binF
+    unfold Set.image at binF
+    cases binF with
+      | intro a ainF =>
+        cases ainF with
+          | intro ainF r =>
+            cases ainF with
+              | intro b' rr =>
+                cases rr with
+                  | intro rrl rrr =>
+                    rw [←rrr] at r
+                    rw [h.left b'] at r
+                    rwa [←r]
+  }
 }
 
-/- def is_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
+/- def is_reciprocal {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
 
-lemma deterministic_function {α : Type _} {β : Type _} (f : α -> β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ -> a₁ ≠ a₂ := by
+lemma deterministic_function {α : Type _} {β : Type _} (f : α → β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ → a₁ ≠ a₂ := by
 intros a₁ a₂ h
 contrapose h
 push_neg at h 
 push_neg
 rw [h]
 
-lemma hom_inv_is_surj {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) (h1 : is_bijective f) (h2 : is_reciprocal f f_inv) : is_surjective f_inv := by
+lemma hom_inv_is_surj {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) (h1 : is_bijective f) (h2 : is_reciprocal f f_inv) : is_surjective f_inv := by
 intro a
 use (f a)
 exact And.right hom.is_bij_reci a
 
-lemma bij_reciprocal_is_injective {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) (h1 : is_bijective f) (h2 : is_reciprocal f f_inv) : is_injective f_inv := by
+lemma bij_reciprocal_is_injective {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) (h1 : is_bijective f) (h2 : is_reciprocal f f_inv) : is_injective f_inv := by
 intros b₁ b₂ hdif
 have key1 : ∃ (a : α), f a = b₁ := h1.right b₁
 have key2 : ∃ (a : α), f a = b₂ := h1.right b₂
@@ -141,7 +207,7 @@ cases key1 with
         exact deterministic_function hom.f a₁ a₂ hdif
 
 /- A surjective reciprocal is the reciprocal bijective -/
-example {α : Type _} {β : Type _} (f : α -> β)  (f_inv : β -> α) (h1 : is_reciprocal f f_inv)  (h2 : is_surjective f_inv) : ∀ (a : α), f_inv (f a) = a := by
+example {α : Type _} {β : Type _} (f : α → β)  (f_inv : β → α) (h1 : is_reciprocal f f_inv)  (h2 : is_surjective f_inv) : ∀ (a : α), f_inv (f a) = a := by
 intro a
 have key : ∃ (b : β), f_inv b = a := h2 a
 cases key with
@@ -149,13 +215,13 @@ cases key with
     rw [←key]
     rw [h1 b]
 
-def is_bij_reciprocal {α : Type _} {β : Type _} (f : α -> β) (f_inv : β -> α) := is_reciprocal f f_inv ∧ ∀ (a : α), f_inv (f a) = a
+def is_bij_reciprocal {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) := is_reciprocal f f_inv ∧ ∀ (a : α), f_inv (f a) = a
 
 
 structure homeomorphism (α : Type _) (β : Type _)
 where
-f : α -> β
-inv_f : β -> α
+f : α → β
+inv_f : β → α
 is_bij : is_bijective f
 is_bij_reci : is_bij_reciprocal f inv_f
 is_bij_inv : is_bijective inv_f

@@ -55,15 +55,35 @@ cases h2 with
     rw [h1 (μ_t.T_inv '' A)]
     rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul ν AisM FisD T_invisInjonA d_μ]
 
-noncomputable def d_p_μ (h : ∀ (s : Set α), ∀ x ∈ s, HasFDerivWithinAt μ_t.T_inv (T' x) s x) (a : α) := ENNReal.ofReal |(T' a).det| * d_μ (μ_t.T_inv a)
-
-/- Derivative of f^(-1)' (f x) = x ∧ |det 1| = 1 -/
-lemma int (h : ∀ (s : Set α), ∀ x ∈ s, HasFDerivWithinAt μ_t.T_inv (T' x) s x) : ∀ (a : α), |(T' (μ_t.T a)).det| = 1 := by sorry
-
-lemma push_forward_density_equality (h : ∀ (s : Set α), ∀ x ∈ s, HasFDerivWithinAt μ_t.T_inv (T' x) s x) : ∀ (a : α), (d_p_μ T' d_μ μ_t h) (μ_t.T a) = d_μ a :=
+variable (s : Set α) (H : UniqueDiffOn ℝ s)
+lemma det_of_derivative_of_composition_of_reciprocal_eq_1 (f : α → β) (f_inv : β → α) (h1 : is_reciprocal f f_inv) (h2 : ∀ x ∈ s, HasFDerivWithinAt (f_inv ∘ f) (T' x) s x) : ∀ (a : α), a ∈ s → (T' a).det = 1 :=
 by
-intro a
-unfold d_p_μ
+intros a ainS
+have key : T' a = ContinuousLinearMap.id ℝ α := by
+{
+  have k1 : HasFDerivWithinAt id (ContinuousLinearMap.id ℝ α) s a := by
+  {
+    have k2 : fderivWithin ℝ id s a = ContinuousLinearMap.id ℝ α := fderivWithin_id (H a ainS)
+    rw [←k2]
+    have k3 : DifferentiableWithinAt ℝ id s a := by
+    {
+      use T' a
+      rw [← (composition_inv_eq_id f f_inv h1).right]
+      exact h2 a ainS
+    }
+    exact DifferentiableWithinAt.hasFDerivWithinAt k3
+  }
+  specialize h2 a ainS
+  rw [(composition_inv_eq_id f f_inv h1).right] at h2
+  exact UniqueDiffOn.eq H ainS h2 k1
+}
+rw [key]
+unfold ContinuousLinearMap.det
+simp
+
+lemma push_forward_density_equality (h : ∀ x ∈ s, HasFDerivWithinAt (μ_t.T_inv ∘ μ_t.T) (T' x) s x) : ∀ (a : α), a ∈ s → ENNReal.ofReal |(T' a).det| * d_μ (μ_t.T_inv (μ_t.T a)) = d_μ a :=
+by
+intros a ainS
+rw [det_of_derivative_of_composition_of_reciprocal_eq_1 T' s H μ_t.T μ_t.T_inv μ_t.is_reci h a ainS]
 rw [μ_t.is_reci.right a]
-rw [int T' μ_t h a]
 simp

@@ -179,6 +179,19 @@ constructor
   }
 }
 
+lemma composition_inv_eq_id (f : α → β) (f_inv : β → α) (h : is_reciprocal f f_inv) : f ∘ f_inv = id ∧ f_inv ∘ f = id :=
+by
+constructor
+{
+  ext b
+  exact h.left b
+}
+
+{
+  ext a
+  exact h.right a
+}
+
 /- def is_reciprocal {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
 
 lemma deterministic_function {α : Type _} {β : Type _} (f : α → β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ → a₁ ≠ a₂ := by

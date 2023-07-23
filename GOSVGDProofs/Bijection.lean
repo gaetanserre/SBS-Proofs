@@ -192,6 +192,25 @@ constructor
   exact h.right a
 }
 
+lemma image_of_univ_is_univ (f : α → α) (f_inv : α → α) (h1 : is_bijective f) (h2 : is_reciprocal f f_inv) : f_inv '' Set.univ = Set.univ :=
+by
+ext a
+constructor
+{
+  intro _aInfUniv
+  simp
+}
+{
+  intro _aInUniv
+  have key : ∃ (b : α), f_inv b = a := (reciprocal_of_bij_is_bij f f_inv h2 h1).right a
+  cases key with
+    | intro b key =>
+      use b
+      constructor
+      {simp}
+      {exact key}
+}
+
 /- def is_reciprocal {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)
 
 lemma deterministic_function {α : Type _} {β : Type _} (f : α → β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ → a₁ ≠ a₂ := by

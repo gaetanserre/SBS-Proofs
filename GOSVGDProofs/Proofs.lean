@@ -99,9 +99,9 @@ variable (h_density_p_μ : is_density μ_t.p_μ ν (push_forward_density μ_t d_
 variable (π : Measure α) (d_π : α → ℝ≥0∞)
 variable (π_t : Pushforward_Measure α α) (h_pi_T : π_t.T = μ_t.T_inv) (h_pi_μ : π_t.μ = π) (h_density_π : is_density π_t.μ ν d_π)
 variable (h_density_p_π : is_density π_t.p_μ ν (push_forward_density π_t d_π h_density_π T'))
-variable (log : ℝ≥0∞ → ℝ≥0∞)
+variable (log : ℝ≥0∞ → ℝ)
 
-def is_KL (μ : Measure α) (π : Measure α) (d_μ : α → ℝ≥0∞) (d_π : α → ℝ≥0∞) (KL : Measure α → Measure α → ℝ≥0∞) (_h1 : is_density μ ν d_μ) (_h2 : is_density π ν d_π) := KL μ π = ∫⁻ x in Set.univ, log ((d_μ x) / (d_π x)) ∂μ
+def is_KL (μ : Measure α) (π : Measure α) (d_μ : α → ℝ≥0∞) (d_π : α → ℝ≥0∞) (KL : Measure α → Measure α → ℝ≥0∞) (_h1 : is_density μ ν d_μ) (_h2 : is_density π ν d_π) := KL μ π = ∫⁻ x in Set.univ, ENNReal.ofReal (log ((d_μ x) / (d_π x))) ∂μ
 
 variable (KL : Measure α → Measure α → ℝ≥0∞)
 
@@ -111,7 +111,7 @@ by
 rw [KL_μ_t_π]
 rw [μ_t.integration]
 
-have k_μ : (fun x => (log ((push_forward_density μ_t d_μ h_density_μ T' x) / ((d_π) x)))) ∘ μ_t.T = (fun x => log ((d_μ x) / ((d_π ∘ μ_t.T) x) )):= by
+have k_μ : (fun x => ENNReal.ofReal (log ((push_forward_density μ_t d_μ h_density_μ T' x) / ((d_π) x))) ) ∘ μ_t.T = (fun x => ENNReal.ofReal (log ((d_μ x) / ((d_π ∘ μ_t.T) x) )) ):= by
 {
   have k : ∀ (a : α), (push_forward_density μ_t d_μ h_density_μ T' ∘ μ_t.T) a = d_μ a := by 
   {

@@ -33,8 +33,14 @@ by
 sorry
 
 
-lemma has_density {μ ν : Measure α} [IsProbabilityMeasure μ] (h : absolutely_continuous μ ν) : ∃ (d : α → ℝ≥0∞), ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν := by
+lemma has_density {μ ν : Measure α} [IsProbabilityMeasure μ] (h : absolutely_continuous μ ν) : ∃ (d : α → ℝ≥0∞), ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν :=
+by
 -- Radon-Nikodym
 sorry
 
 def is_density (μ : Measure α) (ν : Measure α) (d : α → ℝ≥0∞) := ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν
+
+lemma density_integration (μ : Measure α) (ν : Measure α) (d : α → ℝ≥0∞) (h : is_density μ ν d) : ∀ (f : α → ℝ≥0∞), ∀ (s : Set α), ∫⁻ x in s, f x ∂μ = ∫⁻ x in s, (d x) * (f x) ∂ν :=
+by
+-- Radon-Nikodym
+sorry

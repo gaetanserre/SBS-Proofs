@@ -14,7 +14,7 @@ variable {α : Type _} {β : Type _} [MeasurableSpace α] [MeasurableSpace β]
 
 def measure_set_of_pushforward_measure (μ : Measure α) (p_μ : Measure β) (f : β → α) := ∀ (B : Set β), p_μ B = μ (f '' B)
 
-def push_forward_integration (μ : Measure α) (p_μ : Measure β) (T : α → β) (T_inv : β → α) := ∀ (φ : β → ℝ≥0∞), ∀ (B : Set β), ∫⁻ x in B, φ x ∂p_μ = ∫⁻ x in T_inv '' B, (φ ∘ T) x ∂μ
+def push_forward_integration (μ : Measure α) (p_μ : Measure β) (T : α → β) (T_inv : β → α) := ∀ (φ : β → ℝ), ∀ (B : Set β), ∫ x in B, φ x ∂p_μ = ∫ x in T_inv '' B, (φ ∘ T) x ∂μ
 
 structure Pushforward_Measure (α : Type _) (β : Type _) [MeasurableSpace α] [MeasurableSpace β] extends Measure β where
 p_μ : Measure β
@@ -32,15 +32,14 @@ lemma measure_integral (μ : Measure α) (A : Set α) : μ A = ∫⁻ x in A, 1 
 by
 sorry
 
-
-lemma has_density {μ ν : Measure α} [IsProbabilityMeasure μ] (h : absolutely_continuous μ ν) : ∃ (d : α → ℝ≥0∞), ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν :=
+lemma has_density {μ ν : Measure α} [IsProbabilityMeasure μ] (h : absolutely_continuous μ ν) : ∃ (d : α → ℝ≥0∞), ∀ (s : Set α), μ s = ENNReal.ofReal (∫ x in s, ENNReal.toReal (d x) ∂ν) :=
 by
 -- Radon-Nikodym
 sorry
 
 def is_density (μ : Measure α) (ν : Measure α) (d : α → ℝ≥0∞) := ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν
 
-lemma density_integration (μ : Measure α) (ν : Measure α) (d : α → ℝ≥0∞) (h : is_density μ ν d) : ∀ (f : α → ℝ≥0∞), ∀ (s : Set α), ∫⁻ x in s, f x ∂μ = ∫⁻ x in s, (d x) * (f x) ∂ν :=
+lemma density_integration (μ : Measure α) (ν : Measure α) (d : α → ℝ≥0∞) (h : is_density μ ν d) : ∀ (f : α → ℝ), ∀ (s : Set α), ∫ x in s, f x ∂μ = ∫ x in s, ENNReal.toReal (d x) * (f x) ∂ν :=
 by
 -- Radon-Nikodym
 sorry

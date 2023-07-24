@@ -1,14 +1,9 @@
-import Mathlib.Tactic
-import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
-import Mathlib.MeasureTheory.Integral.Average
-import Mathlib.MeasureTheory.Function.Jacobian
-import Mathlib.MeasureTheory.Group.Measure
-
 import GOSVGDProofs.Bijection
 import GOSVGDProofs.AbsoluteContinuity
 import GOSVGDProofs.PushForward
 open ENNReal
+
+set_option trace.Meta.Tactic.simp.rewrite true
 
 open MeasureTheory MeasureTheory.Measure
 

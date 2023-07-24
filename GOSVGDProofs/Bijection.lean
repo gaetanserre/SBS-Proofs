@@ -1,5 +1,7 @@
 import Mathlib.Tactic
-
+/-- 
+  A function f is injective if a₁ ≠ a₂ → f a₁ ≠ a₂ 
+-/
 def is_injective {α : Type _} {β : Type _} (f : α → β) :=  ∀ (a₁ a₂ : α), a₁ ≠ a₂ → f a₁ ≠ f a₂
 
 lemma is_inj_imp_set_inj {α : Type _} {β : Type _} (f : α → β) : is_injective f → ∀ (A : Set α), Set.InjOn f A :=
@@ -16,12 +18,11 @@ lemma is_surj_imp_set_surj {α : Type _} {β : Type _} (f : α → β) : is_surj
 by
 intros h b _huniv
 specialize h b
-cases h with
-  | intro a h =>
-    use a
-    constructor
-    {simp}
-    {exact h}
+rcases h with ⟨a, h⟩
+use a
+constructor
+{simp}
+{exact h}
 
 /- def is_bijective {α : Type _} {β : Type _} (f : α → β) := ∀ (b : β),
 ∃ (a : α), (f a = b) ∧ (∀ (a₂ : α), a ≠ a₂ → f a ≠ f a₂)
@@ -46,7 +47,7 @@ by
 intro h
 constructor
 {
-  intros a ha
+  intros a _ha
   simp
 }
 constructor
@@ -54,21 +55,20 @@ constructor
 {exact is_surj_imp_set_surj f h.right}
 
 lemma bijective_imp_inversible {α : Type _} {β : Type _} (f : α → β) (h : is_bijective f) : ∃ (f_inv : β → α), (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a) := by
-cases h with
-  | intro hinj hsurj =>
-    choose f_inv h using hsurj
-    use f_inv
-    intro b
-    constructor
-    {
-      exact h b
-    }
-    intro a
-    specialize h (f a)
-    by_contra hbar
-    push_neg at hbar
-    have key : f (f_inv (f a)) ≠ f a := hinj _ _ hbar
-    exact key h -- (a ≠ b : a = b → False)
+rcases h with ⟨hinj, hsurj⟩
+choose f_inv h using hsurj
+use f_inv
+intro b
+constructor
+{
+  exact h b
+}
+intro a
+specialize h (f a)
+by_contra hbar
+push_neg at hbar
+have key : f (f_inv (f a)) ≠ f a := hinj _ _ hbar
+exact key h -- (a ≠ b : a = b → False)
 
 def is_reciprocal {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) := (∀ (b : β), f (f_inv b) = b) ∧ (∀ (a : α), f_inv (f a) = a)
 
@@ -89,14 +89,12 @@ constructor
   intros b₁ b₂ difb₁b₂
   have key1 : ∃ (a : α), f a = b₁ := h2.right b₁
   have key2 : ∃ (a : α), f a = b₂ := h2.right b₂
-  cases key1 with 
-    | intro a₁ key1 =>
-      cases key2 with 
-        | intro a₂ key2 =>
-          rw [← key1, ← key2]
-          rw [h1.right a₁, h1.right a₂]
-          rw [← key1, ← key2 ] at difb₁b₂
-          exact deterministic_function f a₁ a₂ difb₁b₂
+  rcases key1 with ⟨a₁, key1⟩
+  rcases key2 with ⟨a₂, key2⟩
+  rw [← key1, ← key2]
+  rw [h1.right a₁, h1.right a₂]
+  rw [← key1, ← key2 ] at difb₁b₂
+  exact deterministic_function f a₁ a₂ difb₁b₂
 }
 
 {
@@ -129,17 +127,11 @@ constructor
   {
     intro ainF
     unfold Set.image at ainF
-    cases ainF with
-      | intro b binF =>
-        cases binF with
-          | intro binF r =>
-            cases binF with
-              | intro a' rr =>
-                cases rr with
-                  | intro rrl rrr =>
-                    rw [←rrr] at r
-                    rw [h.right a'] at r
-                    rwa [←r]
+    rcases ainF with ⟨b, a', r⟩
+    rcases a' with ⟨a', a'InA, fa'⟩
+    rw [←fa'] at r
+    rw [h.right a'] at r
+    rwa [←r]
   }
 }
 
@@ -164,17 +156,11 @@ constructor
   {
     intro binF
     unfold Set.image at binF
-    cases binF with
-      | intro a ainF =>
-        cases ainF with
-          | intro ainF r =>
-            cases ainF with
-              | intro b' rr =>
-                cases rr with
-                  | intro rrl rrr =>
-                    rw [←rrr] at r
-                    rw [h.left b'] at r
-                    rwa [←r]
+    rcases binF with ⟨a, b', r⟩
+    rcases b' with ⟨b', b'InB, fb'⟩
+    rw [←fb'] at r
+    rw [h.left b'] at r
+    rwa [←r]
   }
 }
 
@@ -202,12 +188,11 @@ constructor
 {
   intro _aInUniv
   have key : ∃ (b : α), f_inv b = a := (reciprocal_of_bij_is_bij f f_inv h2 h1).right a
-  cases key with
-    | intro b key =>
-      use b
-      constructor
-      {simp}
-      {exact key}
+  rcases key with ⟨b, key⟩
+  use b
+  constructor
+  {simp}
+  {exact key}
 }
 
 /- def is_reciprocal {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) := (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a)

@@ -4,18 +4,17 @@ def is_injective {α : Type _} {β : Type _} (f : α → β) :=  ∀ (a₁ a₂ 
 
 lemma is_inj_imp_set_inj {α : Type _} {β : Type _} (f : α → β) : is_injective f → ∀ (A : Set α), Set.InjOn f A :=
 by
-intros h A x₁ x₁InA x₂ x₂InA hf
+intros h _A x₁ _x₁InA x₂ _x₂InA hf
 specialize h x₁ x₂
 by_contra xdif
 push_neg at xdif
-specialize h xdif
-exact h hf
+exact h xdif hf
 
 def is_surjective {α : Type _} {β : Type _} (f : α → β) := ∀ (b : β), ∃ (a : α), f a = b
 
 lemma is_surj_imp_set_surj {α : Type _} {β : Type _} (f : α → β) : is_surjective f → Set.SurjOn f (Set.univ) (Set.univ) :=
 by
-intros h b huniv
+intros h b _huniv
 specialize h b
 cases h with
   | intro a h =>

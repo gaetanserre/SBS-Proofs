@@ -17,7 +17,7 @@ variable {habs1 : absolutely_continuous μ_t.μ ν}
 variable (T' : α → α →L[ℝ] α) (hT' : ∀ (s : Set α), ∀ x ∈ s, HasFDerivWithinAt μ_t.T_inv (T' x) s x) (d_μ : α → ℝ≥0∞) (h_density_μ : is_density μ_t.μ ν d_μ)
 
 
-lemma push_forward_has_density (h1 : is_density μ_t.μ ν d_μ) (h2 : ∀ (s : Set α), MeasurableSet s) : is_density μ_t.p_μ ν (fun x => ENNReal.ofReal |(T' x).det| * d_μ (μ_t.T_inv x)) :=
+lemma push_forward_has_density (h1 : ∀ (s : Set α), MeasurableSet s) : is_density μ_t.p_μ ν (fun x => ENNReal.ofReal |(T' x).det| * d_μ (μ_t.T_inv x)) :=
 by
 unfold is_density
 intro A
@@ -30,8 +30,8 @@ have T_invisInjonA : Set.InjOn μ_t.T_inv A := by
 }
 
 rw [μ_t.measure_app]
-rw [h1 (μ_t.T_inv '' A)]
-rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul ν (h2 A) (hT' A) T_invisInjonA d_μ]
+rw [h_density_μ (μ_t.T_inv '' A)]
+rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul ν (h1 A) (hT' A) T_invisInjonA d_μ]
 
 variable (s : Set α) (s_unique_diff : UniqueDiffOn ℝ s)
 lemma det_of_derivative_of_composition_of_reciprocal_eq_1 (f : α → β) (f_inv : β → α) (h1 : is_reciprocal f f_inv) (h2 : ∀ x ∈ s, HasFDerivWithinAt (f_inv ∘ f) (T' x) s x) : ∀ (a : α), a ∈ s → (T' a).det = 1 :=

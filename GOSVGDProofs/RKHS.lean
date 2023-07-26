@@ -4,6 +4,8 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 namespace MeasureTheory
 
+local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
+
 open scoped RealInnerProductSpace 
 open BigOperators Finset ENNReal NNReal
 
@@ -20,15 +22,42 @@ variable (h_kernel : is_kernel H₀ k)
 
 variable {H : Set (ℕ → α → ℝ)} (d : ℕ) [NormedAddCommGroup H] [InnerProductSpace ℝ H] [CompleteSpace H] [Inner ℝ (ℕ → α → ℝ)]
 
-def product_RKHS (H₀ : Set (α → ℝ)) (f : ℕ → α → ℝ) (_h : f ∈ H) := ∀ (i : ℕ), i ∈ range d → f i ∈ H₀
+def product_RKHS (H₀ : Set (α → ℝ)) (f : ℕ → α → ℝ) (_h : f ∈ H) := ∀ (i : ℕ), i ∈ range (d + 1) → f i ∈ H₀
 
-def inner_product_H (f g : ℕ → α → ℝ) (_h : f ∈ H ∧ g ∈ H) := ⟪f, g⟫ = ∑ i in range d, ⟪f i, g i⟫
+def inner_product_H (f g : ℕ → α → ℝ) (_h : f ∈ H ∧ g ∈ H) := ⟪f, g⟫ = ∑ i in range (d + 1), ⟪f i, g i⟫
 
-def integral_is_finite (μ : Measure α) := ∃ C, ∫⁻ x in Set.univ, ENNReal.ofReal (k x x) ∂μ ≤ C ∧ C < ∞
+def integral_is_finite (μ : Measure α) := ∃ (C : ℝ≥0), ∫⁻ x in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ < C
 
-lemma finite_sum (f : ℕ → ℝ) : ∃ C, ∑ i in range d, ENNReal.ofReal (f i^2) ≤ C ∧ C < ∞ := by
---ofReal_sum_of_nonneg
-sorry
+lemma exist_max_finset {ι : Type _} [LinearOrder ι] (s : Finset ι) (h : Finset.Nonempty s) : ∃ e ∈ s, ∀ a ∈ s, a ≤ e := by
+{
+  use (Finset.max' s h)
+  constructor
+  {exact max'_mem s h}
+  {
+    intros a ains
+    exact le_max_of_eq ains (Eq.symm (coe_max' h)) 
+  }
+}
+
+lemma exist_max_image_finset {ι E : Type _} [LinearOrder E] (s : Finset ι) (h : Finset.Nonempty s) (f : ι → E) : ∃ j ∈ s, ∀ i ∈ s, f i ≤ f j := by 
+{
+  let sf := Finset.image f s
+  have hf : Finset.Nonempty sf := Nonempty.image h f
+
+  have max : ∃ e ∈ sf, ∀ a ∈ sf, a ≤ e := exist_max_finset sf hf
+
+  rcases max with ⟨c, cin, max⟩
+  rw [Finset.mem_image] at cin
+  rcases cin with ⟨j, jin, fj⟩
+
+  use j
+  constructor
+  {exact jin}
+  intros i iin
+  specialize max (f i)
+  rw [fj]
+  exact max (mem_image_of_mem f iin)
+}
 
 lemma le_coe (a : ℝ) (b : NNReal) (h1 : 0 ≤ a) : ‖a‖₊ ≤ b → ENNReal.ofReal a ≤ ENNReal.ofReal b :=
 by
@@ -38,11 +67,17 @@ rw [←k]
 simp
 exact h
 
-example (a : ℝ) : ‖a‖₊ = |a| :=
+lemma square_re (a : ℝ) : a * a = a^2 :=
 by
-simp
+symm
+exact sq a
 
-lemma square (a : ℝ≥0∞) : a * a = a^2 :=
+lemma square_enn (a : ℝ≥0∞) : a * a = a^2 :=
+by
+symm
+exact sq a
+
+lemma square_nn (a : ℝ≥0) : a * a = a^2 :=
 by
 symm
 exact sq a
@@ -50,7 +85,7 @@ exact sq a
 lemma le_square {a b : ℝ≥0∞} (h : a ≤ b) : a^2 ≤ b^2 :=
 by
 have k := mul_le_mul h h (by simp) (by simp)
-rwa [←square a, ←square b]
+rwa [←square_enn a, ←square_enn b]
 
 lemma distrib_sq (a b : ℝ≥0∞) : a^2 * b^2 = (a * b)^2 := by {
   exact Eq.symm (mul_pow a b 2)
@@ -60,29 +95,94 @@ lemma coe_nnreal_le {a b : ℝ≥0} (h : a ≤ b) : (a : ℝ≥0∞) ≤ (b : �
 
 lemma coe_distrib (a b : ℝ≥0) : ENNReal.some (a * b) = (a : ℝ≥0∞) * (b : ℝ≥0∞) := ENNReal.coe_mul
 
-lemma pos_integral (C : ℝ) (f : α → ℝ) (h : ∀x, 0 ≤ f x) (s : Set α) : ∫⁻ x in s, ENNReal.ofReal (f x) ∂μ < ENNReal.ofReal C → ∫ x in s, f x ∂μ < C := by sorry
 
-
-/- lemma test (f : ℕ → ℝ) (h : ∀ i, 0 ≤ f i) (s : Finset ℕ) : 0 ≤ ∑ i in s, f i := by
-exact sum_nonneg' h
-
-lemma dist_sq (a b : ℝ) : (a * b)^2 = a^2 * b^2 := by
+lemma finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i in range (d + 1), (f i : ℝ≥0∞)^2 < ENNReal.some C := by
 {
-  sorry
-} -/
+  have sup_el : ∀ i ∈ range (d + 1), ∃ c, (f i)^2 < c := fun i _ => exists_gt ((f i)^2)
 
+  have max : ∃ j ∈ range (d+1), ∀ i ∈ range (d+1), (f i)^2 ≤ (f j)^2 := by {
+    have non_empty : ∀ (n : ℕ), Finset.Nonempty (range (n+1)) := fun n => nonempty_range_succ
+    have max := exist_max_image_finset (range (d+1)) (non_empty d) (fun i => (f i)^2)
+    rcases max with ⟨j, jin, max⟩
+    use j
+    constructor
+    {exact jin}
+    {
+      intros i iin
+      exact max i iin
+    }
+  }
 
-example (a : NNReal) : a^2 = 0 := by
+  have sup : ∃ c, ∀ i ∈ range (d + 1), (f i)^2 < c := by {
+    rcases max with ⟨j, jin, max⟩
+    choose C sup_el using sup_el
+    use (C j jin)
+    intros i iin
+    specialize max i iin
+    specialize sup_el j jin
+    calc (f i)^2 ≤ (f j)^2 := max
+    _ < C j jin := sup_el
+  }
 
-sorry
+  have sup_coe : ∃ (c:ℝ≥0), ∀ (i : ℕ), i ∈ range (d + 1) → (f i : ℝ≥0∞)^2 < c := by {
+    rcases sup with ⟨C, sup⟩
+    use C
+    intros i iin
+    specialize sup i iin
+    have coe_lt : ∀ (a b : ℝ≥0), (a < b) → ENNReal.some a < ENNReal.some b := by {
+      intros a b h
+      exact Iff.mpr coe_lt_coe h
+    }
+    rw [←square_enn (ENNReal.some (f i))]
+    rw [←coe_distrib (f i)]
+    rw [square_nn (f i)]
+    exact coe_lt (f i ^ 2) C sup
+  }
+
+  rcases sup_coe with ⟨c, sup_coe⟩
+
+  have sum_le : ∑ i in range (d + 1), (f i : ℝ≥0∞)^2 < ∑ i in range (d + 1), (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (by simp) sup_coe
+
+  have sum_coe : ∑ i in range (d + 1), (c : ℝ≥0∞) = ENNReal.some (∑ i in range (d + 1), c) := by {
+    exact Eq.symm coe_finset_sum
+  }
+
+  have sum_simpl : ∑ i in range (d + 1), c = (d+1) • c := by {
+    exact Eq.symm (nsmul_eq_sum_const c (d + 1))
+  }
+
+  use ((d+1) • c)
+
+  calc ∑ i in range (d + 1), (f i: ℝ≥0∞) ^ 2 < ∑ i in range (d + 1), (c : ℝ≥0∞) := sum_le
+  _ = ENNReal.some (∑ i in range (d + 1), c) := sum_coe
+  _ = ENNReal.some ((d+1) • c) := by rw [sum_simpl]
+}
+
+lemma nn_norm_eq_norm (a : α → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := by {
+  exact Eq.symm (ofReal_norm_eq_coe_nnnorm a)
+}
+
+lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := by {
+  exact Eq.symm (ofReal_norm_eq_coe_nnnorm a)
+}
+
+lemma nn_square {a : ℝ} (h : 0 ≤ a) : ENNReal.ofReal (a) ^ 2 = ENNReal.ofReal (a ^ 2) :=
+by {
+  rw [←square_enn (ENNReal.ofReal (a)), ←square_re a]
+  exact Eq.symm (ofReal_mul h)
+}
 
 variable (h_m_set : ∀ (s : Set α), MeasurableSet s)
 
-lemma H_subset_of_L2 (μ : Measure α) (f : ℕ → α → ℝ) (h1 : f ∈ H) (h2 : inner_product_H d f f ⟨h1, h1⟩) (h3 : product_RKHS d H₀ f h1) (h4 : integral_is_finite k μ) : ∫⁻ x in Set.univ, ∑ i in range d, (‖(f i x)‖₊ : ℝ≥0∞)^2 ∂μ < ∞ := by
+lemma H_subset_of_L2 (μ : Measure α) (f : ℕ → α → ℝ) (h1 : f ∈ H) (h2 : inner_product_H d f f ⟨h1, h1⟩) (h3 : product_RKHS d H₀ f h1) (h4 : integral_is_finite k μ) : ∫⁻ x in Set.univ, ∑ i in range (d + 1), ENNReal.ofReal (|f i x|)^2 ∂μ < ∞ := by
 { 
+  --rw [Real.ennnorm_eq_ofReal_abs (f i x)]
+  have abs_to_nnorm : ∀ x, ∀ i, ENNReal.ofReal (|f i x|) = ‖f i x‖₊ := fun x i => Eq.symm (Real.ennnorm_eq_ofReal_abs (f i x))
+  
+  simp_rw [abs_to_nnorm]
 
-  have rkhs : ∀ (x : α), ∑ i in range d, (‖(f i x)‖₊ : ℝ≥0∞)^2 = ∑ i in range d, (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 := by {
-    have temp : ∀ (x : α), ∀ (i : ℕ), i ∈ range d → f i x = ⟪f i, k x⟫ := by
+  have rkhs : ∀ (x : α), ∑ i in range (d + 1), (‖(f i x)‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 := by {
+    have temp : ∀ (x : α), ∀ (i : ℕ), i ∈ range (d + 1) → f i x = ⟪f i, k x⟫ := by
     {
       intros x i iInRange
       apply h_kernel
@@ -95,15 +195,15 @@ lemma H_subset_of_L2 (μ : Measure α) (f : ℕ → α → ℝ) (h1 : f ∈ H) (
   }
   simp_rw [rkhs]
 
-  have cauchy_schwarz : ∀x, ∀i ∈ range d, (‖⟪f i, k x⟫‖₊ : ℝ≥0∞) ≤ (‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞) := by {
-    intros x i iInRange
+  have cauchy_schwarz : ∀x, ∀i ∈ range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞) ≤ (‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞) := by {
+    intros x i _iInRange
     have nn_cauchy := nnnorm_inner_le_nnnorm (𝕜 := ℝ) (f i) (k x)
     have distrib : ENNReal.some (‖f i‖₊ * ‖k x‖₊) = (‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞) := coe_distrib ‖f i‖₊ ‖k x‖₊
     rw [←distrib]
     exact coe_nnreal_le nn_cauchy
   }
 
-  have cauchy_schwarz_sq : ∀x, ∀i ∈ range d, (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ≤ (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := by {
+  have cauchy_schwarz_sq : ∀x, ∀i ∈ range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ≤ (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := by {
     intros x i iInRange
     have sq_dist : ((‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞))^2 = (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := by {
       symm
@@ -113,187 +213,83 @@ lemma H_subset_of_L2 (μ : Measure α) (f : ℕ → α → ℝ) (h1 : f ∈ H) (
     exact le_square (cauchy_schwarz x i iInRange)
   }
 
-  have sum_le : (fun x => ∑ i in range d, (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2) ≤ (fun x => ∑ i in range d, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2) := by {
-    intro x
-    exact sum_le_sum (cauchy_schwarz_sq x)
-  }
+  have sum_le : (fun x => ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2) ≤ (fun x => ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2) := fun x => sum_le_sum (cauchy_schwarz_sq x)
 
-  have inverse_sum_int : ∫⁻ x in Set.univ, ∑ i in range d, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ = ∑ i in range d, ∫⁻ x in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
-    have is_measurable : ∀ i ∈ range d, Measurable ((fun i => fun x => (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2) i) := by
+  have inverse_sum_int : ∫⁻ x in Set.univ, ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ = ∑ i in range (d + 1), ∫⁻ x in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+    have is_measurable : ∀ i ∈ range (d + 1), Measurable ((fun i => fun x => (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2) i) := by
     {
-      intros i InRange s _h
+      intros i _InRange s _h
       exact h_m_set _
     }
-    exact lintegral_finset_sum (range d) is_measurable
+    exact lintegral_finset_sum (range (d + 1)) is_measurable
   }
 
-  sorry
-}
+  rcases finite_sum d (fun i => ‖f i‖₊) with ⟨C1, finite_sum⟩
 
+  rcases h4 with ⟨C2, h4⟩
 
-
-/- lemma H_subset_of_L2 (μ : Measure α) (f : ℕ → α → ℝ) (h1 : f ∈ H) (h2 : inner_product_H d f f ⟨h1, h1⟩) (h3 : product_RKHS d H₀ f h1) (h4 : integral_is_finite k μ) : ∫ x in Set.univ, ∑ i in range d, |(f i x)|^2 ∂μ < ENNReal.toReal ∞ :=
-by
-
-have rkhs : ∀ (x : α), ∑ i in range d, |(f i x)|^2 = ∑ i in range d, |⟪f i, k x⟫|^2 := by {
-  have temp : ∀ (x : α), ∀ (i : ℕ), i ∈ range d → f i x = ⟪f i, k x⟫ := by
-  {
-    intros x i iInRange
-    apply h_kernel
-    exact h3 i iInRange
+  calc ∫⁻ (x : α) in Set.univ, ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ∂μ ≤ ∫⁻ (x : α) in Set.univ, ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := lintegral_mono sum_le
+  _ = ∑ i in range (d + 1), ∫⁻ (x : α) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := inverse_sum_int
+  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : α) in Set.univ, (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+    have is_measurable : Measurable (fun x => (‖k x‖₊ : ℝ≥0∞)^2) := by {
+      intros s _hs
+      exact h_m_set _
+    }
+    have const_int : ∀ i, ∫⁻ (x : α) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ = (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : α) in Set.univ, (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+      intro i
+      exact lintegral_const_mul ((‖f i‖₊ : ℝ≥0∞)^2) is_measurable
+    }
+    simp_rw [const_int]
   }
-  intro x
-  apply sum_congr (Eq.refl _)
-  intros i iInRange
-  rw [temp x i iInRange]
-}
+  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : α) in Set.univ, (‖⟪k x, k x⟫‖₊ : ℝ≥0∞) ∂μ := by {
+    
+    have coe_nnorm : ∀x, (‖k x‖₊ : ℝ≥0∞) = ENNReal.ofReal ‖k x‖ := by {
+      intro x
+      exact nn_norm_eq_norm (k x)
+    }
+    simp_rw [coe_nnorm]
 
-simp_rw [rkhs]
+    have pos : ∀x, 0 ≤ ‖k x‖ := by {
+      intro x
+      simp
+    }
 
-have sum_le : (fun x => ∑ i in range d, |⟪f i, k x⟫|^2) ≤ (fun x => ∑ i in range d, NNReal.toReal (‖f i‖₊) ^ 2 * NNReal.toReal (↑‖k x‖₊) ^ 2) := by
-{
-  have cauchy_schwarz :  ∀ (x : α), ∀ (i : ℕ), i ∈ range d → ‖⟪f i, k x⟫‖₊ ≤ ‖f i‖₊ * ‖k x‖₊ := by {intros x i iInRange; exact nnnorm_inner_le_nnnorm (𝕜 := ℝ) (f i) (k x)}
+    have enn_sq : ∀x, ENNReal.ofReal ‖k x‖ ^ 2 = ENNReal.ofReal (‖k x‖ ^ 2) := by {
+      intro x
+      exact nn_square (pos x)
+    }
 
-  have coercion : ∀ x, ∀ i, ‖⟪f i, k x⟫‖₊ = |⟪f i, k x⟫| := by {
-    intros x i
-    simp
+    simp_rw [enn_sq]
+
+    have norm_sq_eq_inner : ∀ x, ⟪k x, k x⟫ = ‖k x‖ ^ 2 := by {
+      intro x
+      have tt := inner_self_eq_norm_sq_to_K (𝕜 := ℝ) (k x)
+      rw [tt]
+      simp
+    }
+    simp_rw [norm_sq_eq_inner]
+    have coe : ∀x, ENNReal.ofReal (‖k x‖ ^ 2) = ↑‖‖k x‖ ^ 2‖₊ := by {
+      intro x
+      rw [nn_norm_eq_norm_re (‖k x‖ ^ 2)]
+      simp
+    }
+    simp_rw [coe]
   }
-  simp_rw [←coercion]
-
-  have coercion_le : ∀ (x : α), ∀ (i : ℕ), i ∈ range d → NNReal.toReal ‖⟪f i, k x⟫‖₊^2 ≤ NNReal.toReal (‖f i‖₊)^2 *  NNReal.toReal (‖k x‖₊)^2 := by {
-    have temp : ∀ (a b : NNReal), a ≤ b → NNReal.toReal a ≤ NNReal.toReal b := by simp
-    intros x i iInRange
-    have test := le_square (NNReal.toReal ‖⟪f i, k x⟫‖₊) (NNReal.toReal (‖f i‖₊) * NNReal.toReal (‖k x‖₊)) (by simp) (NNReal.coe_nonneg (‖f i‖₊ * ‖k x‖₊)) (cauchy_schwarz x i iInRange)
-    rwa [←dist_sq (NNReal.toReal (‖f i‖₊)) (NNReal.toReal (‖k x‖₊))]
-  }
-
-  intro x
-  
-  exact sum_le_sum (coercion_le x)
-
-  /- have smaller_el : ∀ (x : α), ∀ (i : ℕ), i ∈ range d → ENNReal.ofReal |⟪f i, k x⟫|^2 ≤ ENNReal.ofReal (‖f i‖^2 * ‖k x‖^2) := by
-  {
-    intros x i iInRange
-    have kk : ‖ ⟪f i, k x⟫ ‖₊ ≤ ‖f i‖₊ * ‖k x‖₊ := nnnorm_inner_le_nnnorm (𝕜 := ℝ) (f i) (k x)
-    have kkk : ‖ ⟪f i, k x⟫ ‖₊ = ‖ |⟪f i, k x⟫| ‖₊ := by simp
-    rw [kkk] at kk
-    have kkkk := le_coe |⟪f i, k x⟫| (‖f i‖₊ * ‖k x‖₊) (by simp) kk
-    have t := le_square (ENNReal.ofReal |inner (f i) (k x)|) (ENNReal.ofReal (‖f i‖₊ * ‖k x‖₊)) (by simp) (by simp) kkkk
-    sorry
-  }
-
-  intro x
-  exact sum_le_sum (smaller_el x) -/
-}
-
-apply pos_integral
-{
-  intro x
-  have pos : ∀i, 0 ≤ |⟪f i, k x⟫|^2 := by {
-    intro i
-    rw [←square |⟪f i, k x⟫|]
-    exact mul_self_nonneg _
-  }
-  exact sum_nonneg' pos
-}
-
-have ennreal_compose : ENNReal.ofReal (ENNReal.toReal ∞) = ∞ := by sorry
-rw [ennreal_compose]
-
-have inverse_sum_int : ∫⁻ x in Set.univ, ∑ i in range d, ENNReal.ofReal (‖f i‖^2 * ‖k x‖^2) ∂μ = ∑ i in range d, ∫⁻ x in Set.univ, ENNReal.ofReal (‖f i‖^2 * ‖k x‖^2) ∂μ := by
-{
-  have is_measurable : ∀ i ∈ range d, Measurable ((fun i => fun x => ENNReal.ofReal (‖f i‖^2 * ‖k x‖^2)) i) := by
-  {
-    intros i InRange s _h
-    exact h_m_set _
-  }
-
-  exact lintegral_finset_sum (range d) is_measurable
-}
-
-rcases finite_sum d (fun i => ‖f i‖)  with ⟨C1, finite_sum⟩
-rcases h4 with ⟨C2, h4⟩
-
-
-have test {a b : ℝ} : a ≤ b → ENNReal.ofReal a ≤ ENNReal.ofReal a := by {
-  intros hab
-  exact Eq.ge rfl
-}
-
-have test2 : ∀ x, ∑ i in range d, ENNReal.ofReal (|inner (f i) (k x)| ^ 2) = ENNReal.ofReal (∑ i in range d, |inner (f i) (k x)| ^ 2) := by {
-  intro x
-  have pos : ∀ i ∈ range d, 0 ≤ |⟪f i, k x⟫| ^ 2 := by {
-    intro i iInRange
-    rw [←square |⟪f i, k x⟫|]
-    exact mul_self_nonneg _
-  }
-  symm
-  exact ofReal_sum_of_nonneg pos
-}
-
-have test3 : ∀ x, ∑ i in range d, ENNReal.ofReal (↑‖f i‖₊ ^ 2 * ↑‖k x‖₊ ^ 2) = ENNReal.ofReal (∑ i in range d, ENNReal.toReal (‖f i‖₊) ^ 2 * ENNReal.toReal (‖k x‖₊) ^ 2) := by {
-  intro x
-  have pos : ∀ i ∈ range d, 0 ≤ ENNReal.toReal (‖f i‖₊) ^ 2 * ENNReal.toReal (‖k x‖₊) ^ 2 := by {
-    intro i iInRange
-    --exact zero_le (ENNReal.toReal (‖f i‖₊) ^ 2 * ENNReal.toReal (‖k x‖₊) ^ 2)
-    sorry
-  }
-  symm
-  exact ofReal_sum_of_nonneg pos
-}
-
-have sum_le : (fun x => ∑ i in range d, ENNReal.ofReal (|inner (f i) (k x)|^2)) ≤ fun x => ∑ i in range d, ENNReal.ofReal (↑‖f i‖₊ ^ 2 * ↑‖k x‖₊ ^ 2) := by {
-  intro x
-  simp_rw [test2, test3]
-  exact test sum_le
-}
-
-
-calc ∫⁻ (x : α) in Set.univ, ENNReal.ofReal (∑ i in range d, |inner (f i) (k x)| ^ 2) ∂μ = ∫⁻ (x : α) in Set.univ, ∑ i in range d, ENNReal.ofReal |inner (f i) (k x)|^2 ∂μ := by sorry
-_ ≤ ∫⁻ (x : α) in Set.univ, ∑ i in range d, ENNReal.ofReal (‖f i‖₊^2 * ‖k x‖₊^2) ∂μ := lintegral_mono sum_le
-_ = ∑ i in range d, ∫⁻ (x : α) in Set.univ, ENNReal.ofReal (‖f i‖^2 * ‖k x‖^2) ∂μ := inverse_sum_int
-_ = ∑ i in range d, ∫⁻ (x : α) in Set.univ, ENNReal.ofReal (‖f i‖^2) * ENNReal.ofReal (‖k x‖^2) ∂μ := by {
-  have f_pos : ∀ i, 0 ≤ ‖f i‖^2 := by simp
-  have coercion : ∀ i, ∀ x, ENNReal.ofReal (‖f i‖^2 * ‖k x‖^2) = ENNReal.ofReal (‖f i‖^2) * ENNReal.ofReal (‖k x‖^2) := by {
-    intros i x
-    exact ofReal_mul (f_pos i)
-  }
-  simp_rw [coercion]
-}
-_ = ∑ i in range d, ENNReal.ofReal (‖f i‖^2) * ∫⁻ (x : α) in Set.univ, ENNReal.ofReal (‖k x‖^2) ∂μ := by {
-  have is_measurable : Measurable (fun x => ENNReal.ofReal (‖k x‖^2)) := by {
-    intros s _hs
-    exact h_m_set _
-  }
-  have const_int : ∀ i, ∫⁻ (x : α) in Set.univ, ENNReal.ofReal (‖f i‖^2) * ENNReal.ofReal (‖k x‖^2) ∂μ = ENNReal.ofReal (‖f i‖^2) * ∫⁻ (x : α) in Set.univ, ENNReal.ofReal (‖k x‖^2) ∂μ := by {
-    intro i
-    exact lintegral_const_mul (ENNReal.ofReal (‖f i‖^2)) is_measurable
-  }
-  simp_rw [const_int]
-}
-_ = ∑ i in range d, ENNReal.ofReal (‖f i‖^2) * ∫⁻ (x : α) in Set.univ, ENNReal.ofReal (⟪k x, k x⟫) ∂μ := by {
-  have norm_sq_eq_inner : ∀ x, ‖k x‖^2 = ⟪k x, k x⟫ := by {
-    intro x
-    exact inner_self_eq_norm_sq_to_K hr hn hi (k x)
-  }
-  simp_rw [norm_sq_eq_inner]
-}
-_ = ∑ i in range d, ENNReal.ofReal (‖f i‖^2) * ∫⁻ (x : α) in Set.univ, ENNReal.ofReal (k x x) ∂μ := by {
-  have reproducing_prop : ∀ x, ⟪k x, k x⟫ = k x x := by {
+  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
+    have reproducing_prop : ∀ x, ⟪k x, k x⟫ = k x x := by {
     intro x
     rw [h_kernel (k x) (h_k.left x) x]
+    }
+    simp_rw [reproducing_prop]
   }
-  simp_rw [reproducing_prop]
+  _ = (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * ∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
+    have sum_mul : (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * (∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ) = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ) := by exact sum_mul
+    rw [←sum_mul]
+  }
+  _ < C1 * C2 := ENNReal.mul_lt_mul finite_sum h4
+  _ < ∞ := by {
+    have h1 : C1 < ∞ := ENNReal.coe_lt_top
+    have h2 : C2 < ∞ := ENNReal.coe_lt_top
+    exact ENNReal.mul_lt_mul h1 h2
+  }
 }
-_ =  (∑ i in range d, ENNReal.ofReal (‖f i‖^2)) * (∫⁻ (x : α) in Set.univ, ENNReal.ofReal (k x x) ∂μ)  := by 
-{
-  have sum_mul : (∑ i in range d, ENNReal.ofReal (‖f i‖^2)) * (∫⁻ (x : α) in Set.univ, ENNReal.ofReal (k x x) ∂μ) = ∑ i in range d, (ENNReal.ofReal (‖f i‖^2)) * (∫⁻ (x : α) in Set.univ, ENNReal.ofReal (k x x) ∂μ) := by exact sum_mul
-  rw [←sum_mul]
-}
-_ ≤ C1 * C2 := mul_le_mul finite_sum.left h4.left (by simp) (by simp)
-
-_ < ∞ := by {
-  have infty_mul_infty : ∞ * ∞ = ∞ := by simp
-  rw [←infty_mul_infty]
-  exact mul_lt_mul_of_nonneg_of_pos finite_sum.right ((le_not_le_of_lt h4.right).left) (by simp) (by simp)
-} -/

@@ -74,15 +74,12 @@ by
 /--
   a*a = a²
 -/
-lemma square {M : Type _} [Monoid M] (a : M) : a * a = a^2 :=
-by
-  symm
-  exact sq a
+lemma square {M : Type _} [Monoid M] (a : M) : a * a = a^2 := (sq a).symm
 
 /--
   a² * b² = (a * b)²
 -/
-lemma distrib_sq {M : Type _} [CommMonoid M] (a b : M) : a^2 * b^2 = (a * b)^2 := Eq.symm (mul_pow a b 2)
+lemma distrib_sq {M : Type _} [CommMonoid M] (a b : M) : a^2 * b^2 = (a * b)^2 := (mul_pow a b 2).symm
 /--
   ∀ a b ∈ ℝ⁺ ∪ {∞}, a ≤ b → a² ≤ b²
 -/
@@ -104,14 +101,14 @@ lemma coe_nnreal_le {a b : ℝ≥0} (h : a ≤ b) : (a : ℝ≥0∞) ≤ (b : �
 
 lemma coe_distrib (a b : ℝ≥0) : ENNReal.some (a * b) = (a : ℝ≥0∞) * (b : ℝ≥0∞) := ENNReal.coe_mul
 
-lemma nn_norm_eq_norm (a : (Vector ℝ d) → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := Eq.symm (ofReal_norm_eq_coe_nnnorm a)
+lemma nn_norm_eq_norm (a : (Vector ℝ d) → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
 
-lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := Eq.symm (ofReal_norm_eq_coe_nnnorm a)
+lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
 
 lemma nn_square {a : ℝ} (h : 0 ≤ a) : ENNReal.ofReal (a) ^ 2 = ENNReal.ofReal (a ^ 2) :=
 by
   rw [←square (ENNReal.ofReal (a)), ←square a]
-  exact Eq.symm (ofReal_mul h)
+  exact (ofReal_mul h).symm
 
 /--
   A finite sum of finite elements is finite.
@@ -166,14 +163,10 @@ by
   have sum_le : ∑ i in range (d + 1), (f i : ℝ≥0∞) < ∑ i in range (d + 1), (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (by simp) sup_coe
 
   /- Same as above, with coercion -/
-  have sum_coe : ∑ i in range (d + 1), (c : ℝ≥0∞) = ENNReal.some (∑ i in range (d + 1), c) := by {
-    exact Eq.symm coe_finset_sum
-  }
+  have sum_coe : ∑ i in range (d + 1), (c : ℝ≥0∞) = ENNReal.some (∑ i in range (d + 1), c) := coe_finset_sum.symm
 
   /- Sum of constant = constant -/
-  have sum_simpl : ∑ i in range (d + 1), c = (d+1) • c := by {
-    exact Eq.symm (nsmul_eq_sum_const c (d + 1))
-  }
+  have sum_simpl : ∑ i in range (d + 1), c = (d+1) • c := (nsmul_eq_sum_const c (d + 1)).symm
 
   use ((d+1) • c)
 
@@ -193,7 +186,7 @@ by
   intros f finH
 
   /- We rewrite the absolute value of as positive norm of real. -/
-  have abs_to_nnorm : ∀ x, ∀ i, ENNReal.ofReal (|f i x|) = ‖f i x‖₊ := fun x i ↦ Eq.symm (Real.ennnorm_eq_ofReal_abs (f i x))
+  have abs_to_nnorm : ∀ x, ∀ i, ENNReal.ofReal (|f i x|) = ‖f i x‖₊ := fun x i ↦ (Real.ennnorm_eq_ofReal_abs (f i x)).symm
   simp_rw [abs_to_nnorm]
 
   /- We use the reproducing propriety of H₀ to rewrite f i x as ⟪f i, k x⟫. -/
@@ -223,10 +216,7 @@ by
   /- Coersive "square" Cauchy-Schwarz inequality : (↑‖⟪f i, k x⟫‖₊)² ≤ (↑‖f i‖₊)² (↑‖f x‖₊)². -/
   have cauchy_schwarz_sq : ∀x, ∀i ∈ range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ≤ (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := by {
     intros x i iInRange
-    have sq_dist : ((‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞))^2 = (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := by {
-      symm
-      exact distrib_sq (‖f i‖₊ : ℝ≥0∞) (‖k x‖₊ : ℝ≥0∞)
-    }
+    have sq_dist : ((‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞))^2 = (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := (distrib_sq (‖f i‖₊ : ℝ≥0∞) (‖k x‖₊ : ℝ≥0∞)).symm
     rw [←sq_dist]
     exact le_square (cauchy_schwarz x i iInRange)
   }
@@ -250,7 +240,7 @@ by
   /- Retrieve the majorant of the integral ∫⁻ (x : (Vector ℝ d)) in Set.univ, ↑|k x x| ∂μ, supposed finite. -/
   rcases h2 with ⟨C2, h2⟩
   /- Rewrite ↑|k x x| as  ↑‖k x x‖₊. -/
-  have abs_to_nnorm : ∀ x, ENNReal.ofReal (|k x x|) = ‖k x x‖₊ := fun x ↦ Eq.symm (Real.ennnorm_eq_ofReal_abs (k x x))
+  have abs_to_nnorm : ∀ x, ENNReal.ofReal (|k x x|) = ‖k x x‖₊ := fun x ↦ (Real.ennnorm_eq_ofReal_abs (k x x)).symm
   simp_rw [abs_to_nnorm] at h2
 
   /- 1. ∀ f ≤ g, ∫⁻ x, f x ∂μ ≤ ∫⁻ x, g x ∂μ. We use this lemma with *sum_le*. -/
@@ -316,7 +306,7 @@ by
       intro i
       rw [←square (‖f i‖₊ : ℝ≥0∞), ←square ‖f i‖₊]
       symm
-      exact coe_distrib ‖f i‖₊ ‖f i‖₊
+      exact (coe_distrib ‖f i‖₊ ‖f i‖₊)
     }
     simp_rw [coe_sq]
   }

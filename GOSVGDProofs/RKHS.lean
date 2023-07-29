@@ -2,6 +2,7 @@ import Mathlib.Data.Real.EReal
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
+import Mathlib.Analysis.Calculus.FDeriv.Basic
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
@@ -10,27 +11,28 @@ open BigOperators Finset ENNReal NNReal MeasureTheory MeasureTheory.Measure
 
 set_option trace.Meta.Tactic.simp.rewrite true
 
+variable (d : ℕ)
 /-
-  We define a RKHS of (α → ℝ) functions.
+  We define a RKHS of ((Vector ℝ d) → ℝ) functions.
 -/
-variable {α : Type _} (H₀ : Set (α → ℝ)) [NormedAddCommGroup (α → ℝ)] [InnerProductSpace ℝ (α → ℝ)] [CompleteSpace (α → ℝ)] [MeasurableSpace α] [PosMulStrictMono ℝ≥0∞] [MulPosStrictMono ℝ≥0∞]
+variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [CompleteSpace ((Vector ℝ d) → ℝ)] [MeasurableSpace (Vector ℝ d)] [PosMulStrictMono ℝ≥0∞] [MulPosStrictMono ℝ≥0∞]
 
 /- The kernel function -/
-variable (k : α → α → ℝ) (h_k : (∀ (x : α), k x ∈ H₀) ∧ (∀ (x : α), (fun y ↦ k y x) ∈ H₀))
+variable (k : (Vector ℝ d) → (Vector ℝ d) → ℝ) (h_k : (∀ (x : (Vector ℝ d)), k x ∈ H₀) ∧ (∀ (x : (Vector ℝ d)), (fun y ↦ k y x) ∈ H₀))
 
 /--
   Reproducing propriety
 -/
-def is_kernel := ∀ (f : α → ℝ), f ∈ H₀ → ∀ (x : α), f x = ⟪f, k x⟫
+def is_kernel := ∀ (f : (Vector ℝ d) → ℝ), f ∈ H₀ → ∀ (x : (Vector ℝ d)), f x = ⟪f, k x⟫
 
-variable (h_kernel : is_kernel H₀ k)
+variable (h_kernel : is_kernel d H₀ k)
 
-/- We define the product RKHS as a space of function on (ℕ → α → ℝ). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable {H : Set (ℕ → α → ℝ)} (d : ℕ) [NormedAddCommGroup H] [InnerProductSpace ℝ H] [CompleteSpace H] [Inner ℝ (ℕ → α → ℝ)]
+/- We define the product RKHS as a space of function on (ℕ → (Vector ℝ d) → ℝ). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
+variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)] [CompleteSpace (ℕ → (Vector ℝ d) → ℝ)]
 
-def product_RKHS (H : Set (ℕ → α → ℝ)) (H₀ : Set (α → ℝ)) := ∀ f ∈ H, ∀ (i : ℕ), i ∈ range (d + 1) → f i ∈ H₀
+def product_RKHS (H : Set (ℕ → (Vector ℝ d) → ℝ)) (H₀ : Set ((Vector ℝ d) → ℝ)) := ∀ f ∈ H, ∀ (i : ℕ), i ∈ range (d + 1) → f i ∈ H₀
 
-def inner_product_H (f g : ℕ → α → ℝ) (_h : f ∈ H ∧ g ∈ H) := ⟪f, g⟫ = ∑ i in range (d + 1), ⟪f i, g i⟫
+def inner_product_H (f g : ℕ → (Vector ℝ d) → ℝ) (_h : f ∈ H ∧ g ∈ H) := ⟪f, g⟫ = ∑ i in range (d + 1), ⟪f i, g i⟫
 
 /- Intermediate lemmas -/
 
@@ -44,7 +46,7 @@ by
   {exact max'_mem s h}
   {
     intros a ains
-    exact le_max_of_eq ains (Eq.symm (coe_max' h)) 
+    exact le_max' s a ains
   }
 
 /--
@@ -102,7 +104,7 @@ lemma coe_nnreal_le {a b : ℝ≥0} (h : a ≤ b) : (a : ℝ≥0∞) ≤ (b : �
 
 lemma coe_distrib (a b : ℝ≥0) : ENNReal.some (a * b) = (a : ℝ≥0∞) * (b : ℝ≥0∞) := ENNReal.coe_mul
 
-lemma nn_norm_eq_norm (a : α → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := Eq.symm (ofReal_norm_eq_coe_nnnorm a)
+lemma nn_norm_eq_norm (a : (Vector ℝ d) → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := Eq.symm (ofReal_norm_eq_coe_nnnorm a)
 
 lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := Eq.symm (ofReal_norm_eq_coe_nnnorm a)
 
@@ -179,14 +181,14 @@ by
   _ = ENNReal.some (∑ i in range (d + 1), c) := sum_coe
   _ = ENNReal.some ((d+1) • c) := by rw [sum_simpl]
 
-variable (h_m_set : ∀ (s : Set α), MeasurableSet s)
+variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
 
-def integral_is_finite (μ : Measure α) (f : α → ℝ) := ∃ (C : ℝ≥0), ∫⁻ x in Set.univ, ENNReal.ofReal |f x| ∂μ < C
+def integral_is_finite (μ : Measure (Vector ℝ d)) (f : (Vector ℝ d) → ℝ) := ∃ (C : ℝ≥0), ∫⁻ x in Set.univ, ENNReal.ofReal |f x| ∂μ < C
 
 /--
   H ⊆ L2(μ) i.e., ∀ f ∈ H ∫⁻ x in Set.univ, ∑ i in range (d + 1), ENNReal.ofReal (|f i x|)^2 ∂μ < ∞.
 -/
-lemma H_subset_of_L2 (μ : Measure α) (h1 : product_RKHS d H H₀) (h2 : integral_is_finite μ (fun x ↦ k x x)) : ∀ f ∈ H, ∫⁻ x in Set.univ, ∑ i in range (d + 1), ENNReal.ofReal (|f i x|)^2 ∂μ < ∞ :=
+theorem H_subset_of_L2 (μ : Measure (Vector ℝ d)) (h1 : product_RKHS d H H₀) (h2 : integral_is_finite d μ (fun x ↦ k x x)) : ∀ f ∈ H, ∫⁻ x in Set.univ, ∑ i in range (d + 1), ENNReal.ofReal (|f i x|)^2 ∂μ < ∞ :=
 by
   intros f finH
 
@@ -195,8 +197,8 @@ by
   simp_rw [abs_to_nnorm]
 
   /- We use the reproducing propriety of H₀ to rewrite f i x as ⟪f i, k x⟫. -/
-  have rkhs : ∀ (x : α), ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 := by {
-    have temp : ∀ (x : α), ∀ (i : ℕ), i ∈ range (d + 1) → f i x = ⟪f i, k x⟫ := by
+  have rkhs : ∀ (x : (Vector ℝ d)), ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 := by {
+    have temp : ∀ (x : (Vector ℝ d)), ∀ (i : ℕ), i ∈ range (d + 1) → f i x = ⟪f i, k x⟫ := by
     {
       intros x i iInRange
       apply h_kernel
@@ -245,25 +247,25 @@ by
   /- Retrieve the majorant of the finite sum : ∑ i in range (d + 1), (↑‖f i‖₊)². -/
   rcases finite_sum d (fun i ↦ ‖f i‖₊^2) with ⟨C1, finite_sum⟩
 
-  /- Retrieve the majorant of the integral ∫⁻ (x : α) in Set.univ, ↑|k x x| ∂μ, supposed finite. -/
+  /- Retrieve the majorant of the integral ∫⁻ (x : (Vector ℝ d)) in Set.univ, ↑|k x x| ∂μ, supposed finite. -/
   rcases h2 with ⟨C2, h2⟩
   /- Rewrite ↑|k x x| as  ↑‖k x x‖₊. -/
   have abs_to_nnorm : ∀ x, ENNReal.ofReal (|k x x|) = ‖k x x‖₊ := fun x ↦ Eq.symm (Real.ennnorm_eq_ofReal_abs (k x x))
   simp_rw [abs_to_nnorm] at h2
 
   /- 1. ∀ f ≤ g, ∫⁻ x, f x ∂μ ≤ ∫⁻ x, g x ∂μ. We use this lemma with *sum_le*. -/
-  calc ∫⁻ (x : α) in Set.univ, ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ∂μ ≤ ∫⁻ (x : α) in Set.univ, ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := lintegral_mono sum_le
+  calc ∫⁻ (x : (Vector ℝ d)) in Set.univ, ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ∂μ ≤ ∫⁻ (x : (Vector ℝ d)) in Set.univ, ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := lintegral_mono sum_le
 
   /- 2. Inversion sum integral. -/
-  _ = ∑ i in range (d + 1), ∫⁻ (x : α) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := inverse_sum_int
+  _ = ∑ i in range (d + 1), ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := inverse_sum_int
 
   /- 3. As (↑‖f i‖₊)² is a constant in the integral, get it out. -/
-  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : α) in Set.univ, (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
     have is_measurable : Measurable (fun x ↦ (‖k x‖₊ : ℝ≥0∞)^2) := by {
       intros s _hs
       exact h_m_set _
     }
-    have const_int : ∀ i, ∫⁻ (x : α) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ = (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : α) in Set.univ, (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+    have const_int : ∀ i, ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ = (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
       intro i
       exact lintegral_const_mul ((‖f i‖₊ : ℝ≥0∞)^2) is_measurable
     }
@@ -271,9 +273,9 @@ by
   }
 
   /- Rewrite  (↑‖k x‖₊)² as ↑‖⟪k x, k x⟫‖₊ (lot of coercions). -/
-  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : α) in Set.univ, (‖⟪k x, k x⟫‖₊ : ℝ≥0∞) ∂μ := by {
+  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖⟪k x, k x⟫‖₊ : ℝ≥0∞) ∂μ := by {
     
-    simp_rw [fun x ↦ nn_norm_eq_norm (k x)]
+    simp_rw [fun x ↦ nn_norm_eq_norm d (k x)]
 
     simp_rw [fun x ↦ nn_square (norm_nonneg (k x))]
 
@@ -294,7 +296,7 @@ by
   }
   
   /- Use the reproducing propriety of H₀ to write ⟪k x, k x⟫ as k x x. -/
-  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
+  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have reproducing_prop : ∀ x, ⟪k x, k x⟫ = k x x := by {
     intro x
     rw [h_kernel (k x) (h_k.left x) x]
@@ -303,13 +305,13 @@ by
   }
 
   /- As the integral is a constant in the sum, write ∑ i in ... * ∫⁻ ... as (∑ i in ...) * ∫⁻ ... -/
-  _ = (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * ∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
-    have sum_mul : (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * (∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ) = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ) := by exact sum_mul
+  _ = (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
+    have sum_mul : (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ) = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ) := by exact sum_mul
     rw [←sum_mul]
   }
 
   /- Rewrite (↑‖f i‖₊)² as ↑(‖f i‖₊²) to use the *finite_sum* lemma. -/
-  _ = (∑ i in range (d + 1), (‖f i‖₊^2 : ℝ≥0∞)) * ∫⁻ (x : α) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
+  _ = (∑ i in range (d + 1), (‖f i‖₊^2 : ℝ≥0∞)) * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have coe_sq : ∀ i, (‖f i‖₊ : ℝ≥0∞)^2 = (‖f i‖₊^2 : ℝ≥0∞) := by {
       intro i
       rw [←square (‖f i‖₊ : ℝ≥0∞), ←square ‖f i‖₊]

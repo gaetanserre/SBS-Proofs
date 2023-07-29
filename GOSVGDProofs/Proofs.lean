@@ -109,7 +109,7 @@ noncomputable def KL (μ : Measure α) (d_μ : α → ℝ≥0∞) (d_π : α →
 variable (univ_unique_diff : UniqueDiffOn ℝ (Set.univ : Set α))
 
 /--
-  Given a map T and two measures μ π, both admitting density w.r.t. the Lebesgue measure, then KL(T#μ || π) = KL(μ || T⁻¹ π)
+  Given a map T and two measures μ π, both admitting density w.r.t. the Lebesgue measure, then KL(T#μ || π) = KL(μ || T⁻¹#π)
 -/
 lemma KL_of_μ_t_π_eq_KL_of_π_t_μ (Tμ_comp' : α → α →L[ℝ] α) (Tπ_comp' : α → α →L[ℝ] α) (h1 : ∀ x ∈ Set.univ, HasFDerivWithinAt (μ_t.T_inv ∘ μ_t.T) (Tμ_comp' x) Set.univ x) (h2 : ∀ x ∈ Set.univ, HasFDerivWithinAt (π_t.T_inv ∘ π_t.T) (Tπ_comp' x) Set.univ x) (h3 : push_forward_density_composition μ_t T' hT' d_μ h_density_μ Set.univ d_p_μ μ_t.T Tμ_comp' h1 h_d_p_μ) (h4 : push_forward_density_composition π_t Tπ' hTπ' d_π h_density_π Set.univ d_p_π π_t.T Tπ_comp' h2 h_d_p_π) : KL μ_t.p_μ d_p_μ d_π = KL μ_t.μ d_μ d_p_π :=
 by

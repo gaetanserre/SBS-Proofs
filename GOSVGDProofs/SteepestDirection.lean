@@ -3,6 +3,7 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 
 import GOSVGDProofs.RKHS
+import GOSVGDProofs.PushForward
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
@@ -36,17 +37,25 @@ by
   have key2 : ⟪a, b + d⟫ = ⟪a, b⟫ + ⟪a, d⟫ := inner_add_right a b d
   rw [key, key2]
 
+example (a b d : (Vector ℝ d)) (c : ℝ) : ⟪a, c • b + d⟫ = c * ⟪a, b⟫ + ⟪a, d⟫ :=
+by
+  have key1 : ⟪a, c • b + d⟫ = ⟪a, c • b⟫ + ⟪a, d⟫ := inner_add_right a (c • b) d
+  have key2 : ⟪a, c • b⟫ = c * ⟪a, b⟫ := real_inner_smul_right a b c
+  rw [key1, key2]
+
 /- Steepest direction -/
 
-lemma inter_inner_integral_right (μ : Measure (Vector ℝ d)) (f : (Vector ℝ d) → (Vector ℝ d) → ℝ) (g : (Vector ℝ d) → ℝ) (hg : g ∈ H₀) (hf : (∀ (x : (Vector ℝ d)), f x ∈ H₀) ∧ (∀ (x : (Vector ℝ d)), (fun y ↦ f y x) ∈ H₀)) : ⟪g, (fun x ↦ ENNReal.toReal (∫⁻ y in Set.univ, ENNReal.ofReal (f y x) ∂μ))⟫ = ENNReal.toReal (∫⁻ y in Set.univ, ENNReal.ofReal ⟪g, f y⟫ ∂μ) :=
+lemma inter_inner_integral_right (μ : Measure (Vector ℝ d)) (g : (Vector ℝ d) → ℝ) (f : (Vector ℝ d) → (Vector ℝ d) → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
 by
 sorry
+
+lemma inner_linear (f a b : Vector ℝ d → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x + b x⟫ = c * ⟪f, fun x ↦ a x⟫ + ⟪f, fun x ↦ b x⟫ := by sorry
 
 /-
 dk x i = y ↦ (∂x k(x, y))ⁱ
 
 f : (Vector ℝ d) → ℝ
-df' : ℕ → (Vector ℝ d) → ℝ 
+df : ℕ → (Vector ℝ d) → ℝ 
       x ↦ (∂xⁱ f(x))
 -/
 variable (dk : (Vector ℝ d) → ℕ → (Vector ℝ d) → ℝ) (hdk : ∀ x, ∀ i, dk x i ∈ H₀)
@@ -58,3 +67,50 @@ by
 
 
 noncomputable def divergence (f' : ℕ → (Vector ℝ d) → ℝ) (x : Vector ℝ d) := ∑ i in range (d + 1), f' i x
+
+variable (φ : ℕ → (Vector ℝ d) → ℝ) (hφ : φ ∈ H) (μ π ν : Measure (Vector ℝ d)) (dμ dπ : (Vector ℝ d) → ℝ≥0∞) (h_dpμ : is_density μ ν dμ) (h_dpπ : is_density π ν dπ) (d_log_π : ℕ → (Vector ℝ d) → ℝ) [MeasureSpace (Vector ℝ d)] [MeasureSpace ℝ]
+
+def is_phi (φ : ℕ → (Vector ℝ d) → ℝ) := ∀ i, φ i = (fun x ↦ ∫ y, (d_log_π i y) * (k y x) + (dk y i x) ∂μ)
+
+variable (h_is_φ : is_phi d k dk μ d_log_π φ)
+
+variable (is_integrable : ∀ (f : ℕ → Vector ℝ d → ℝ), ∀ i ∈ range (d + 1), Integrable (f i) μ)
+
+lemma steepest_descent_trajectory (h1 : product_RKHS d H H₀) (h2 : inner_product_H d H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (df : ℕ → (Vector ℝ d) → ℝ) : ⟪f, φ⟫ = ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ :=
+by
+  rw [h2 f hf φ hφ]
+  unfold is_phi at h_is_φ
+  simp_rw [h_is_φ]
+
+  have invert_inner_integral : ∀i, ⟪(f i), (fun x ↦ (∫ y, d_log_π i y * k y x + dk y i x ∂μ))⟫ = ∫ y, ⟪(f i), (fun y x ↦ d_log_π i y * k y x + dk y i x) y⟫ ∂μ := fun i ↦ inter_inner_integral_right d μ (f i) (fun y x ↦ d_log_π i y * k y x + dk y i x)
+  simp_rw [invert_inner_integral]
+
+  have invert_sum_integral : ∑ i in range (d + 1), ∫ (y : Vector ℝ d), (fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫) i y ∂μ = ∫ (y : Vector ℝ d), ∑ i in range (d + 1), (fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫) i y ∂μ := by {
+    symm
+    exact integral_finset_sum (range (d + 1)) (by {
+      intros i iin
+      exact is_integrable ((fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫)) i iin
+    })
+  }
+  simp_rw [invert_sum_integral]
+
+  have linear_inner : ∀y, ∀i, ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫ = d_log_π i y * ⟪f i, fun x ↦ k y x⟫ + ⟪f i, fun x ↦ dk y i x⟫ := fun y i ↦ inner_linear d (f i) (k y) (dk y i) (d_log_π i y)
+  simp_rw [linear_inner]
+
+  have sum_reproducing : ∀ y, ∑ i in range (d + 1), (d_log_π i y * ⟪f i, fun x => k y x⟫ + ⟪f i, fun x => dk y i x⟫) = ∑ i in range (d + 1), (d_log_π i y * (f i y) + df i y) := by {
+    intro y
+    have reproducing : ∀ x, ∀ i ∈ range (d + 1), ⟪f i, fun y ↦ k x y⟫ = f i x := by {
+      intros x i iin
+      symm
+      apply h_kernel (f i)
+      exact h1 f hf i iin
+    }
+    apply sum_congr (Eq.refl _)
+    intros i iin
+
+    have d_reproducing : ⟪f i, fun x => dk y i x⟫ = df i y := reproducing_derivative d H₀ dk (f i) (df) (h1 f hf i iin) y i iin
+
+
+    rw [reproducing y i iin, d_reproducing]
+  }
+  simp_rw [sum_reproducing]

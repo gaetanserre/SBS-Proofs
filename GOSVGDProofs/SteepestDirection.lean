@@ -37,12 +37,6 @@ by
   have key2 : ⟪a, b + d⟫ = ⟪a, b⟫ + ⟪a, d⟫ := inner_add_right a b d
   rw [key, key2]
 
-example (a b d : (Vector ℝ d)) (c : ℝ) : ⟪a, c • b + d⟫ = c * ⟪a, b⟫ + ⟪a, d⟫ :=
-by
-  have key1 : ⟪a, c • b + d⟫ = ⟪a, c • b⟫ + ⟪a, d⟫ := inner_add_right a (c • b) d
-  have key2 : ⟪a, c • b⟫ = c * ⟪a, b⟫ := real_inner_smul_right a b c
-  rw [key1, key2]
-
 /- Steepest direction -/
 
 lemma inter_inner_integral_right (μ : Measure (Vector ℝ d)) (g : (Vector ℝ d) → ℝ) (f : (Vector ℝ d) → (Vector ℝ d) → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=

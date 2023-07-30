@@ -34,6 +34,16 @@ def product_RKHS (H : Set (ℕ → (Vector ℝ d) → ℝ)) (H₀ : Set ((Vector
 
 def inner_product_H (f g : ℕ → (Vector ℝ d) → ℝ) (_h : f ∈ H ∧ g ∈ H) := ⟪f, g⟫ = ∑ i in range (d + 1), ⟪f i, g i⟫
 
+variable [NormedAddCommGroup (ℕ → ℝ)] [InnerProductSpace ℝ (ℕ → ℝ)] [CompleteSpace (ℕ → ℝ)]
+/--
+  The simple vector norm
+-/
+def norm_H (H : Set (ℕ → (Vector ℝ d) → ℝ)) := ∀ f ∈ H, ∀x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞) = sqrt (∑ i in range (d + 1), ‖f i x‖₊^2)
+
+example (a : ℝ≥0) : (sqrt a)^2 = a :=
+by
+exact sq_sqrt a
+
 /- Intermediate lemmas -/
 
 /--
@@ -105,10 +115,12 @@ lemma nn_norm_eq_norm (a : (Vector ℝ d) → ℝ) : ‖a‖₊ = ENNReal.ofReal
 
 lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
 
-lemma nn_square {a : ℝ} (h : 0 ≤ a) : ENNReal.ofReal (a) ^ 2 = ENNReal.ofReal (a ^ 2) :=
+lemma enn_square {a : ℝ} (h : 0 ≤ a) : ENNReal.ofReal (a) ^ 2 = ENNReal.ofReal (a ^ 2) :=
 by
   rw [←square (ENNReal.ofReal (a)), ←square a]
   exact (ofReal_mul h).symm
+
+lemma nn_square {a : ℝ≥0} : (a : ℝ≥0∞) ^ 2 = (a ^ 2 : ℝ≥0∞) := (ENNReal.coe_pow 2).symm
 
 /--
   A finite sum of finite elements is finite.
@@ -181,13 +193,25 @@ def integral_is_finite (μ : Measure (Vector ℝ d)) (f : (Vector ℝ d) → ℝ
 /--
   H ⊆ L2(μ) i.e., ∀ f ∈ H ∫⁻ x in Set.univ, ∑ i in range (d + 1), ENNReal.ofReal (|f i x|)^2 ∂μ < ∞.
 -/
-theorem H_subset_of_L2 (μ : Measure (Vector ℝ d)) (h1 : product_RKHS d H H₀) (h2 : integral_is_finite d μ (fun x ↦ k x x)) : ∀ f ∈ H, ∫⁻ x in Set.univ, ∑ i in range (d + 1), ENNReal.ofReal (|f i x|)^2 ∂μ < ∞ :=
+example (f : ℕ → (Vector ℝ d) → ℝ) (x : (Vector ℝ d)) : ENNReal.ofReal ‖fun i ↦ f i x‖ = ‖fun i ↦ f i x‖₊ := ofReal_norm_eq_coe_nnnorm fun i => f i x
+
+theorem H_subset_of_L2 (μ : Measure (Vector ℝ d)) (h1 : product_RKHS d H H₀) (h2 : integral_is_finite d μ (fun x ↦ k x x)) (h3 : norm_H d H) : ∀ f ∈ H, ∫⁻ x in Set.univ, ENNReal.ofReal ‖fun i ↦ f i x‖^2 ∂μ < ∞ :=
 by
   intros f finH
 
-  /- We rewrite the absolute value of as positive norm of real. -/
-  have abs_to_nnorm : ∀ x, ∀ i, ENNReal.ofReal (|f i x|) = ‖f i x‖₊ := fun x i ↦ (Real.ennnorm_eq_ofReal_abs (f i x)).symm
+  /- We rewrite the absolute value of a norm as positive norm. -/
+  have abs_to_nnorm : ∀ x, ENNReal.ofReal ‖fun i ↦ f i x‖ = ‖fun i ↦ f i x‖₊ := fun x ↦ ofReal_norm_eq_coe_nnnorm fun i => f i x
   simp_rw [abs_to_nnorm]
+
+  /- We use the property of H to rewrite the norm as a sum of norm of function in H₀ -/
+  have H_norm : ∀ x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 := by {
+    intro x
+    rw [h3 f finH x]
+    have sq_coe : ENNReal.some (sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2))^2 = ENNReal.some ((sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2))^2) := nn_square
+    rw [sq_coe]
+    simp
+  }
+  simp_rw [H_norm]
 
   /- We use the reproducing propriety of H₀ to rewrite f i x as ⟪f i, k x⟫. -/
   have rkhs : ∀ (x : (Vector ℝ d)), ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 := by {
@@ -267,7 +291,7 @@ by
     
     simp_rw [fun x ↦ nn_norm_eq_norm d (k x)]
 
-    simp_rw [fun x ↦ nn_square (norm_nonneg (k x))]
+    simp_rw [fun x ↦ enn_square (norm_nonneg (k x))]
 
     have norm_sq_eq_inner : ∀ x, ⟪k x, k x⟫ = ‖k x‖ ^ 2 := by {
       intro x
@@ -302,12 +326,7 @@ by
 
   /- Rewrite (↑‖f i‖₊)² as ↑(‖f i‖₊²) to use the *finite_sum* lemma. -/
   _ = (∑ i in range (d + 1), (‖f i‖₊^2 : ℝ≥0∞)) * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
-    have coe_sq : ∀ i, (‖f i‖₊ : ℝ≥0∞)^2 = (‖f i‖₊^2 : ℝ≥0∞) := by {
-      intro i
-      rw [←square (‖f i‖₊ : ℝ≥0∞), ←square ‖f i‖₊]
-      symm
-      exact (coe_distrib ‖f i‖₊ ‖f i‖₊)
-    }
+    have coe_sq : ∀ i, (‖f i‖₊ : ℝ≥0∞)^2 = (‖f i‖₊^2 : ℝ≥0∞) := fun i ↦ nn_square
     simp_rw [coe_sq]
   }
 

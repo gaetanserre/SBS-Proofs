@@ -28,18 +28,14 @@ integration : push_forward_integration μ p_μ T T_inv
 
 noncomputable def pushforward_average (μ : Pushforward_Measure α β) [IsProbabilityMeasure μ.p_μ] [IsProbabilityMeasure μ.μ] (f : β → ℝ≥0∞) := laverage μ.p_μ f = ∫⁻ x, f (μ.T x) ∂(μ.μ)
 
-lemma measure_integral (μ : Measure α) (A : Set α) : μ A = ∫⁻ x in A, 1 ∂μ := 
-by
-sorry
-
-lemma has_density {μ ν : Measure α} [IsProbabilityMeasure μ] (h : absolutely_continuous μ ν) : ∃ (d : α → ℝ≥0∞), ∀ (s : Set α), μ s = ENNReal.ofReal (∫ x in s, ENNReal.toReal (d x) ∂ν) :=
+lemma has_density {μ ν : Measure α} [IsProbabilityMeasure μ] (h : absolutely_continuous μ ν) : ∃ (d : α → ℝ≥0∞), ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν :=
 by
 -- Radon-Nikodym
 sorry
 
 def is_density (μ : Measure α) (ν : Measure α) (d : α → ℝ≥0∞) := ∀ (s : Set α), μ s = ∫⁻ x in s, d x ∂ν
 
-lemma density_integration (μ : Measure α) (ν : Measure α) (d : α → ℝ≥0∞) (h : is_density μ ν d) : ∀ (f : α → ℝ), ∀ (s : Set α), ∫ x in s, f x ∂μ = ∫ x in s, ENNReal.toReal (d x) * (f x) ∂ν :=
+lemma density_integration (μ : Measure α) (ν : Measure α) (d : α → ℝ≥0∞) (h : is_density μ ν d) : ∀ (f : α → ℝ≥0∞), ∀ (s : Set α), ∫⁻ x in s, f x ∂μ = ∫⁻ x in s, d x * f x ∂ν :=
 by
 -- Radon-Nikodym
 sorry

@@ -8,9 +8,10 @@ import GOSVGDProofs.PushForward
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
 open scoped RealInnerProductSpace 
-open BigOperators Finset ENNReal NNReal MeasureTheory MeasureTheory.Measure
+open BigOperators Finset ENNReal NNReal MeasureTheory MeasureTheory.Measure IsROrC
 
 set_option trace.Meta.Tactic.simp.rewrite true
+set_option maxHeartbeats 4000000
 
 variable (d : ℕ)
 /-
@@ -49,7 +50,7 @@ sorry
 /--
   Linearity of inner product for function
 -/
-lemma inner_linear (f a b : Vector ℝ d → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x + b x⟫ = c * ⟪f, fun x ↦ a x⟫ + ⟪f, fun x ↦ b x⟫ := by sorry
+lemma inner_linear_left (f a b : Vector ℝ d → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x + b x⟫ = c * ⟪f, fun x ↦ a x⟫ + ⟪f, fun x ↦ b x⟫ := by sorry
 
 /-
 dk x i = y ↦ (∂x k(x, y))ⁱ
@@ -78,7 +79,7 @@ variable (is_integrable : ∀ (f : ℕ → Vector ℝ d → ℝ), ∀ i ∈ rang
 /--
 We show that ⟪f, φ⟫ = 𝔼 x ∼ μ [∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x)], where φ i x = ∫ y, (d_log_π i y) * (k y x) + (dk y i x) ∂μ
 -/
-lemma steepest_descent_trajectory (h1 : product_RKHS d H H₀) (h2 : inner_product_H d H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (df : ℕ → (Vector ℝ d) → ℝ) : ⟪f, φ⟫ = ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ :=
+lemma inner_product_eq_dKL (h1 : product_RKHS d H H₀) (h2 : inner_product_H d H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (df : ℕ → (Vector ℝ d) → ℝ) : ⟪f, φ⟫ = ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ :=
 by
   rw [h2 f hf φ hφ]
   unfold is_phi at h_is_φ
@@ -99,7 +100,7 @@ by
   simp_rw [invert_sum_integral]
 
   /- We use the linearity of inner product to develop it and get the constant d_log_π i y out and -/
-  have linear_inner : ∀y, ∀i, ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫ = d_log_π i y * ⟪f i, fun x ↦ k y x⟫ + ⟪f i, fun x ↦ dk y i x⟫ := fun y i ↦ inner_linear d (f i) (k y) (dk y i) (d_log_π i y)
+  have linear_inner : ∀y, ∀i, ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫ = d_log_π i y * ⟪f i, fun x ↦ k y x⟫ + ⟪f i, fun x ↦ dk y i x⟫ := fun y i ↦ inner_linear_left d (f i) (k y) (dk y i) (d_log_π i y)
   simp_rw [linear_inner]
 
   /- We use reproducing properties of H₀ to rewrite ⟪f i, k y⟫ as f i y and ⟪f i, dk y i⟫ as df i y -/
@@ -119,3 +120,51 @@ by
     rw [reproducing y i iin, d_reproducing]
   }
   simp_rw [sum_reproducing]
+
+lemma bound_direction (h1 : product_RKHS d H H₀) (h2 : inner_product_H d H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (hfb : ‖f‖ = 1) (df : ℕ → (Vector ℝ d) → ℝ) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ ≤ ‖φ‖ :=
+by
+  rw [←inner_product_eq_dKL d H₀ k h_kernel dk φ hφ μ d_log_π h_is_φ is_integrable h1 h2 f hf df]
+  calc ⟪f, φ⟫ ≤ ‖⟪f, φ⟫‖ := le_abs_self ⟪f, φ⟫
+  _ ≤ ‖f‖ * ‖φ‖ := norm_inner_le_norm f φ
+  _ = ‖φ‖ := by {
+    rw [hfb]
+    simp
+  }
+
+
+/--
+  Linearity of inner product for function
+-/
+lemma inner_linear_right (f a b : ℕ → Vector ℝ d → ℝ) (c : ℝ) : ⟪fun i x ↦ c * a i x + b i x, f⟫ = c * ⟪fun i x ↦ a i x, f⟫ + ⟪fun i x ↦ b i x, f⟫ := by sorry
+
+lemma inner_zero (a : ℕ → Vector ℝ d → ℝ) : ⟪0, a⟫ = 0 := by sorry
+
+/--
+We prove that x ↦ φ i x / ‖φ‖ is the steepest direction for updating the distribution, using ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ = ⟪f, φ⟫ ≤ ‖φ‖.
+-/
+lemma steepest_descent_trajectory (h1 : product_RKHS d H H₀) (h2 : inner_product_H d H) (hφs : (fun i x ↦ φ i x / ‖φ‖) ∈ H) (dφ : ℕ → (Vector ℝ d) → ℝ) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * ((fun i x ↦ φ i x / ‖φ‖) l x) + dφ l x) ∂μ = ‖φ‖ :=
+by
+  rw [←inner_product_eq_dKL d H₀ k h_kernel dk φ hφ μ d_log_π h_is_φ is_integrable h1 h2 (fun i x ↦ φ i x / ‖φ‖) hφs dφ]
+
+  have div_to_mul : ∀i, ∀x, φ i x / ‖φ‖ = φ i x * (1 / ‖φ‖) := fun i x ↦ div_eq_mul_one_div (φ i x) ‖φ‖
+  simp_rw [div_to_mul]
+
+  have linear_inner : ⟪(fun i x => φ i x * (1 / ‖φ‖)), φ⟫ = 1 / ‖φ‖ * ⟪(fun i x => φ i x), φ⟫ + ⟪(fun i x => 0), φ⟫ := by {
+    have comm : ∀i, ∀x, (1 / ‖φ‖) * (φ i x) = (φ i x) * (1 / ‖φ‖) := fun i x ↦ mul_comm (1 / ‖φ‖) (φ i x)
+    simp_rw [←comm]
+    have add_zero : ⟪fun i x => 1 / ‖φ‖ * φ i x, φ⟫ = ⟪fun i x => 1 / ‖φ‖ * φ i x + 0, φ⟫ := by {simp}
+    rw [add_zero]
+    exact inner_linear_right d φ φ (fun i x ↦ 0) (1 / ‖φ‖)
+  }
+  rw [linear_inner]
+
+  have inner_prod_zero : ⟪fun i x ↦ 0, φ⟫ = 0 := by {
+    exact inner_zero d φ
+  }
+  rw[inner_prod_zero, add_zero]
+
+  have eq_re : ⟪fun i x ↦ φ i x, φ⟫ = re ⟪φ, φ⟫ := by simp
+  rw [eq_re]
+  rw [inner_self_eq_norm_mul_norm]
+  rw [Mathlib.Tactic.RingNF.mul_assoc_rev (1 / ‖φ‖) ‖φ‖ ‖φ‖]
+  simp

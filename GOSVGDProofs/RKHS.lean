@@ -15,7 +15,7 @@ variable (d : ℕ)
 /-
   We define a RKHS of ((Vector ℝ d) → ℝ) functions.
 -/
-variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [CompleteSpace ((Vector ℝ d) → ℝ)] [MeasurableSpace (Vector ℝ d)] [PosMulStrictMono ℝ≥0∞] [MulPosStrictMono ℝ≥0∞]
+variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [MeasurableSpace (Vector ℝ d)]
 
 /- The kernel function -/
 variable (k : (Vector ℝ d) → (Vector ℝ d) → ℝ) (h_k : (∀ (x : (Vector ℝ d)), k x ∈ H₀) ∧ (∀ (x : (Vector ℝ d)), (fun y ↦ k y x) ∈ H₀))
@@ -28,7 +28,7 @@ def is_kernel := ∀ (f : (Vector ℝ d) → ℝ), f ∈ H₀ → ∀ (x : (Vect
 variable (h_kernel : is_kernel d H₀ k)
 
 /- We define the product RKHS as a space of function on (ℕ → (Vector ℝ d) → ℝ). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)] [CompleteSpace (ℕ → (Vector ℝ d) → ℝ)]
+variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
 
 def product_RKHS (H : Set (ℕ → (Vector ℝ d) → ℝ)) (H₀ : Set ((Vector ℝ d) → ℝ)) := ∀ f ∈ H, ∀ (i : ℕ), i ∈ range (d + 1) → f i ∈ H₀
 
@@ -39,10 +39,6 @@ variable [NormedAddCommGroup (ℕ → ℝ)] [InnerProductSpace ℝ (ℕ → ℝ)
   The simple vector norm
 -/
 def norm_H (H : Set (ℕ → (Vector ℝ d) → ℝ)) := ∀ f ∈ H, ∀x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞) = sqrt (∑ i in range (d + 1), ‖f i x‖₊^2)
-
-example (a : ℝ≥0) : (sqrt a)^2 = a :=
-by
-exact sq_sqrt a
 
 /- Intermediate lemmas -/
 
@@ -136,12 +132,6 @@ by
     have max := exist_max_image_finset (range (d+1)) (non_empty d) (fun i ↦ f i)
     rcases max with ⟨j, jin, max⟩
     use j
-    constructor
-    {exact jin}
-    {
-      intros i iin
-      exact max i iin
-    }
   }
 
   /- We show that the majorant of the biggest element majors every element of the sum  -/

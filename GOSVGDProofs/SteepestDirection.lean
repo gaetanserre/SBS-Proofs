@@ -17,7 +17,7 @@ variable (d : ℕ)
 /-
   We define a RKHS of ((Vector ℝ d) → ℝ) functions.
 -/
-variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [CompleteSpace ((Vector ℝ d) → ℝ)] [MeasurableSpace (Vector ℝ d)] [PosMulStrictMono ℝ≥0∞] [MulPosStrictMono ℝ≥0∞]
+variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [MeasurableSpace (Vector ℝ d)]
 
 /- The kernel function -/
 variable (k : (Vector ℝ d) → (Vector ℝ d) → ℝ) (h_k : (∀ (x : (Vector ℝ d)), k x ∈ H₀) ∧ (∀ (x : (Vector ℝ d)), (fun y ↦ k y x) ∈ H₀))
@@ -28,15 +28,10 @@ variable (k : (Vector ℝ d) → (Vector ℝ d) → ℝ) (h_k : (∀ (x : (Vecto
 variable (h_kernel : is_kernel d H₀ k)
 
 /- We define the product RKHS as a space of function on (ℕ → (Vector ℝ d) → ℝ). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)] [CompleteSpace (ℕ → (Vector ℝ d) → ℝ)]
+variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
 
 
 variable [NormedAddCommGroup (Vector ℝ d)] [InnerProductSpace ℝ (Vector ℝ d)] [CompleteSpace (Vector ℝ d)]
-example (a b d : (Vector ℝ d)) (c : ℝ) : ⟪c • a, b + d⟫ = c * (⟪a, b⟫ + ⟪a, d⟫) :=
-by
-  have key : ⟪c • a, b + d⟫ = c * ⟪a, b + d⟫ := real_inner_smul_left a (b + d) c
-  have key2 : ⟪a, b + d⟫ = ⟪a, b⟫ + ⟪a, d⟫ := inner_add_right a b d
-  rw [key, key2]
 
 /- Steepest direction -/
 
@@ -55,9 +50,13 @@ lemma inner_linear_left (f a b : Vector ℝ d → ℝ) (c : ℝ) : ⟪f, fun x �
 /-
 dk x i = y ↦ (∂x k(x, y))ⁱ
 
-f : (Vector ℝ d) → ℝ
+f  : (Vector ℝ d) → ℝ
 df : ℕ → (Vector ℝ d) → ℝ 
-      x ↦ (∂xⁱ f(x))
+     i ⨯ x ↦ (∂xⁱ f(x))
+
+f  : ℕ → (Vector ℝ d) → ℝ
+df : ℕ → (Vector ℝ d) → ℝ 
+      i ⨯ x ↦ (∂xⁱ f(x)ⁱ )
 -/
 variable (dk : (Vector ℝ d) → ℕ → (Vector ℝ d) → ℝ) (hdk : ∀ x, ∀ i, dk x i ∈ H₀)
 
@@ -67,7 +66,9 @@ by
   sorry
 
 
-variable (φ : ℕ → (Vector ℝ d) → ℝ) (hφ : φ ∈ H) (μ π ν : Measure (Vector ℝ d)) (dμ dπ : (Vector ℝ d) → ℝ≥0∞) (h_dpμ : is_density μ ν dμ) (h_dpπ : is_density π ν dπ) (d_log_π : ℕ → (Vector ℝ d) → ℝ) [MeasureSpace (Vector ℝ d)] [MeasureSpace ℝ]
+variable (μ π ν : Measure (Vector ℝ d)) (dμ dπ : (Vector ℝ d) → ℝ≥0∞) (h_dpμ : is_density μ ν dμ) (h_dpπ : is_density π ν dπ) (d_log_π : ℕ → (Vector ℝ d) → ℝ)
+
+variable (φ : ℕ → (Vector ℝ d) → ℝ) (hφ : φ ∈ H) (dφ : ℕ → (Vector ℝ d) → ℝ) 
 
 def is_phi (φ : ℕ → (Vector ℝ d) → ℝ) := ∀ i, φ i = (fun x ↦ ∫ y, (d_log_π i y) * (k y x) + (dk y i x) ∂μ)
 
@@ -123,7 +124,7 @@ by
 
 lemma bound_direction (h1 : product_RKHS d H H₀) (h2 : inner_product_H d H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (hfb : ‖f‖ = 1) (df : ℕ → (Vector ℝ d) → ℝ) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ ≤ ‖φ‖ :=
 by
-  rw [←inner_product_eq_dKL d H₀ k h_kernel dk φ hφ μ d_log_π h_is_φ is_integrable h1 h2 f hf df]
+  rw [←inner_product_eq_dKL d H₀ k h_kernel dk μ d_log_π φ hφ h_is_φ is_integrable h1 h2 f hf df]
   calc ⟪f, φ⟫ ≤ ‖⟪f, φ⟫‖ := le_abs_self ⟪f, φ⟫
   _ ≤ ‖f‖ * ‖φ‖ := norm_inner_le_norm f φ
   _ = ‖φ‖ := by {
@@ -142,9 +143,9 @@ lemma inner_zero (a : ℕ → Vector ℝ d → ℝ) : ⟪0, a⟫ = 0 := by sorry
 /--
 We prove that x ↦ φ i x / ‖φ‖ is the steepest direction for updating the distribution, using ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ = ⟪f, φ⟫ ≤ ‖φ‖.
 -/
-lemma steepest_descent_trajectory (h1 : product_RKHS d H H₀) (h2 : inner_product_H d H) (hφs : (fun i x ↦ φ i x / ‖φ‖) ∈ H) (dφ : ℕ → (Vector ℝ d) → ℝ) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * ((fun i x ↦ φ i x / ‖φ‖) l x) + dφ l x) ∂μ = ‖φ‖ :=
+lemma steepest_descent_trajectory (h1 : product_RKHS d H H₀) (h2 : inner_product_H d H) (hφs : (fun i x ↦ φ i x / ‖φ‖) ∈ H) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * ((fun i x ↦ φ i x / ‖φ‖) l x) + dφ l x) ∂μ = ‖φ‖ :=
 by
-  rw [←inner_product_eq_dKL d H₀ k h_kernel dk φ hφ μ d_log_π h_is_φ is_integrable h1 h2 (fun i x ↦ φ i x / ‖φ‖) hφs dφ]
+  rw [←inner_product_eq_dKL d H₀ k h_kernel dk μ d_log_π φ hφ h_is_φ is_integrable h1 h2 (fun i x ↦ φ i x / ‖φ‖) hφs dφ]
 
   have div_to_mul : ∀i, ∀x, φ i x / ‖φ‖ = φ i x * (1 / ‖φ‖) := fun i x ↦ div_eq_mul_one_div (φ i x) ‖φ‖
   simp_rw [div_to_mul]

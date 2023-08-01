@@ -48,12 +48,17 @@ def is_kernel := ∀ (f : (Vector ℝ d) → ℝ), f ∈ H₀ → ∀ (x : (Vect
 
 /--
   Positive definite kernel
+
+  For simplicity in the Lean formalism, we define vector-valued function as follows:
+  Let f be a function on ℝᵈ to ℝᵈ. The same function in our Lean formalism writes:
+  f' : ℕ → Vector ℝ d → ℝ
+       i ↦ x ↦ f(x)ⁱ
 -/
 def positive_definite_kernel := ∀ (f : ℕ → Vector ℝ d → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
 
 variable (h_kernel : is_kernel H₀ k) (h_kernel_positive : positive_definite_kernel μ k)
 
-/- We define the product RKHS as a space of function on (ℕ → (Vector ℝ d) → ℝ). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
+/- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
 variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
 
 def product_RKHS (H : Set (ℕ → (Vector ℝ d) → ℝ)) (H₀ : Set ((Vector ℝ d) → ℝ)) := ∀ f ∈ H, ∀ (i : ℕ), i ∈ range (d + 1) → f i ∈ H₀
@@ -507,7 +512,6 @@ by
   rw [Mathlib.Tactic.RingNF.mul_assoc_rev (1 / ‖ϕ‖) ‖ϕ‖ ‖ϕ‖]
   simp
 
-
 /-===============================KERNEL STEIN DISCREPANCY===============================-/
 /-
 Here, we prove that KSD(μ | π) is a valid discrepancy measure, i.e. KSD(μ | π) = 0 ↔ μ = π.
@@ -572,7 +576,7 @@ variable (d_log_μ_π : ℕ → (Vector ℝ d) → ℝ) (hd_log_μ_π : (∀x, �
 /-
 dπ' : i ↦ c ↦ ∂xⁱ π(x)
 -/
-variable (dπ' : ℕ → (Vector ℝ d) → ℝ) (d_log_π : ℕ → (Vector ℝ d) → ℝ)
+variable (dπ' : ℕ → (Vector ℝ d) → ℝ)
 
 /-
 Simple derivative rule: ∂xⁱ log (π(x)) * π(x) = ∂xⁱ π(x).
@@ -598,7 +602,7 @@ by
   {
     intro h
 
-    rw [ksd μ k ϕ dϕ d_log_μ_π d_log_π]
+    rw [ksd μ k d_log_π ϕ dϕ d_log_μ_π]
 
     have split_sum : ∀x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) = (∑ l in range (d + 1), d_log_π l x * ϕ l x) + (∑ l in range (d + 1), dϕ l x) := fun x ↦ sum_add_distrib
     simp_rw [split_sum]
@@ -678,11 +682,12 @@ by
         simp_rw [dμ_propor] at univ_eq_one_μ
         simp_rw [mul_one] at univ_eq_one_μ
 
-        have t : ∫⁻ x in Set.univ, ENNReal.ofReal (Real.exp c) * dπ x ∂ν =  ENNReal.ofReal (Real.exp c) * ∫⁻ x in Set.univ, dπ x ∂ν := lintegral_const_mul (ENNReal.ofReal (Real.exp c)) (mdπ)
-
         rw [density_lintegration π ν dπ hπ (fun x ↦ 1) Set.univ] at univ_eq_one_π
         simp_rw [mul_one] at univ_eq_one_π
-        rw [t, univ_eq_one_π, mul_one] at univ_eq_one_μ
+
+        have const_out_int : ∫⁻ x in Set.univ, ENNReal.ofReal (Real.exp c) * dπ x ∂ν =  ENNReal.ofReal (Real.exp c) * ∫⁻ x in Set.univ, dπ x ∂ν := lintegral_const_mul (ENNReal.ofReal (Real.exp c)) (mdπ)
+
+        rw [const_out_int, univ_eq_one_π, mul_one] at univ_eq_one_μ
         exfalso
         exact hc univ_eq_one_μ
       }

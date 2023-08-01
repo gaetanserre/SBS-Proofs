@@ -117,12 +117,7 @@ by
       unfold Set.image
       use (f a)
       constructor
-      {
-        use a
-        constructor
-        { exact ainA }
-        { exact Eq.refl (f a) }
-      }
+      {use a}
       exact h.right a
     }
 
@@ -146,12 +141,7 @@ by
       unfold Set.image
       use (f_inv b)
       constructor
-      {
-        use b
-        constructor
-        { exact binB }
-        { exact Eq.refl (f_inv b) }
-      }
+      {use b}
       exact h.left b
     }
 

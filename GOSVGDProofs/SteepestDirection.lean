@@ -596,32 +596,38 @@ variable (hπ' : ∀x, ∀i, ENNReal.toReal (dπ x) * d_log_π i x = dπ' i x)
 -/
 def SteinClass (f : ℕ → (Vector ℝ d) → ℝ) (dμ : (Vector ℝ d) → ℝ≥0∞) := ∀ x, tends_to_infty (fun (x : Vector ℝ d) ↦ ‖x‖) → ∀i, ENNReal.toReal (dμ x) * f i x = 0
 
+
+/-
+  Kernel Stein Discrepancy
+-/
+variable (KSD : Measure (Vector ℝ d) → Measure (Vector ℝ d) → ℝ)
+
 /--
 KSD(μ | π) = ⟪∇log μ/π, Pμ ∇log μ/π⟫_L²(μ). We assume here that KSD is also equal to ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ.
 -/
-lemma ksd : ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ = ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ := by sorry
+def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ) ∧ (KSD μ π = ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ)
 
 /-
-KSD(μ | π) is originally defined as ‖Sμ ∇log μ/π‖²_H, it is therefore non-negative.
+  KSD(μ | π) is originally defined as ‖Sμ ∇log μ/π‖²_H, it is therefore non-negative.
 -/
-variable (ksd_nn : 0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ)
+variable (ksd_nn : 0 ≤ KSD μ π)
 
 /-
-ϕ is in the Stein class of π
+  ϕ is in the Stein class of π
 -/
 variable (hstein : SteinClass ϕ dπ)
 
 /--
-We show that, if ϕ is in the Stein class of π, KSD is a valid discrepancy measure i.e. μ = π ↔ KSD(μ | π) = 0.
+  We show that, if ϕ is in the Stein class of π, KSD is a valid discrepancy measure i.e. μ = π ↔ KSD(μ | π) = 0.
 -/
-lemma KSD_is_valid_discrepancy : μ = π ↔ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ = 0 :=
+lemma KSD_is_valid_discrepancy (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_μ_π KSD) : μ = π ↔ KSD μ π = 0 :=
 by
   constructor
   {
-    /- μ = π → KSD(μ | π) = 0. -/
+    /- μ = π ↦ KSD(μ | π) = 0. -/
     intro h
 
-    rw [ksd μ k d_log_π ϕ dϕ d_log_μ_π]
+    rw [hksd.right]
 
     -- /- ∑ i, f i + g i = ∑ i, f i + ∑ i, g i. -/
     have split_sum : ∀x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) = (∑ l in range (d + 1), d_log_π l x * ϕ l x) + (∑ l in range (d + 1), dϕ l x) := fun x ↦ sum_add_distrib
@@ -665,8 +671,9 @@ by
     simp
   }
   {
-    /- KSD(μ | π) = 0 → μ = π. -/
+    /- KSD(μ | π) = 0 ↦ μ = π. -/
     intro h
+    rw [hksd.left] at h
 
     /- We use the fact that the kernel is positive-definite that implies that d_log_μ_π = 0. -/
     have d_log_μ_π_eq_0 := (h_kernel_positive d_log_μ_π).right.mp h
@@ -740,7 +747,7 @@ noncomputable def KL := ENNReal.ofReal (∫ x in Set.univ, log ((dμ x) / (dπ x
 
 variable (hkl_eq : μ = π → KL μ dμ dπ = 0) (hkl_diff : μ ≠ π → 0 < KL μ dμ dπ)
 
-lemma μ_neq_π_imp_ksd_nn : μ ≠ π → 0 < ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ :=
+lemma μ_neq_π_imp_ksd_nn (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_μ_π KSD) : μ ≠ π → 0 < KSD μ π :=
 by
   intro h
   by_contra h2
@@ -749,16 +756,16 @@ by
   cases split_le with
     |inl lt => { linarith }
     |inr eq => {
-      have μ_eq_π := (KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' hstein).mpr eq
+      have μ_eq_π := (KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' KSD hstein hksd).mpr eq
 
       exact h μ_eq_π
     }
 
-theorem Stein_log_Sobolev : ∃ θ > 0, KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ) :=
+theorem Stein_log_Sobolev (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_μ_π KSD) : ∃ θ > 0, KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (KSD μ π) :=
 by
 by_cases μ = π
 {
-  rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' hstein).mp h]
+  rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' KSD hstein hksd).mp h]
 
   rw [hkl_eq h]
 
@@ -769,18 +776,15 @@ by_cases μ = π
 }
 {
   push_neg at h
-  use (ENNReal.ofReal (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ)) / (2 * KL μ dμ dπ)
+  use ENNReal.ofReal (KSD μ π) / (2 * KL μ dμ dπ)
   constructor
   {
-    
-    simp
 
-    have set_univ : ∫ (x : Vector ℝ d), ∫ (x' : Vector ℝ d), ∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x' ∂μ ∂μ = ∫ x in Set.univ, ∫ x' in Set.univ, ∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x' ∂μ ∂μ := by simp
-    rw [set_univ]
+    simp
 
     constructor
     {
-      exact μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' ksd_nn hstein h
+      exact μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' KSD ksd_nn hstein hksd h
     }
     {
       push_neg
@@ -826,8 +830,8 @@ by_cases μ = π
 
     have KL_neq_0 : KL μ dμ dπ ≠ 0 := Iff.mp zero_lt_iff (hkl_diff h)
 
-    have enn_KSD_neq_0 : ENNReal.ofReal (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ) ≠ 0 := by {
-      have KSD_ge_0 := μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' ksd_nn hstein h
+    have enn_KSD_neq_0 : ENNReal.ofReal (KSD μ π) ≠ 0 := by {
+      have KSD_ge_0 := μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' KSD ksd_nn hstein hksd h
 
       have enn_KSD_ge_0 := Iff.mpr ofReal_pos KSD_ge_0
 
@@ -835,6 +839,117 @@ by_cases μ = π
 
     }
 
-    exact calculation (KL μ dμ dπ) (ENNReal.ofReal (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ)) (KL_neq_0) (ofReal_ne_top) (enn_KSD_neq_0) (ofReal_ne_top)
+    exact calculation (KL μ dμ dπ) (ENNReal.ofReal (KSD μ π)) (KL_neq_0) (ofReal_ne_top) (enn_KSD_neq_0) (ofReal_ne_top)
   }
 }
+
+/- variable (μ_t : ℝ≥0 → Measure (Vector ℝ d)) (dμ_t : ℝ≥0 → (Vector ℝ d → ℝ≥0∞)) (hμ_t : ∀ t, is_density (μ_t t) ν (dμ_t t)) (h_prob : ∀ t, IsProbabilityMeasure (μ_t t))
+variable (hdμ_t :∀t, ∀ (x : Vector ℝ d), dμ_t t x ≠ 0 ∧ dμ_t t x ≠ ⊤)
+
+/-
+  d_KL_t : t ↦ ∂t KL(μ_t t || π)
+-/
+variable (d_KL_t : ℝ≥0 → ℝ)
+variable (d_log_μ_t_π : ℝ≥0 → ℕ → (Vector ℝ d) → ℝ)
+variable (hd_log_μ_t_π : ∀t, (∀x, ∀i, d_log_μ_t_π t i x = 0) → (∃ c, ∀ x, log (dμ_t t x / dπ x) = c))
+variable (hkl_eq_t : ∀t, μ_t t = π → KL (μ_t t) (dμ_t t) dπ = 0) (hkl_diff_t : ∀t, μ_t t ≠ π → 0 < KL (μ_t t) (dμ_t t) dπ)
+
+noncomputable def exp (a : ℝ) := ENNReal.ofReal (Real.exp a)
+
+variable [MeasureSpace ℝ≥0] [NormedAddCommGroup ℝ≥0∞] [NormedSpace ℝ ℝ≥0∞] [LocallyFiniteOrder ℝ≥0]
+
+/-
+  Our definition of Grownall's lemma
+-/
+
+variable (h_kernel_positive_t : ∀t, positive_definite_kernel (μ_t t) k)
+variable (is_integrable_H₀_t : ∀t, ∀ (f : Vector ℝ d → ℝ), Integrable f (μ_t t))
+variable (ksd_nn_t : ∀t, 0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_t_π t i x * k x x' * d_log_μ_t_π t i x') ∂(μ_t t)) ∂(μ_t t))
+
+variable (gronwall : ∀ (f : ℝ≥0 → ℝ), ∀ t, d_KL_t t ≤ f t * ENNReal.toReal (KL (μ_t t) (dμ_t t) dπ) → KL (μ_t t) (dμ_t t) dπ ≤ KL (μ_t 0) (dμ_t 0) dπ * exp (∫ s in Icc 0 t, f s))
+
+theorem exponential_convergence_of_SVGD : ∃ (Λ : ℝ≥0 → ℝ), ∀ (t : ℝ≥0), (0 < Λ t) ∧ (KL (μ_t t) (dμ_t t) dπ ≤ KL (μ_t 0) (dμ_t 0) dπ * exp (-2 * Λ t)) :=
+by
+  have stein_log_sobolev := fun t ↦ Stein_log_Sobolev (μ_t t) π ν (dμ_t t) dπ (hμ_t t) hπ mdπ (hdμ_t t) hdπ k (h_kernel_positive_t t) d_log_π ϕ dϕ (is_integrable_H₀_t t) (d_log_μ_t_π t) (hd_log_μ_t_π t) dπ' hπ' (ksd_nn_t t) hstein (hkl_eq_t t) (hkl_diff_t t)
+  choose θ stein_log_sobolev using stein_log_sobolev
+  
+  use (fun t ↦ ENNReal.toReal (∫ s in Icc 0 t, θ s))
+  intro t
+  constructor
+  {sorry}
+  {
+    have gron := gronwall (fun t ↦ -2 * ENNReal.toReal (θ t))
+    specialize stein_log_sobolev t
+    rcases stein_log_sobolev with ⟨_h, stein_log_sobolev⟩
+
+    have calculation : ∀ (a b c : ℝ≥0∞), b ≠ ∞ → c ≠ ∞ → a ≤ (1 / (2 * c)) * b → - ENNReal.toReal b ≤ -2 * ENNReal.toReal c * ENNReal.toReal a := by {
+      intros a b c htb htc h
+      have t : 1 / (2 * c) * b = (2 * c)⁻¹ * b := by simp
+      rw [t] at h
+
+      have finite : (2 * c) ≠ ∞ := ENNReal.mul_ne_top (by simp) (htc)
+      have n_zero : (2 * c) ≠ 0 := mul_ne_zero (by simp) (h0c)
+      have tt : a * (2 * c) ≤ (2 * c)⁻¹ * b * (2 * c) := by {
+        exact (ENNReal.mul_le_mul_right n_zero finite).mpr h
+      }
+
+      have ttt : (2 * c)⁻¹ * b * (2 * c) = b * ((2 * c)⁻¹ * (2 * c)) := by ring
+      have t : (2 * c)⁻¹ * (2 * c) = 1 := by exact ENNReal.inv_mul_cancel n_zero finite
+      rw [ttt, t, mul_one] at tt
+      have t : ENNReal.toReal (a * (2 * c)) ≤ ENNReal.toReal b := by {
+        exact toReal_mono htb tt
+      }
+      have tt : ENNReal.toReal (a * (2 * c)) = ENNReal.toReal a * ENNReal.toReal (2 * c) := by simp
+      rw [tt] at t
+      have tt : ENNReal.toReal (2 * c) = ENNReal.toReal 2 * ENNReal.toReal c := by simp
+      rw [tt] at t
+      have tt : ENNReal.toReal a * (ENNReal.toReal 2 * ENNReal.toReal c) = ENNReal.toReal a * ENNReal.toReal 2 * ENNReal.toReal c := by ring
+      rw [tt] at t
+      have tt := neg_le_neg t
+      have t : -(ENNReal.toReal a * ENNReal.toReal 2 * ENNReal.toReal c) = - ENNReal.toReal 2 * ENNReal.toReal c * ENNReal.toReal a := by ring
+      rw [t] at tt
+      exact tt
+    }
+
+    have tt := calculation (KL (μ_t t) (dμ_t t) dπ) (ENNReal.ofReal (∫ x in Set.univ, ∫ x' in Set.univ, ∑ i in range (d + 1), d_log_μ_t_π t i x * k x x' * d_log_μ_t_π t i x' ∂μ_t t ∂μ_t t)) (θ t) (by sorry) (by sorry) stein_log_sobolev
+
+  }
+
+example (a b c : ℝ≥0∞) (htb : b ≠ ∞) (h0c : c ≠ 0) (htc : c ≠ ∞) : a ≤ (1 / (2 * c)) * b → - ENNReal.toReal b ≤ -2 * ENNReal.toReal c * ENNReal.toReal a :=
+by
+  intro h
+  have t : 1 / (2 * c) * b = (2 * c)⁻¹ * b := by simp
+  rw [t] at h
+
+  have finite : (2 * c) ≠ ∞ := ENNReal.mul_ne_top (by simp) (htc)
+  have n_zero : (2 * c) ≠ 0 := mul_ne_zero (by simp) (h0c)
+  have tt : a * (2 * c) ≤ (2 * c)⁻¹ * b * (2 * c) := by {
+    exact (ENNReal.mul_le_mul_right n_zero finite).mpr h
+  }
+
+  have ttt : (2 * c)⁻¹ * b * (2 * c) = b * ((2 * c)⁻¹ * (2 * c)) := by ring
+  have t : (2 * c)⁻¹ * (2 * c) = 1 := by exact ENNReal.inv_mul_cancel n_zero finite
+  rw [ttt, t, mul_one] at tt
+  have t : ENNReal.toReal (a * (2 * c)) ≤ ENNReal.toReal b := by {
+    exact toReal_mono htb tt
+  }
+  have tt : ENNReal.toReal (a * (2 * c)) = ENNReal.toReal a * ENNReal.toReal (2 * c) := by simp
+  rw [tt] at t
+  have tt : ENNReal.toReal (2 * c) = ENNReal.toReal 2 * ENNReal.toReal c := by simp
+  rw [tt] at t
+  have tt : ENNReal.toReal a * (ENNReal.toReal 2 * ENNReal.toReal c) = ENNReal.toReal a * ENNReal.toReal 2 * ENNReal.toReal c := by ring
+  rw [tt] at t
+  have tt := neg_le_neg t
+  have t : -(ENNReal.toReal a * ENNReal.toReal 2 * ENNReal.toReal c) = - ENNReal.toReal 2 * ENNReal.toReal c * ENNReal.toReal a := by ring
+  rw [t] at tt
+  exact tt
+
+
+example (a b : ℝ≥0∞) (ha : a ≠ ∞) (hb : b ≠ ∞) : a ≤ b → ENNReal.toReal a ≤ ENNReal.toReal b := by {
+  exact fun a_1 => toReal_mono hb a_1
+}
+
+example (a b : ℝ) : a ≤ b → -b ≤ -a := by {
+  exact fun a_1 => neg_le_neg a_1
+  intro h
+} -/

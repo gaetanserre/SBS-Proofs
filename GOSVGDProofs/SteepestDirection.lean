@@ -601,10 +601,20 @@ KSD(μ | π) = ⟪∇log μ/π, Pμ ∇log μ/π⟫_L²(μ). We assume here that
 -/
 lemma ksd : ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ = ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ := by sorry
 
+/-
+KSD(μ | π) is originally defined as ‖Sμ ∇log μ/π‖²_H, it is therefore non-negative.
+-/
+variable (ksd_nn : 0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ)
+
+/-
+ϕ is in the Stein class of π
+-/
+variable (hstein : SteinClass ϕ dπ)
+
 /--
 We show that, if ϕ is in the Stein class of π, KSD is a valid discrepancy measure i.e. μ = π ↔ KSD(μ | π) = 0.
 -/
-lemma KSD_is_valid_discrepancy (hstein : SteinClass ϕ dπ) : μ = π ↔ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ = 0 :=
+lemma KSD_is_valid_discrepancy : μ = π ↔ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ = 0 :=
 by
   constructor
   {
@@ -722,3 +732,109 @@ by
     rw [density_lintegration μ ν dμ hμ, density_lintegration π ν dπ hπ]
     simp_rw [mul_one, dμ_propor]
   }
+
+
+
+
+noncomputable def KL := ENNReal.ofReal (∫ x in Set.univ, log ((dμ x) / (dπ x)) ∂μ)
+
+variable (hkl_eq : μ = π → KL μ dμ dπ = 0) (hkl_diff : μ ≠ π → 0 < KL μ dμ dπ)
+
+lemma μ_neq_π_imp_ksd_nn : μ ≠ π → 0 < ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ :=
+by
+  intro h
+  by_contra h2
+  push_neg at h2
+  have split_le := LE.le.lt_or_eq h2
+  cases split_le with
+    |inl lt => { linarith }
+    |inr eq => {
+      have μ_eq_π := (KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' hstein).mpr eq
+
+      exact h μ_eq_π
+    }
+
+theorem Stein_log_Sobolev : ∃ θ > 0, KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ) :=
+by
+by_cases μ = π
+{
+  rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' hstein).mp h]
+
+  rw [hkl_eq h]
+
+  use 1
+  constructor
+  {simp}
+  simp
+}
+{
+  push_neg at h
+  use (ENNReal.ofReal (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ)) / (2 * KL μ dμ dπ)
+  constructor
+  {
+    
+    simp
+
+    have set_univ : ∫ (x : Vector ℝ d), ∫ (x' : Vector ℝ d), ∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x' ∂μ ∂μ = ∫ x in Set.univ, ∫ x' in Set.univ, ∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x' ∂μ ∂μ := by simp
+    rw [set_univ]
+
+    constructor
+    {
+      exact μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' ksd_nn hstein h
+    }
+    {
+      push_neg
+      exact mul_ne_top (by simp) (ofReal_ne_top)
+    }
+  }
+
+  {
+    have calculation : ∀ (a b : ℝ≥0∞), a ≠ 0 → a ≠ ∞ → b ≠ 0 → b ≠ ∞ → a ≤ (1 / (2 * (b / (2 * a)))) * b := by {
+      intros a b h0a hta h0b htb
+
+      have simpl : 1 / (2 * (b / (2 * a))) = (2 * (b / (2 * a)))⁻¹ := by simp
+      rw [simpl]
+
+      have eq : (2 * (b / (2 * a)))⁻¹ * b = a := by {
+        calc (2 * (b / (2 * a)))⁻¹ * b = (2 * (b / (2 * a)))⁻¹ * b := by ring
+            _ = (2 * (b * (2 * a)⁻¹))⁻¹ * b := by exact rfl
+            _ = (2 * b * (2 * a)⁻¹)⁻¹ * b := by ring
+            _ = (2 * 2⁻¹ * a⁻¹ * b)⁻¹ * b := by {
+              rw [ENNReal.mul_inv (by simp) (Or.inr h0a)]
+              ring
+            }
+
+            _ = (a⁻¹ * b)⁻¹ * b := by {
+              rw [ENNReal.mul_inv_cancel (by simp) (by simp), one_mul]
+            }
+
+            _ = a * b⁻¹ * b := by {
+              have t : a⁻¹ ≠ 0 := ENNReal.inv_ne_zero.mpr hta
+              rw [ENNReal.mul_inv (Or.inl t) (Or.inr h0b)]
+              simp
+            }
+
+            _ = a * (b⁻¹ * b) := by ring
+
+            _ = a := by {
+              rw [ENNReal.inv_mul_cancel (h0b) (htb), mul_one]
+            }
+      }
+
+      rw [eq]
+    }
+
+    have KL_neq_0 : KL μ dμ dπ ≠ 0 := Iff.mp zero_lt_iff (hkl_diff h)
+
+    have enn_KSD_neq_0 : ENNReal.ofReal (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ) ≠ 0 := by {
+      have KSD_ge_0 := μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' ksd_nn hstein h
+
+      have enn_KSD_ge_0 := Iff.mpr ofReal_pos KSD_ge_0
+
+      exact Iff.mp zero_lt_iff enn_KSD_ge_0
+
+    }
+
+    exact calculation (KL μ dμ dπ) (ENNReal.ofReal (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ)) (KL_neq_0) (ofReal_ne_top) (enn_KSD_neq_0) (ofReal_ne_top)
+  }
+}

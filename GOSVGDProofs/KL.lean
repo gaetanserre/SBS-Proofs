@@ -104,7 +104,7 @@ variable (d_p_π : α → ℝ≥0∞) (h_d_p_π : is_push_forward_density π_t h
 
 noncomputable def log (a : ℝ≥0∞) := Real.log (ENNReal.toReal a)
 
-noncomputable def KL (μ : Measure α) (d_μ : α → ℝ≥0∞) (d_π : α → ℝ≥0∞) := ∫ x in Set.univ, log ((d_μ x) / (d_π x)) ∂μ
+noncomputable def KL (μ : Measure α) (d_μ : α → ℝ≥0∞) (d_π : α → ℝ≥0∞) := ENNReal.ofReal (∫ x in Set.univ, log ((d_μ x) / (d_π x)) ∂μ)
 
 variable (univ_unique_diff : UniqueDiffOn ℝ (Set.univ : Set α))
 

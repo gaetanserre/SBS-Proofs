@@ -55,7 +55,7 @@ variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ →
 
 /-===============================KERNEL STEIN DISCREPANCY===============================-/
 /-
-Here, we prove that KSD(μ | π) is a valid discrepancy measure, i.e. KSD(μ | π) = 0 ↔ μ = π.
+Here, we prove that KSD(μ | π) is a valid discrepancy measure, that the Stein log Sobolev inequality holds, and the exponential convergence of SVGD.
 -/
 
 /- dk : x ↦ i ↦ y ↦ ∂xⁱ k(x, y) -/

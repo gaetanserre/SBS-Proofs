@@ -30,7 +30,7 @@ by
   unfold is_density
   intro A
 
-  /- We show that f_inv is injective on A using the fact that f is bijective. -/
+  -- We show that f_inv is injective on A using the fact that f is bijective.
   have T_invisInjonA : Set.InjOn μ_t.T_inv A := by
   {
     apply is_inj_imp_set_inj
@@ -38,11 +38,11 @@ by
     exact key.left
   }
 
-  /- We use pushforward measure and density definitions. -/
+  -- We use pushforward measure and density definitions.
   rw [μ_t.measure_app]
   rw [h_density_μ (μ_t.T_inv '' A)]
 
-  /- Change of variable in integration -/
+  -- Change of variable in integration.
   rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul ν (h1 A) (hT' A) T_invisInjonA d_μ]
   unfold push_forward_density
   simp
@@ -57,7 +57,7 @@ lemma det_of_derivative_of_composition_of_reciprocal_eq_1 (f : α → β) (f_inv
 by
   intros a ainS
 
-  /- We prove that ∂ₓ (f⁻¹ ∘ f) = 1 using that f⁻¹ ∘ f = id, ∂ₓ id = 1 and that the derivative is unique. -/
+  -- We prove that ∂ₓ (f⁻¹ ∘ f) = 1 using that f⁻¹ ∘ f = id, ∂ₓ id = 1 and that the derivative is unique.
   have key : T' a = ContinuousLinearMap.id ℝ α := by
   {
     have k1 : HasFDerivWithinAt id (ContinuousLinearMap.id ℝ α) s a := by
@@ -111,11 +111,11 @@ variable (univ_unique_diff : UniqueDiffOn ℝ (Set.univ : Set α))
 theorem KL_of_μ_t_π_eq_KL_of_π_t_μ (Tμ_comp' : α → α →L[ℝ] α) (Tπ_comp' : α → α →L[ℝ] α) (h1 : ∀ x ∈ Set.univ, HasFDerivWithinAt (μ_t.T_inv ∘ μ_t.T) (Tμ_comp' x) Set.univ x) (h2 : ∀ x ∈ Set.univ, HasFDerivWithinAt (π_t.T_inv ∘ π_t.T) (Tπ_comp' x) Set.univ x) (h3 : push_forward_density_composition μ_t T' d_μ Set.univ μ_t.T Tμ_comp' h1) (h4 : push_forward_density_composition π_t Tπ' d_π Set.univ π_t.T Tπ_comp' h2) : KL μ_t.p_μ (push_forward_density μ_t T' d_μ) d_π = KL μ_t.μ d_μ (push_forward_density π_t Tπ' d_π) :=
 by
 
-  /- We use the composition propriety of the pushforward measure -/
+  -- We use the composition propriety of the pushforward measure
   unfold KL
   rw [μ_t.integration]
 
-  /- We unfold the composition and use the *push_forward_density_equality* lemma  -/
+  -- We unfold the composition and use the *push_forward_density_equality* lemma
   have k_μ : (fun x ↦ log (push_forward_density μ_t T' d_μ x / d_π x)) ∘ μ_t.T = (fun x ↦ log ((d_μ x) / ((d_π ∘ μ_t.T) x)) ):= by
   {
     have k : ∀ (a : α), (push_forward_density μ_t T' d_μ  ∘ μ_t.T) a = d_μ a := by 
@@ -133,7 +133,7 @@ by
   rw [k_μ]
   rw [image_of_univ_is_univ μ_t.T μ_t.T_inv μ_t.is_bij μ_t.is_reci]
 
-  /- We show that dπ ∘ T is equal to the density of T⁻¹#π -/
+  -- We show that dπ ∘ T is equal to the density of T⁻¹#π
   have k_π : push_forward_density π_t Tπ' d_π = (d_π ∘ μ_t.T) := by 
   {
     have key := push_forward_density_equality π_t Tπ' d_π Set.univ univ_unique_diff Tπ_comp' h2 h4

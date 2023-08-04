@@ -77,11 +77,11 @@ theorem H_subset_of_L2 (μ : Measure (Vector ℝ d)) (h1 : product_RKHS H H₀) 
 by
   intros f finH
 
-  /- We rewrite the absolute value of a norm as positive norm. -/
+  -- We rewrite the absolute value of a norm as positive norm.
   have abs_to_nnorm : ∀ x, ENNReal.ofReal ‖fun i ↦ f i x‖ = ‖fun i ↦ f i x‖₊ := fun x ↦ ofReal_norm_eq_coe_nnnorm fun i => f i x
   simp_rw [abs_to_nnorm]
 
-  /- We use the property of H to rewrite the norm as a sum of norm of function in H₀ -/
+  -- We use the property of H to rewrite the norm as a sum of norm of function in H₀
   have H_norm : ∀ x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 := by {
     intro x
     rw [h3 f finH x]
@@ -91,7 +91,7 @@ by
   }
   simp_rw [H_norm]
 
-  /- We use the reproducing propriety of H₀ to rewrite f i x as ⟪f i, k x⟫. -/
+  -- We use the reproducing propriety of H₀ to rewrite f i x as ⟪f i, k x⟫.
   have rkhs : ∀ (x : (Vector ℝ d)), ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 := by {
     have temp : ∀ (x : (Vector ℝ d)), ∀ (i : ℕ), i ∈ range (d + 1) → f i x = ⟪f i, k x⟫ := by
     {
@@ -106,7 +106,7 @@ by
   }
   simp_rw [rkhs]
 
-  /- Coersive Cauchy-Schwarz inequality : ↑‖⟪f i, k x⟫‖₊ ≤ ↑‖f i‖₊ ↑‖f x‖₊. -/
+  -- Coersive Cauchy-Schwarz inequality : ↑‖⟪f i, k x⟫‖₊ ≤ ↑‖f i‖₊ ↑‖f x‖₊.
   have cauchy_schwarz : ∀x, ∀i ∈ range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞) ≤ (‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞) := by {
     intros x i _iInRange
     have nn_cauchy := nnnorm_inner_le_nnnorm (𝕜 := ℝ) (f i) (k x)
@@ -115,7 +115,7 @@ by
     exact coe_nnreal_le nn_cauchy
   }
 
-  /- Coersive "square" Cauchy-Schwarz inequality : (↑‖⟪f i, k x⟫‖₊)² ≤ (↑‖f i‖₊)² (↑‖f x‖₊)². -/
+  -- Coersive "square" Cauchy-Schwarz inequality : (↑‖⟪f i, k x⟫‖₊)² ≤ (↑‖f i‖₊)² (↑‖f x‖₊)².
   have cauchy_schwarz_sq : ∀x, ∀i ∈ range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ≤ (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := by {
     intros x i iInRange
     have sq_dist : ((‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞))^2 = (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := (distrib_sq (‖f i‖₊ : ℝ≥0∞) (‖k x‖₊ : ℝ≥0∞)).symm
@@ -123,10 +123,10 @@ by
     exact le_square (cauchy_schwarz x i iInRange)
   }
 
-  /- If f ≤ g, ∑ i in s, f ≤ ∑ i in s, g. Thus, ∑ i in range (d + 1), (↑‖⟪f i, k x⟫‖₊)² ≤ ∑ i in range (d + 1), (↑‖f i‖)² * (↑‖k x‖₊)². -/
+  -- If f ≤ g, ∑ i in s, f ≤ ∑ i in s, g. Thus, ∑ i in range (d + 1), (↑‖⟪f i, k x⟫‖₊)² ≤ ∑ i in range (d + 1), (↑‖f i‖)² * (↑‖k x‖₊)².
   have sum_le : (fun x ↦ ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2) ≤ (fun x ↦ ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2) := fun x ↦ sum_le_sum (cauchy_schwarz_sq x)
 
-  /- A lower-Lebesgue integral of a finite sum is equal to a finite sum of lower-Lebesgue integral. -/
+  -- A lower-Lebesgue integral of a finite sum is equal to a finite sum of lower-Lebesgue integral.
   have inverse_sum_int : ∫⁻ x in Set.univ, ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ = ∑ i in range (d + 1), ∫⁻ x in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
     have is_measurable : ∀ i ∈ range (d + 1), Measurable ((fun i ↦ fun x ↦ (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2) i) := by
     {
@@ -136,22 +136,23 @@ by
     exact lintegral_finset_sum (range (d + 1)) is_measurable
   }
 
-  /- Retrieve the majorant of the finite sum : ∑ i in range (d + 1), (↑‖f i‖₊)². -/
+  -- Retrieve the majorant of the finite sum : ∑ i in range (d + 1), (↑‖f i‖₊)².
   rcases finite_sum (fun i ↦ ‖f i‖₊^2) with ⟨C1, finite_sum⟩
 
-  /- Retrieve the majorant of the integral ∫⁻ (x : (Vector ℝ d)) in Set.univ, ↑|k x x| ∂μ, supposed finite. -/
+  -- Retrieve the majorant of the integral ∫⁻ (x : (Vector ℝ d)) in Set.univ, ↑|k x x| ∂μ, supposed finite.
   rcases h2 with ⟨C2, h2⟩
-  /- Rewrite ↑|k x x| as  ↑‖k x x‖₊. -/
+
+  -- Rewrite ↑|k x x| as  ↑‖k x x‖₊.
   have abs_to_nnorm : ∀ x, ENNReal.ofReal (|k x x|) = ‖k x x‖₊ := fun x ↦ (Real.ennnorm_eq_ofReal_abs (k x x)).symm
   simp_rw [abs_to_nnorm] at h2
 
-  /- 1. ∀ f ≤ g, ∫⁻ x, f x ∂μ ≤ ∫⁻ x, g x ∂μ. We use this lemma with *sum_le*. -/
+  -- 1. ∀ f ≤ g, ∫⁻ x, f x ∂μ ≤ ∫⁻ x, g x ∂μ. We use this lemma with *sum_le*.
   calc ∫⁻ (x : (Vector ℝ d)) in Set.univ, ∑ i in range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ∂μ ≤ ∫⁻ (x : (Vector ℝ d)) in Set.univ, ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := lintegral_mono sum_le
 
-  /- 2. Inversion sum integral. -/
+  -- 2. Inversion sum integral.
   _ = ∑ i in range (d + 1), ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := inverse_sum_int
 
-  /- 3. As (↑‖f i‖₊)² is a constant in the integral, get it out. -/
+  -- 3. As (↑‖f i‖₊)² is a constant in the integral, get it out.
   _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
     have is_measurable : Measurable (fun x ↦ (‖k x‖₊ : ℝ≥0∞)^2) := by {
       intros s _hs
@@ -164,7 +165,7 @@ by
     simp_rw [const_int]
   }
 
-  /- Rewrite  (↑‖k x‖₊)² as ↑‖⟪k x, k x⟫‖₊ (lot of coercions). -/
+  -- Rewrite  (↑‖k x‖₊)² as ↑‖⟪k x, k x⟫‖₊ (lot of coercions).
   _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖⟪k x, k x⟫‖₊ : ℝ≥0∞) ∂μ := by {
     
     simp_rw [fun x ↦ nn_norm_eq_norm (k x)]
@@ -187,7 +188,7 @@ by
     simp_rw [coe]
   }
   
-  /- Use the reproducing propriety of H₀ to write ⟪k x, k x⟫ as k x x. -/
+  -- Use the reproducing propriety of H₀ to write ⟪k x, k x⟫ as k x x.
   _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have reproducing_prop : ∀ x, ⟪k x, k x⟫ = k x x := by {
     intro x
@@ -196,22 +197,22 @@ by
     simp_rw [reproducing_prop]
   }
 
-  /- As the integral is a constant in the sum, write ∑ i in ... * ∫⁻ ... as (∑ i in ...) * ∫⁻ ... -/
+  -- As the integral is a constant in the sum, write ∑ i in ... * ∫⁻ ... as (∑ i in ...) * ∫⁻ ...
   _ = (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have sum_mul : (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ) = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ) := by exact sum_mul
     rw [←sum_mul]
   }
 
-  /- Rewrite (↑‖f i‖₊)² as ↑(‖f i‖₊²) to use the *finite_sum* lemma. -/
+  -- Rewrite (↑‖f i‖₊)² as ↑(‖f i‖₊²) to use the *finite_sum* lemma.
   _ = (∑ i in range (d + 1), (‖f i‖₊^2 : ℝ≥0∞)) * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have coe_sq : ∀ i, (‖f i‖₊ : ℝ≥0∞)^2 = (‖f i‖₊^2 : ℝ≥0∞) := fun i ↦ nn_square
     simp_rw [coe_sq]
   }
 
-  /- Bound the product from above using the two previously retrieved majorants. -/
+  -- Bound the product from above using the two previously retrieved majorants.
   _ < C1 * C2 := ENNReal.mul_lt_mul finite_sum h2
 
-  /- C1 C2 ∈ ℝ≥0 -/
+  -- C1 C2 ∈ ℝ≥0
   _ < ∞ := by {
     have h1 : C1 < ∞ := ENNReal.coe_lt_top
     have h2 : C2 < ∞ := ENNReal.coe_lt_top

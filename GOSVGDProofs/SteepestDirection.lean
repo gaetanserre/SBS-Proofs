@@ -87,11 +87,11 @@ by
   unfold is_phi at h_is_ϕ
   simp_rw [h_is_ϕ]
 
-  /- First, we get the integral out of the inner product. -/
+  -- First, we get the integral out of the inner product.
   have invert_inner_integral : ∀i, ⟪(f i), (fun x ↦ (∫ y, d_log_π i y * k y x + dk y i x ∂μ))⟫ = ∫ y, ⟪(f i), (fun y x ↦ d_log_π i y * k y x + dk y i x) y⟫ ∂μ := fun i ↦ inter_inner_integral_right μ (f i) (fun y x ↦ d_log_π i y * k y x + dk y i x)
   simp_rw [invert_inner_integral]
 
-  /- Then, we switch the integral with the finite sum using *is_integrable_H* assumption. -/
+  -- Then, we switch the integral with the finite sum using *is_integrable_H* assumption.
   have invert_sum_integral : ∑ i in range (d + 1), ∫ (y : Vector ℝ d), (fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫) i y ∂μ = ∫ (y : Vector ℝ d), ∑ i in range (d + 1), (fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫) i y ∂μ := by {
     symm
     exact integral_finset_sum (range (d + 1)) (by {
@@ -101,11 +101,11 @@ by
   }
   simp_rw [invert_sum_integral]
 
-  /- We use the linearity of inner product to develop it and get the constant d_log_π i y out. -/
+  -- We use the linearity of inner product to develop it and get the constant d_log_π i y out.
   have linear_inner : ∀y, ∀i, ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫ = d_log_π i y * ⟪f i, fun x ↦ k y x⟫ + ⟪f i, fun x ↦ dk y i x⟫ := fun y i ↦ inner_linear_left (f i) (k y) (dk y i) (d_log_π i y)
   simp_rw [linear_inner]
 
-  /- We use reproducing properties of H₀ to rewrite ⟪f i, k y⟫ as f i y and ⟪f i, dk y i⟫ as df i y. -/
+  -- We use reproducing properties of H₀ to rewrite ⟪f i, k y⟫ as f i y and ⟪f i, dk y i⟫ as df i y.
   have sum_reproducing : ∀ y, ∑ i in range (d + 1), (d_log_π i y * ⟪f i, fun x => k y x⟫ + ⟪f i, fun x => dk y i x⟫) = ∑ i in range (d + 1), (d_log_π i y * (f i y) + df i y) := by {
     intro y
     have reproducing : ∀ x, ∀ i ∈ range (d + 1), ⟪f i, fun y ↦ k x y⟫ = f i x := by {
@@ -128,10 +128,10 @@ by
 -/
 lemma bound_direction (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (hfb : ‖f‖ = 1) (df : ℕ → (Vector ℝ d) → ℝ) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ ≤ ‖ϕ‖ :=
 by
-  /- We rewrite ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) as ⟪f, ϕ⟫. -/
+  -- We rewrite ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) as ⟪f, ϕ⟫.
   rw [←inner_product_eq_dKL μ H₀ k h_kernel dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 f hf df]
 
-  /- We use Cauchy-Schwarz inequality. -/
+  -- We use Cauchy-Schwarz inequality.
   calc ⟪f, ϕ⟫ ≤ ‖⟪f, ϕ⟫‖ := le_abs_self ⟪f, ϕ⟫
   _ ≤ ‖f‖ * ‖ϕ‖ := norm_inner_le_norm f ϕ
   _ = ‖ϕ‖ := by {
@@ -146,11 +146,11 @@ theorem steepest_descent_trajectory (h1 : product_RKHS H H₀) (h2 : inner_produ
 by
   rw [←inner_product_eq_dKL μ H₀ k h_kernel dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 (fun i x ↦ ϕ i x / ‖ϕ‖) hϕs dϕ]
 
-  /- We rewrite the division as a product of inverse. -/
+  -- We rewrite the division as a product of inverse.
   have div_to_mul : ∀i, ∀x, ϕ i x / ‖ϕ‖ = ϕ i x * (1 / ‖ϕ‖) := fun i x ↦ div_eq_mul_one_div (ϕ i x) ‖ϕ‖
   simp_rw [div_to_mul]
 
-  /- We use the linearity of the scalar product to get 1 / ‖ϕ‖ out. -/
+  -- We use the linearity of the scalar product to get 1 / ‖ϕ‖ out.
   have linear_inner : ⟪(fun i x => ϕ i x * (1 / ‖ϕ‖)), ϕ⟫ = 1 / ‖ϕ‖ * ⟪(fun i x => ϕ i x), ϕ⟫ + ⟪(fun i x => 0), ϕ⟫ := by {
     have comm : ∀i, ∀x, (1 / ‖ϕ‖) * (ϕ i x) = (ϕ i x) * (1 / ‖ϕ‖) := fun i x ↦ mul_comm (1 / ‖ϕ‖) (ϕ i x)
     simp_rw [←comm]
@@ -160,13 +160,13 @@ by
   }
   rw [linear_inner]
 
-  /- We use the fact that ⟪0, f⟫ = 0. -/
+  -- We use the fact that ⟪0, f⟫ = 0.
   have inner_prod_zero : ⟪fun i x ↦ 0, ϕ⟫ = 0 := by {
     exact inner_zero ϕ
   }
   rw[inner_prod_zero, add_zero]
 
-  /- We use the theorem *inner_self_eq_norm_mul_norm* stating that re ⟪a, a⟫ = ‖a‖ * ‖a‖. -/
+  -- We use the theorem *inner_self_eq_norm_mul_norm* stating that re ⟪a, a⟫ = ‖a‖ * ‖a‖.
   have eq_re : ⟪fun i x ↦ ϕ i x, ϕ⟫ = re ⟪ϕ, ϕ⟫ := by simp
   rw [eq_re]
   rw [inner_self_eq_norm_mul_norm]

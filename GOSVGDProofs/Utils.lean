@@ -175,9 +175,9 @@ theorem inner_zero (a : ℕ → Vector ℝ d → ℝ) : ⟪0, a⟫ = 0 := by sor
 
 variable [MeasureSpace ℝ≥0] [NormedAddCommGroup ℝ≥0∞] [NormedSpace ℝ ℝ≥0∞] [LocallyFiniteOrder ℝ≥0]
 
-lemma pos_integral (f : ℝ≥0 → ℝ≥0∞) : ∀ (t : ℝ≥0), 0 < t → 0 < ∫ s in Icc 0 t, f s := by sorry
+lemma pos_integral (f : ℝ≥0 → ℝ≥0∞) : ∀ (t : ℝ≥0), 0 < t → (∀ s, 0 < f s) → 0 < ∫ s in Icc 0 t, f s := by sorry
 
-lemma finite_integral (f : ℝ≥0 → ℝ≥0∞) : ∀ (t : ℝ≥0), ∫ s in Icc 0 t, f s ≠ ∞ := by sorry
+lemma finite_integral (f : ℝ≥0 → ℝ≥0∞) : ∀ (t : ℝ≥0), (∀ s, f s ≠ ∞) → ∫ s in Icc 0 t, f s ≠ ∞ := by sorry
 
 lemma coe_integral (f : ℝ≥0 → ℝ≥0∞) : ∀ (t : ℝ≥0), ∫ s in Icc 0 t, ENNReal.toReal (f s) = ENNReal.toReal (∫ s in Icc 0 t, f s) := by sorry
 
@@ -236,3 +236,20 @@ theorem mv_integration_by_parts (f : Vector ℝ d → ℝ) (g grad_f dg : ℕ �
 
 
 noncomputable def exp (a : ℝ) := ENNReal.ofReal (Real.exp a)
+
+lemma lt_eq_le_and_neq : ∀ (a : ℝ), 0 ≤ a ∧ a ≠ 0 ↔ 0 < a :=
+by
+  intro a
+  constructor
+  {
+    intro ha
+    rcases ha with ⟨pos, nneg⟩
+    by_contra ht
+    push_neg at ht
+    have eq_zero : a = 0 := by linarith
+    exact nneg eq_zero
+  }
+  {
+    intro ha
+    exact ⟨le_of_lt ha, ne_of_gt ha⟩
+  }

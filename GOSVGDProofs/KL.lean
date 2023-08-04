@@ -4,6 +4,7 @@ import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import GOSVGDProofs.Bijection
 import GOSVGDProofs.AbsoluteContinuity
 import GOSVGDProofs.PushForward
+import GOSVGDProofs.Utils
 open ENNReal
 
 set_option trace.Meta.Tactic.simp.rewrite true
@@ -100,10 +101,6 @@ variable (π : Measure α) (d_π : α → ℝ≥0∞)
 variable (π_t : Pushforward_Measure α α) (h_pi_T : π_t.T = μ_t.T_inv) (h_pi_μ : π_t.μ = π) (h_density_π : is_density π_t.μ ν d_π) [IsProbabilityMeasure π_t.μ] [IsProbabilityMeasure π_t.p_μ]
 
 variable (Tπ' : α → α →L[ℝ] α) (hTπ' : ∀ (s : Set α), ∀ x ∈ s, HasFDerivWithinAt π_t.T_inv (Tπ' x) s x)
-
-noncomputable def log (a : ℝ≥0∞) := Real.log (ENNReal.toReal a)
-
-noncomputable def KL (μ : Measure α) (d_μ : α → ℝ≥0∞) (d_π : α → ℝ≥0∞) := ENNReal.ofReal (∫ x in Set.univ, log ((d_μ x) / (d_π x)) ∂μ)
 
 variable (univ_unique_diff : UniqueDiffOn ℝ (Set.univ : Set α))
 

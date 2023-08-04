@@ -1,7 +1,6 @@
 import GOSVGDProofs.AbsoluteContinuity
 import GOSVGDProofs.Bijection
---import GOSVGDProofs.KL
-import GOSVGDProofs.PushForward
-import GOSVGDProofs.SteepestDirection
+import GOSVGDProofs.KL
+import GOSVGDProofs.KSD
 
 def hello := "world"

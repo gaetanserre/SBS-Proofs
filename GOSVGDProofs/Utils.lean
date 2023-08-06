@@ -159,7 +159,7 @@ sorry
 theorem inner_linear_left (f a b : Vector ℝ d → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x + b x⟫ = c * ⟪f, fun x ↦ a x⟫ + ⟪f, fun x ↦ b x⟫ := by sorry
 
 /--
-⟪f, ∇k(x, ̇)⟫ = ∇f(x)
+  ⟪f, ∇k(x, ̇)⟫ = ∇f(x)
 -/
 theorem reproducing_derivative (H₀ : Set ((Vector ℝ d) → ℝ)) (dk : Vector ℝ d → ℕ → Vector ℝ d → ℝ) (f : (Vector ℝ d) → ℝ) (df' : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H₀) : ∀x, ∀ i ∈ range (d + 1), ⟪f, dk x i⟫ = df' i x :=
 by
@@ -225,12 +225,12 @@ by
 
 
 /--
-Definition of infinite limit at infinity for vector-valued function (we use the order of real numbers on the norm of vectors as an order on ℝᵈ).
+  Definition of infinite limit at infinity for vector-valued function (we use the order of real numbers on the norm of vectors as an order on ℝᵈ).
 -/
 def tends_to_infty {α : Type _} [Norm α] (f : α → ℝ) := ∀ c > 0, ∃ (x : α), ∀ (x':α), ‖x‖ ≤ ‖x'‖ → c < f x
 variable [Norm (Vector ℝ d)]
 /--
-Unformal but highly pratical multivariate integration by parts.
+  Unformal but highly pratical multivariate integration by parts.
 -/
 theorem mv_integration_by_parts (f : Vector ℝ d → ℝ) (g grad_f dg : ℕ → (Vector ℝ d) → ℝ) (h : ∀ x, tends_to_infty (fun (x : Vector ℝ d) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Set.univ, f x * (∑ i in range (d + 1), dg i x) ∂μ = - ∫ x in Set.univ, (∑ i in range (d + 1), grad_f i x * g i x) ∂μ := by sorry
 

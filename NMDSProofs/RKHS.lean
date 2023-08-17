@@ -3,7 +3,7 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 
-import GOSVGDProofs.Utils
+import NMDSProofs.Utils
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 

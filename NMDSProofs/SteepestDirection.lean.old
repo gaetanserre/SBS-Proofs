@@ -4,7 +4,7 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 import Mathlib.Analysis.Calculus.FDeriv.Basic
 
-import GOSVGDProofs.PushForward
+import NMDSProofs.PushForward
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 

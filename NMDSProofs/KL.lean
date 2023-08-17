@@ -1,10 +1,10 @@
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 
-import GOSVGDProofs.Bijection
-import GOSVGDProofs.AbsoluteContinuity
-import GOSVGDProofs.PushForward
-import GOSVGDProofs.Utils
+import NMDSProofs.Bijection
+import NMDSProofs.AbsoluteContinuity
+import NMDSProofs.PushForward
+import NMDSProofs.Utils
 open ENNReal
 
 set_option trace.Meta.Tactic.simp.rewrite true

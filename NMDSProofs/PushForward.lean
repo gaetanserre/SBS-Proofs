@@ -4,8 +4,8 @@ import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Function.Jacobian
 
-import GOSVGDProofs.Bijection
-import GOSVGDProofs.AbsoluteContinuity
+import NMDSProofs.Bijection
+import NMDSProofs.AbsoluteContinuity
 open ENNReal
 
 namespace MeasureTheory

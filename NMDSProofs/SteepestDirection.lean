@@ -3,9 +3,9 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 
-import GOSVGDProofs.Utils
-import GOSVGDProofs.RKHS
-import GOSVGDProofs.PushForward
+import NMDSProofs.Utils
+import NMDSProofs.RKHS
+import NMDSProofs.PushForward
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 

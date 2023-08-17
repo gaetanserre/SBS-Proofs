@@ -3,10 +3,10 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 
-import GOSVGDProofs.Utils
-import GOSVGDProofs.RKHS
-import GOSVGDProofs.PushForward
-import GOSVGDProofs.SteepestDirection
+import NMDSProofs.Utils
+import NMDSProofs.RKHS
+import NMDSProofs.PushForward
+import NMDSProofs.SteepestDirection
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 

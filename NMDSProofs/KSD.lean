@@ -307,9 +307,7 @@ by_cases μ = π
   }
 
   {
-    /-
-      μ ≠ π → KL(μ || π) ≠ 0
-    -/
+    -- μ ≠ π → KL(μ || π) ≠ 0
     have KL_neq_0 : KL μ dμ dπ ≠ 0 := Iff.mp zero_lt_iff (hkl_diff h)
     constructor
     {
@@ -318,9 +316,7 @@ by_cases μ = π
       rw [div_as_inv]
       have enn_KSD_finite : ENNReal.ofReal (KSD μ π) ≠ ∞ := ofReal_ne_top
 
-      /-
-        We show that (KL(μ || π))⁻¹ ≠ ∞ as KL(μ || π) ≠ 0
-      -/
+      -- We show that (KL(μ || π))⁻¹ ≠ ∞ as KL(μ || π) ≠ 0
       have inv_KL_finite : (2 * KL μ dμ dπ)⁻¹ ≠ ∞ := by {
         have neq_zero : 2 * KL μ dμ dπ ≠ 0 := by {simp; exact KL_neq_0}
         exact inv_ne_top.mpr neq_zero
@@ -329,9 +325,7 @@ by_cases μ = π
       exact mul_ne_top enn_KSD_finite inv_KL_finite
     }
     {
-      /-
-        We show that, under non-zero and finite conditions, a ≤ (1 / (2 * (b / (2 * a)))) * b (in fact, a = (1 / (2 * (b / (2 * a)))) * b).
-      -/
+      -- We show that, under non-zero and finite conditions, a ≤ (1 / (2 * (b / (2 * a)))) * b (in fact, a = (1 / (2 * (b / (2 * a)))) * b).
       have calculation : ∀ (a b : ℝ≥0∞), a ≠ 0 → a ≠ ∞ → b ≠ 0 → b ≠ ∞ → a ≤ (1 / (2 * (b / (2 * a)))) * b := by {
         intros a b h0a hta h0b htb
 

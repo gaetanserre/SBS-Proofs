@@ -131,7 +131,8 @@ by
   }
 
   -- Retrieve the majorant of the finite sum : ∑ i in range (d + 1), (↑‖f i‖₊)².
-  rcases finite_sum (fun i ↦ ‖f i‖₊^2) with ⟨C1, finite_sum⟩
+  have finite_sum : ∃ (C : ℝ≥0), ∑ i in range (d + 1), (‖f i‖₊^2 : ℝ≥0∞) < C := finite_sum (fun i ↦ ‖f i‖₊^2)
+  rcases finite_sum with ⟨C1, finite_sum⟩
 
   -- Retrieve the majorant of the integral ∫⁻ (x : (Vector ℝ d)) in Set.univ, ↑|k x x| ∂μ, supposed finite.
   rcases h2 with ⟨C2, h2⟩
@@ -168,8 +169,7 @@ by
 
     have norm_sq_eq_inner : ∀ x, ⟪k x, k x⟫ = ‖k x‖ ^ 2 := by {
       intro x
-      have tt := inner_self_eq_norm_sq_to_K (𝕜 := ℝ) (k x)
-      rw [tt]
+      rw [inner_self_eq_norm_sq_to_K (𝕜 := ℝ) (k x)]
       simp
     }
     simp_rw [norm_sq_eq_inner]

@@ -138,8 +138,7 @@ by
   {
     have key := push_forward_density_equality π_t Tπ' d_π Set.univ univ_unique_diff Tπ_comp' h2 h4
     ext a
-    unfold Function.comp at key
-    unfold Function.comp
+    unfold Function.comp at key ⊢
     rw [←key (μ_t.T a) (by simp)]
     rw [h_pi_T]
     rw [μ_t.is_reci.right a]

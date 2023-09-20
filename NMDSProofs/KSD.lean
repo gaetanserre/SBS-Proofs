@@ -14,6 +14,7 @@ open scoped RealInnerProductSpace
 open BigOperators Finset ENNReal NNReal MeasureTheory
 
 set_option trace.Meta.Tactic.simp.rewrite true
+set_option maxHeartbeats 400000
 
 /-
   We defined measures μ and π (ν is considered as the standard Lebesgue measure) along with their densities (finite and non-zero on the entire space)
@@ -220,7 +221,6 @@ by
         push_neg at hc
         have univ_eq_one_μ : ∫⁻ x in Set.univ, 1 ∂μ = 1 := by simp
         have univ_eq_one_π : ∫⁻ x in Set.univ, 1 ∂π = 1 := by simp
-        simp_rw [hc, fun x ↦ one_mul (dπ x)] at dμ_propor
 
         rw [density_lintegration μ ν dμ hμ (fun x ↦ 1) Set.univ] at univ_eq_one_μ
         simp_rw [dμ_propor] at univ_eq_one_μ
@@ -494,7 +494,6 @@ by
         
         have h : 2*a < 2*b := by {
           repeat rw[two_mul]
-          simp
           exact ENNReal.add_lt_add h h
         }
 

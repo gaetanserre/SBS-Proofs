@@ -29,7 +29,7 @@ by
   Given a non-empty finite set s and a function f on elements of s, ∃ j ∈ s, ∀ i ∈ s, f i ≤ f j.
 -/
 theorem exist_max_image_finset {ι E : Type _} [LinearOrder E] (s : Finset ι) (h : Finset.Nonempty s) (f : ι → E) : ∃ j ∈ s, ∀ i ∈ s, f i ≤ f j :=
-by 
+by
   let sf := Finset.image f s
   have hf : Finset.Nonempty sf := Nonempty.image h f
 
@@ -75,8 +75,6 @@ by
 
 lemma coe_nnreal_le {a b : ℝ≥0} (h : a ≤ b) : (a : ℝ≥0∞) ≤ (b : ℝ≥0∞) := Iff.mpr coe_le_coe h
 
-lemma coe_distrib (a b : ℝ≥0) : ENNReal.some (a * b) = (a : ℝ≥0∞) * (b : ℝ≥0∞) := ENNReal.coe_mul
-
 lemma nn_norm_eq_norm (a : (Vector ℝ d) → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
 
 lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
@@ -92,7 +90,7 @@ lemma nn_square {a : ℝ≥0} : (a : ℝ≥0∞) ^ 2 = (a ^ 2 : ℝ≥0∞) := (
 /--
   A finite sum of finite elements is finite.
 -/
-theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i in range (d + 1), (f i : ℝ≥0∞) < ENNReal.some C :=
+theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i in range (d + 1), (f i : ℝ≥0∞) < C :=
 by
   /- We begin to show that each element of the sum is bounded from above. -/
   have sup_el : ∀ i ∈ range (d + 1), ∃ c, (f i) < c := fun i _ ↦ exists_gt (f i)
@@ -123,7 +121,7 @@ by
     use C
     intros i iin
     specialize sup i iin
-    have coe_lt : ∀ (a b : ℝ≥0), (a < b) → ENNReal.some a < ENNReal.some b := by {
+    have coe_lt : ∀ (a b : ℝ≥0), (a < b) → (a : ℝ≥0∞) < (b : ℝ≥0∞) := by {
       intros a b h
       exact Iff.mpr coe_lt_coe h
     }
@@ -136,7 +134,7 @@ by
   have sum_le : ∑ i in range (d + 1), (f i : ℝ≥0∞) < ∑ i in range (d + 1), (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (by simp) sup_coe
 
   /- Same as above, with coercion -/
-  have sum_coe : ∑ i in range (d + 1), (c : ℝ≥0∞) = ENNReal.some (∑ i in range (d + 1), c) := coe_finset_sum.symm
+  have sum_coe : ∑ i in range (d + 1), (c : ℝ≥0∞) = ∑ i in range (d + 1), c := coe_finset_sum.symm
 
   /- Sum of constant = constant -/
   have sum_simpl : ∑ i in range (d + 1), c = (d+1) • c := (nsmul_eq_sum_const c (d + 1)).symm
@@ -144,8 +142,8 @@ by
   use ((d+1) • c)
 
   calc ∑ i in range (d + 1), (f i: ℝ≥0∞) < ∑ i in range (d + 1), (c : ℝ≥0∞) := sum_le
-  _ = ENNReal.some (∑ i in range (d + 1), c) := sum_coe
-  _ = ENNReal.some ((d+1) • c) := by rw [sum_simpl]
+  _ = ∑ i in range (d + 1), c := sum_coe
+  _ = (d+1) • c := by rw [sum_simpl]
 
 /-ASSUMED LEMMAS-/
 /--
@@ -279,7 +277,7 @@ theorem integral_of_constant : ∫ s in Icc 0 (t:ℝ≥0), (fun (s : ℝ≥0) �
 /--
 Let f be a decreasing function and g a function s.t. ∃γ, ∀x, γ < g x. Therefore, ∀t, γ/(2*(f 0)) < (g t) / (2*(f t)) (used in KSD.lean).
 -/
-lemma decrease_bound (f g : ℝ≥0 → ℝ≥0∞) (decreasing : ∀x, ∀y, x < y → f y ≤ f x) (hf_nn : ∀x, f x ≠ 0) (hf_finite : ∀x, f x ≠ ∞) (γ : ℝ≥0∞) (hg : ∀x, γ < g x) : ∀t, γ / (2*(f 0)) < (g t) / (2*(f t)) := 
+lemma decrease_bound (f g : ℝ≥0 → ℝ≥0∞) (decreasing : ∀x, ∀y, x < y → f y ≤ f x) (hf_nn : ∀x, f x ≠ 0) (hf_finite : ∀x, f x ≠ ∞) (γ : ℝ≥0∞) (hg : ∀x, γ < g x) : ∀t, γ / (2*(f 0)) < (g t) / (2*(f t)) :=
 by
   intro t
   have h : ∀x, f x ≤ f 0 := by
@@ -323,4 +321,3 @@ by
   }
 
   exact gt_of_ge_of_gt f_le div_lt
-

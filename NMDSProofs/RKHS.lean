@@ -71,7 +71,7 @@ def norm_H (H : Set (ℕ → (Vector ℝ d) → ℝ)) := ∀ f ∈ H, ∀x, (‖
 def integral_is_finite (μ : Measure (Vector ℝ d)) (f : (Vector ℝ d) → ℝ) := ∃ (C : ℝ≥0), ∫⁻ x in Set.univ, ENNReal.ofReal |f x| ∂μ < C
 
 /--
-  H ⊆ L2(μ) i.e., ∀ f ∈ H ∫⁻ x in Set.univ, ∑ i in range (d + 1), ENNReal.ofReal (|f i x|)^2 ∂μ < ∞.
+  H ⊆ L2(μ) i.e., ∀ f ∈ H, ∫⁻ Ω ||f x||^2 ∂μ < ∞.
 -/
 theorem H_subset_of_L2 (μ : Measure (Vector ℝ d)) (h1 : product_RKHS H H₀) (h2 : integral_is_finite μ (fun x ↦ k x x)) (h3 : norm_H H) : ∀ f ∈ H, ∫⁻ x in Set.univ, ENNReal.ofReal ‖fun i ↦ f i x‖^2 ∂μ < ∞ :=
 by
@@ -85,7 +85,7 @@ by
   have H_norm : ∀ x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 := by {
     intro x
     rw [h3 f finH x]
-    have sq_coe : ENNReal.some (sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2))^2 = ENNReal.some ((sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2))^2) := nn_square
+    have sq_coe : (sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2) : ℝ≥0∞)^2 = ((sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2))^2 : ℝ≥0∞) := nn_square
     rw [sq_coe]
     simp
   }
@@ -109,7 +109,7 @@ by
   -- Coersive squared Cauchy-Schwarz inequality : (↑‖⟪f i, k x⟫‖₊)² ≤ (↑‖f i‖₊)² (↑‖f x‖₊)².
   have cauchy_schwarz_sq : ∀x, ∀i ∈ range (d + 1), (‖⟪f i, k x⟫‖₊ : ℝ≥0∞)^2 ≤ (‖f i‖₊ : ℝ≥0∞)^2 * (‖k x‖₊ : ℝ≥0∞)^2 := by {
     intros x i _iInRange
-    have distrib : ENNReal.some (‖f i‖₊ * ‖k x‖₊) = (‖f i‖₊ : ℝ≥0∞) * (‖k x‖₊ : ℝ≥0∞) := coe_distrib ‖f i‖₊ ‖k x‖₊
+    have distrib : ENNReal.ofNNReal (‖f i‖₊ * ‖k x‖₊) = ‖f i‖₊ * ‖k x‖₊ := ENNReal.coe_mul
     rw [(distrib_sq (‖f i‖₊ : ℝ≥0∞) (‖k x‖₊ : ℝ≥0∞))]
     rw [←distrib]
     apply le_square
@@ -162,7 +162,7 @@ by
 
   -- Rewrite  (↑‖k x‖₊)² as ↑‖⟪k x, k x⟫‖₊ (lot of coercions).
   _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖⟪k x, k x⟫‖₊ : ℝ≥0∞) ∂μ := by {
-    
+
     simp_rw [fun x ↦ nn_norm_eq_norm (k x)]
 
     simp_rw [fun x ↦ enn_square (norm_nonneg (k x))]
@@ -181,7 +181,7 @@ by
     }
     simp_rw [coe]
   }
-  
+
   -- Use the reproducing propriety of H₀ to write ⟪k x, k x⟫ as k x x.
   _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have reproducing_prop : ∀ x, ⟪k x, k x⟫ = k x x := by {

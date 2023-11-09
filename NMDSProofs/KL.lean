@@ -45,7 +45,7 @@ by
   -- Change of variable in integration.
   rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul ν (h1 A) (hT' A) T_invisInjonA d_μ]
   unfold push_forward_density
-  simp
+  rfl
 
 
 variable (s : Set α) (s_unique_diff : UniqueDiffOn ℝ s)
@@ -92,7 +92,7 @@ lemma push_forward_density_equality (T_compose' : α → α →L[ℝ] α) (h : �
 by
   intro a ainS
   rw [h2]
-  
+
   rw [(composition_inv_eq_id μ_t.T μ_t.T_inv μ_t.is_reci).right]
   rw [det_of_derivative_of_composition_of_reciprocal_eq_1 T_compose' s s_unique_diff μ_t.T μ_t.T_inv μ_t.is_reci h a ainS]
   simp
@@ -118,7 +118,7 @@ by
   -- We unfold the composition and use the *push_forward_density_equality* lemma
   have k_μ : (fun x ↦ log (push_forward_density μ_t T' d_μ x / d_π x)) ∘ μ_t.T = (fun x ↦ log ((d_μ x) / ((d_π ∘ μ_t.T) x)) ):= by
   {
-    have k : ∀ (a : α), (push_forward_density μ_t T' d_μ  ∘ μ_t.T) a = d_μ a := by 
+    have k : ∀ (a : α), (push_forward_density μ_t T' d_μ  ∘ μ_t.T) a = d_μ a := by
     {
       have key := push_forward_density_equality μ_t T' d_μ Set.univ univ_unique_diff Tμ_comp' h1 h3
       intro a
@@ -134,7 +134,7 @@ by
   rw [image_of_univ_is_univ μ_t.T μ_t.T_inv μ_t.is_bij μ_t.is_reci]
 
   -- We show that dπ ∘ T is equal to the density of T⁻¹#π
-  have k_π : push_forward_density π_t Tπ' d_π = (d_π ∘ μ_t.T) := by 
+  have k_π : push_forward_density π_t Tπ' d_π = (d_π ∘ μ_t.T) := by
   {
     have key := push_forward_density_equality π_t Tπ' d_π Set.univ univ_unique_diff Tπ_comp' h2 h4
     ext a

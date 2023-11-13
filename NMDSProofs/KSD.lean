@@ -23,7 +23,7 @@ variable {d : ℕ}
 
 variable [MeasurableSpace (Vector ℝ d)] [MeasureSpace (Vector ℝ d)] [MeasureSpace ℝ]
 
-variable (μ π ν : Measure (Vector ℝ d)) (dμ dπ : (Vector ℝ d) → ℝ≥0∞) 
+variable (μ π ν : Measure (Vector ℝ d)) (dμ dπ : (Vector ℝ d) → ℝ≥0∞)
 
 /-
   μ << π << ν, they both admit density w.r.t. ν.
@@ -66,7 +66,7 @@ variable (dk : (Vector ℝ d) → ℕ → (Vector ℝ d) → ℝ)
 variable (d_log_π : ℕ → (Vector ℝ d) → ℝ)
 
 /- Definition of the steepest direction ϕ -/
-variable (ϕ : ℕ → (Vector ℝ d) → ℝ) (hϕ : ϕ ∈ H) (dϕ : ℕ → (Vector ℝ d) → ℝ) 
+variable (ϕ : ℕ → (Vector ℝ d) → ℝ) (hϕ : ϕ ∈ H) (dϕ : ℕ → (Vector ℝ d) → ℝ)
 
 variable (h_is_ϕ : is_phi μ k dk d_log_π ϕ)
 
@@ -74,17 +74,17 @@ variable (h_is_ϕ : is_phi μ k dk d_log_π ϕ)
 variable (is_integrable_H₀ : ∀ (f : Vector ℝ d → ℝ), Integrable f μ)
 
 /-
-d_log_μ_π : i ↦ c ↦ ∂xⁱ log (μ(x) / π(x))
+d_log_π_μ : i ↦ x ↦ ∂xⁱ log (π(x) / μ(x))
 -/
-variable (d_log_μ_π : ℕ → (Vector ℝ d) → ℝ)
+variable (d_log_π_μ : ℕ → (Vector ℝ d) → ℝ)
 
 /-
 Simple derivative rule: if the derivative is 0 ∀x, then the function is constant.
 -/
-variable (hd_log_μ_π : (∀x, ∀i, d_log_μ_π i x = 0) → (∃ c, ∀ x, log (dμ x / dπ x) = c))
+variable (hd_log_π_μ : (∀x, ∀i, d_log_π_μ i x = 0) → (∃ c, ∀ x, log (dμ x / dπ x) = c))
 
 /-
-dπ' : i ↦ c ↦ ∂xⁱ π(x)
+dπ' : i ↦ x ↦ ∂xⁱ π(x)
 -/
 variable (dπ' : ℕ → (Vector ℝ d) → ℝ)
 
@@ -107,12 +107,12 @@ def SteinClass (f : ℕ → (Vector ℝ d) → ℝ) (dμ : (Vector ℝ d) → �
 variable (KSD : Measure (Vector ℝ d) → Measure (Vector ℝ d) → ℝ)
 
 /--
-KSD(μ | π) = ⟪∇log μ/π, Pμ ∇log μ/π⟫_L²(μ). We assume here that KSD is also equal to ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ.
+KSD(μ | π) = ⟪∇log π/μ, Pμ ∇log π/μ⟫_L²(μ). We assume here that KSD is also equal to ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ.
 -/
-def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_μ_π i x * k x x' * d_log_μ_π i x') ∂μ) ∂μ) ∧ (KSD μ π = ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ)
+def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_π_μ i x * k x x' * d_log_π_μ i x') ∂μ) ∂μ) ∧ (KSD μ π = ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ)
 
 /-
-  KSD(μ | π) is originally defined as ‖Sμ ∇log μ/π‖²_H, it is therefore non-negative.
+  KSD(μ | π) is originally defined as ‖ϕ^⋆‖²_H, it is therefore non-negative.
 -/
 variable (ksd_nn : 0 ≤ KSD μ π)
 
@@ -124,7 +124,7 @@ variable (hstein : SteinClass ϕ dπ)
 /--
   We show that, if ϕ is in the Stein class of π, KSD is a valid discrepancy measure i.e. μ = π ↔ KSD(μ | π) = 0.
 -/
-lemma KSD_is_valid_discrepancy (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_μ_π KSD) : μ = π ↔ KSD μ π = 0 :=
+lemma KSD_is_valid_discrepancy (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_π_μ KSD) : μ = π ↔ KSD μ π = 0 :=
 by
   constructor
   {
@@ -179,13 +179,13 @@ by
     intro h
     rw [hksd.left] at h
 
-    -- We use the fact that the kernel is positive-definite that implies that d_log_μ_π = 0.
-    have d_log_μ_π_eq_0 := (h_kernel_positive d_log_μ_π).right.mp h
+    -- We use the fact that the kernel is positive-definite that implies that d_log_π_μ = 0.
+    have d_log_π_μ_eq_0 := (h_kernel_positive d_log_π_μ).right.mp h
 
     -- Simple derivative rule: ∂x f x = 0 → f x = c
-    specialize hd_log_μ_π d_log_μ_π_eq_0
+    specialize hd_log_π_μ d_log_π_μ_eq_0
 
-    rcases hd_log_μ_π with ⟨c, h⟩
+    rcases hd_log_π_μ with ⟨c, h⟩
     -- We show that, since dμ x / dπ x ≠ 0 and finite, dμ x = ENNReal.ofReal (Real.exp c) * dπ x.
     have dμ_propor : ∀x, dμ x = ENNReal.ofReal (Real.exp c) * dπ x := by {
       intro x
@@ -251,7 +251,7 @@ variable (hkl_eq : μ = π → KL μ dμ dπ = 0) (hkl_diff : μ ≠ π → 0 < 
 /--
   We show that μ ≠ π → 0 < KSD μ π (trivial using *KSD_is_valid_discrepancy*).
 -/
-lemma μ_neq_π_imp_ksd_nn (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_μ_π KSD) : μ ≠ π → 0 < KSD μ π :=
+lemma μ_neq_π_imp_ksd_nn (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_π_μ KSD) : μ ≠ π → 0 < KSD μ π :=
 by
   intro h
   by_contra h2
@@ -260,7 +260,7 @@ by
   cases split_le with
     |inl lt => { linarith }
     |inr eq => {
-      have μ_eq_π := (KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' KSD hstein hksd).mpr eq
+      have μ_eq_π := (KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD hstein hksd).mpr eq
 
       exact h μ_eq_π
     }
@@ -268,12 +268,12 @@ by
 /--
   We show that it exists a finite and positive θ such that KL(μ || π) ≤ (1 / (2θ)) * KSD(μ | π)
 -/
-theorem Stein_log_Sobolev (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_μ_π KSD) : ∃ θ > 0, (θ ≠ ∞) ∧ (KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (KSD μ π)) :=
+theorem Stein_log_Sobolev (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_π_μ KSD) : ∃ θ > 0, (θ ≠ ∞) ∧ (KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (KSD μ π)) :=
 by
 by_cases μ = π
 {
   -- μ = π → KSD μ π = 0
-  rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' KSD hstein hksd).mp h]
+  rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD hstein hksd).mp h]
 
   -- μ = π → KL μ π = 0
   rw [hkl_eq h]
@@ -298,7 +298,7 @@ by_cases μ = π
     constructor
     {
       -- We use *μ_neq_π_imp_ksd_nn* as μ ≠ π.
-      exact μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' KSD ksd_nn hstein hksd h
+      exact μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD ksd_nn hstein hksd h
     }
     {
       -- KL is finite (in our framework, as μ << π << ν).
@@ -363,7 +363,7 @@ by_cases μ = π
 
       -- As μ ≠ π, 0 < KSD(μ | π) and thus, KSD(μ | π) ≠ 0.
       have enn_KSD_neq_0 : ENNReal.ofReal (KSD μ π) ≠ 0 := by {
-        have KSD_ge_0 := μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_μ_π hd_log_μ_π dπ' hπ' KSD ksd_nn hstein hksd h
+        have KSD_ge_0 := μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD ksd_nn hstein hksd h
 
         have enn_KSD_ge_0 := Iff.mpr ofReal_pos KSD_ge_0
 
@@ -380,7 +380,7 @@ by_cases μ = π
   In this sub-section, we define the flow of measures μ_t:
   μ_t : ℝ≥0 → Measure (Vector ℝ d)
         t ↦ T_t#μ, where T_t is the trajectories associated with ϕ(μ_t t), the steepest direction to update μ_t t for minimizing ∂t KL(μ_t t || π).
-  We also define everything that we need to use previous results with each measures given by μ_t. 
+  We also define everything that we need to use previous results with each measures given by μ_t.
 -/
 variable (μ_t : ℝ≥0 → Measure (Vector ℝ d)) (dμ_t : ℝ≥0 → (Vector ℝ d → ℝ≥0∞)) (hμ_t : ∀ t, is_density (μ_t t) ν (dμ_t t)) (h_prob : ∀ t, IsProbabilityMeasure (μ_t t))
 variable (hdμ_t :∀t, ∀ (x : Vector ℝ d), dμ_t t x ≠ 0 ∧ dμ_t t x ≠ ⊤)
@@ -433,7 +433,7 @@ by
   have admits_limit := decreasing_bounded_function_limit (fun t ↦ KL (μ_t t) (dμ_t t) dπ) 0 (by simp) kl_decreasing
   rcases admits_limit with ⟨l, lim, _lim_pos, KL_bounded⟩
 
-  -- We proceed by cases on the value of l. If l = 0, the proof is finished. Otherwise, we proceed by contradiction by showing that l ≠ 0 → l = 0.  
+  -- We proceed by cases on the value of l. If l = 0, the proof is finished. Otherwise, we proceed by contradiction by showing that l ≠ 0 → l = 0.
   by_cases hl : 0 = l
   {
     rwa [hl]
@@ -458,7 +458,7 @@ by
         }
         have inv_two_KL_neq : (2 * KL (μ_t 0) (dμ_t 0) dπ)⁻¹ ≠ 0 := ENNReal.inv_ne_zero.mpr two_KL_finite
 
-        have γ_neq : γ ≠ 0 := Iff.mp zero_lt_iff γ_nn 
+        have γ_neq : γ ≠ 0 := Iff.mp zero_lt_iff γ_nn
 
 
         rw [ENNReal.div_eq_inv_mul]
@@ -491,7 +491,7 @@ by
       {
         intro a b _ha h
         rw[one_div (2*a), one_div (2*b)]
-        
+
         have h : 2*a < 2*b := by {
           repeat rw[two_mul]
           exact ENNReal.add_lt_add h h
@@ -500,7 +500,7 @@ by
         exact Iff.mpr ENNReal.inv_lt_inv h
       }
 
-      specialize le_quotient (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) ((fun t => ENNReal.ofReal (KSD (μ_t t) π)) t / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) t)) gamma_star_neq gamma_star 
+      specialize le_quotient (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) ((fun t => ENNReal.ofReal (KSD (μ_t t) π)) t / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) t)) gamma_star_neq gamma_star
 
       have le_prod : ∀(a b c : ℝ≥0∞), c ≠ 0 → c ≠ ∞ → a < b → a * c < b * c :=
       by
@@ -514,14 +514,14 @@ by
       }
       have enn_KSD_finite : ENNReal.ofReal (KSD (μ_t t) π) ≠ ∞ := by simp
 
-      specialize le_prod (1/(2*((fun t => ENNReal.ofReal (KSD (μ_t t) π)) t / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) t)))) (1/(2*(γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)))) (ENNReal.ofReal (KSD (μ_t t) π)) enn_KSD_neq enn_KSD_finite le_quotient 
+      specialize le_prod (1/(2*((fun t => ENNReal.ofReal (KSD (μ_t t) π)) t / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) t)))) (1/(2*(γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)))) (ENNReal.ofReal (KSD (μ_t t) π)) enn_KSD_neq enn_KSD_finite le_quotient
 
       calc KL (μ_t t) (dμ_t t) dπ ≤ 1 / (2 * (ENNReal.ofReal (KSD (μ_t t) π) / (2 * KL (μ_t t) (dμ_t t) dπ))) * ENNReal.ofReal (KSD (μ_t t) π) := log_sobolev
       _ <  1 / (2 * (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0))) * ENNReal.ofReal (KSD (μ_t t) π) := le_prod
     }
 
     -- We use the previous inequality and the Gronwall's lemma to show that ∀t, KL(μ_t || π) ≤ KL (μ_0 || π) * exp(-2t γ/2KL(μ_0 || π)).
-    have bound_gronwall : ∀t>0, (KL (μ_t t) (dμ_t t) dπ ≤ KL (μ_t 0) (dμ_t 0) dπ * exp (-2 * ENNReal.toReal (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) * t)) := by 
+    have bound_gronwall : ∀t>0, (KL (μ_t t) (dμ_t t) dπ ≤ KL (μ_t 0) (dμ_t 0) dπ * exp (-2 * ENNReal.toReal (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) * t)) := by
     {
       -- We show that, under some non-zero and finite conditions, a ≤ (1 / (2 * c)) * b → - (b : ℝ) ≤ -2 * (c : ℝ) * (a : ℝ)
       have calculation : ∀ (a b c : ℝ≥0∞), b ≠ ∞ → c ≠ 0 → c ≠ ∞ → a ≤ (1 / (2 * c)) * b → - ENNReal.toReal b ≤ -2 * ENNReal.toReal c * ENNReal.toReal a := by {
@@ -586,5 +586,5 @@ by
     have lim_eq_zero := limit_equiv (fun t => KL (μ_t t) (dμ_t t) dπ) l 0 ⟨lim, contradiction_limit⟩
 
     exact hl.symm lim_eq_zero
-    
+
   }

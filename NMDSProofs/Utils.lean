@@ -321,3 +321,54 @@ by
   }
 
   exact gt_of_ge_of_gt f_le div_lt
+
+-- Under some non-zero and finite conditions, a =  / (2 * (b / (2 * a))) * b
+lemma ennreal_quo_eq {a b : ℝ≥0∞} (hb1 : b ≠ ∞) (hb2 : b ≠ 0) : a = 1 / (2 * (b / (2 * a))) * b :=
+by
+rw[mul_div 2 b (2 * a), @ENNReal.div_eq_inv_mul (2*b) (2 * a)]
+
+have t : ((2 * a)⁻¹ * (2 * b))⁻¹ = (2 * a) * (2 * b)⁻¹ := by {
+  have temp1 : (2 * b) ≠ 0 := by {
+    simp
+    exact hb2
+  }
+  have temp2 : (2 * b) ≠ ∞ := by {
+    simp
+    exact mul_ne_top (by simp) hb1
+  }
+  rw[ENNReal.mul_inv (Or.inr temp2) (Or.inr temp1)]
+  simp
+}
+rw[one_div, t, ←one_div, mul_one_div]
+have t : 2 * a / (2 * b) = a / b := ENNReal.mul_div_mul_left a b (by simp) (by simp)
+rw[t]
+exact (ENNReal.div_mul_cancel hb2 hb1).symm
+
+-- Under some non-zero and finite conditions, a ≤ (1 / (2 * c)) * b → - (b : ℝ) ≤ -2 * (c : ℝ) * (a : ℝ)
+lemma ennreal_quo_ineq (a b c : ℝ≥0∞) (hbI : b ≠ ∞) (hcnn : c ≠ 0) (hcI : c ≠ ∞) (h : a ≤ (1 / (2 * c)) * b) : - ENNReal.toReal b ≤ -2 * ENNReal.toReal c * ENNReal.toReal a := by {
+  have t : 1 / (2 * c) * b = (2 * c)⁻¹ * b := by simp
+  rw [t] at h
+
+  have finite : (2 * c) ≠ ∞ := ENNReal.mul_ne_top (by simp) (hcI)
+  have n_zero : (2 * c) ≠ 0 := mul_ne_zero (by simp) (hcnn)
+  have tt : a * (2 * c) ≤ (2 * c)⁻¹ * b * (2 * c) := by {
+    exact (ENNReal.mul_le_mul_right n_zero finite).mpr h
+  }
+
+  have ttt : (2 * c)⁻¹ * b * (2 * c) = b * ((2 * c)⁻¹ * (2 * c)) := by ring
+  have t : (2 * c)⁻¹ * (2 * c) = 1 := by exact ENNReal.inv_mul_cancel n_zero finite
+  rw [ttt, t, mul_one] at tt
+  have t : ENNReal.toReal (a * (2 * c)) ≤ ENNReal.toReal b := by {
+    exact toReal_mono hbI tt
+  }
+  have tt : ENNReal.toReal (a * (2 * c)) = ENNReal.toReal a * ENNReal.toReal (2 * c) := by simp
+  rw [tt] at t
+  have tt : ENNReal.toReal (2 * c) = ENNReal.toReal 2 * ENNReal.toReal c := by simp
+  rw [tt] at t
+  have tt : ENNReal.toReal a * (ENNReal.toReal 2 * ENNReal.toReal c) = ENNReal.toReal a * ENNReal.toReal 2 * ENNReal.toReal c := by ring
+  rw [tt] at t
+  have tt := neg_le_neg t
+  have t : -(ENNReal.toReal a * ENNReal.toReal 2 * ENNReal.toReal c) = - ENNReal.toReal 2 * ENNReal.toReal c * ENNReal.toReal a := by ring
+  rw [t] at tt
+  exact tt
+}

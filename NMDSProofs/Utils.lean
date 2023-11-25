@@ -140,10 +140,14 @@ by
   have sum_simpl : ∑ i in range (d + 1), c = (d+1) • c := (nsmul_eq_sum_const c (d + 1)).symm
 
   use ((d+1) • c)
+  rw [ENNReal.coe_smul (d + 1) c]
 
   calc ∑ i in range (d + 1), (f i: ℝ≥0∞) < ∑ i in range (d + 1), (c : ℝ≥0∞) := sum_le
   _ = ∑ i in range (d + 1), c := sum_coe
-  _ = (d+1) • c := by rw [sum_simpl]
+  _ = (d+1) • c := by {
+    rw [sum_simpl]
+    exact ENNReal.coe_smul (d + 1) c
+  }
 
 /-ASSUMED LEMMAS-/
 /--
@@ -193,7 +197,7 @@ noncomputable def KL {α : Type _} [MeasurableSpace α] (μ : Measure α) (dμ d
  ∀ a ∈ ]0, ∞[, exp (log a) = (a : ℝ).
 -/
 lemma enn_comp_exp_log (a : ℝ≥0∞) (ha : a ≠ 0) (ha2 : a ≠ ∞) : Real.exp (log a) = ENNReal.toReal a := by
-  by_cases ENNReal.toReal a = 0
+  by_cases h : ENNReal.toReal a = 0
   {
     exfalso
     have t : a = 0 ∨ a = ∞ := (toReal_eq_zero_iff a).mp h

@@ -4,8 +4,8 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 
 import NMDSProofs.Utils
-import NMDSProofs.RKHS
 import NMDSProofs.PushForward
+import NMDSProofs.RKHS
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
@@ -35,11 +35,14 @@ variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ 
 /- The kernel function -/
 variable (k : (Vector ℝ d) → (Vector ℝ d) → ℝ) (h_k : (∀ (x : (Vector ℝ d)), k x ∈ H₀) ∧ (∀ (x : (Vector ℝ d)), (fun y ↦ k y x) ∈ H₀))
 
+def positive_definite_kernel := ∀ (f : ℕ → Vector ℝ d → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
+
+def is_kernel := ∀ (f : (Vector ℝ d) → ℝ), f ∈ H₀ → ∀ (x : (Vector ℝ d)), f x = ⟪f, k x⟫
+
 variable (h_kernel : is_kernel H₀ k) (h_kernel_positive : positive_definite_kernel μ k)
 
 /- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
-
+variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
 
 /-==============================STEEPEST DIRECTION SECTION==============================-/
 
@@ -52,14 +55,14 @@ variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ →
   f  : Vector ℝ d → ℝ
   df : ℕ → Vector ℝ d → ℝ
        i ↦ x ↦ ∂xⁱ f(x)
-  
+
   For vector-valued function, we defined them as follows:
   f  : ℕ → Vector ℝ d → ℝ
        i ↦ x ↦ f(x)ⁱ
   df : ℕ → Vector ℝ d → ℝ
        i ↦ x ↦ ∂xⁱ f(x)ⁱ
 
-  Also, we assume some simple lemmas using the above formalism. Sometimes, these lemmas are not rigorously defined but, in our framework, it is more than enough. 
+  Also, we assume some simple lemmas using the above formalism. Sometimes, these lemmas are not rigorously defined but, in our framework, it is more than enough.
 -/
 
 /- dk : x ↦ i ↦ y ↦ ∂xⁱ k(x, y) -/
@@ -69,7 +72,7 @@ variable (dk : (Vector ℝ d) → ℕ → (Vector ℝ d) → ℝ)
 variable (d_log_π : ℕ → (Vector ℝ d) → ℝ)
 
 /- Definition of the steepest direction ϕ -/
-variable (ϕ : ℕ → (Vector ℝ d) → ℝ) (hϕ : ϕ ∈ H) (dϕ : ℕ → (Vector ℝ d) → ℝ) 
+variable (ϕ : ℕ → (Vector ℝ d) → ℝ) (hϕ : ϕ ∈ H) (dϕ : ℕ → (Vector ℝ d) → ℝ)
 
 def is_phi (ϕ : ℕ → (Vector ℝ d) → ℝ) := ∀ i, ϕ i = (fun x ↦ ∫ y, (d_log_π i y) * (k y x) + (dk y i x) ∂μ)
 
@@ -129,7 +132,7 @@ by
 lemma bound_direction (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (hfb : ‖f‖ = 1) (df : ℕ → (Vector ℝ d) → ℝ) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ ≤ ‖ϕ‖ :=
 by
   -- We rewrite ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) as ⟪f, ϕ⟫.
-  rw [←inner_product_eq_dKL μ H₀ k h_kernel dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 f hf df]
+  rw [←inner_product_eq_dKL μ H₀ k h_kernel H dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 f hf df]
 
   -- We use Cauchy-Schwarz inequality.
   calc ⟪f, ϕ⟫ ≤ ‖⟪f, ϕ⟫‖ := le_abs_self ⟪f, ϕ⟫
@@ -144,7 +147,7 @@ We prove that x ↦ ϕ i x / ‖ϕ‖ is the steepest direction for updating the
 -/
 theorem steepest_descent_trajectory (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (hϕs : (fun i x ↦ ϕ i x / ‖ϕ‖) ∈ H) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * ((fun i x ↦ ϕ i x / ‖ϕ‖) l x) + dϕ l x) ∂μ = ‖ϕ‖ :=
 by
-  rw [←inner_product_eq_dKL μ H₀ k h_kernel dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 (fun i x ↦ ϕ i x / ‖ϕ‖) hϕs dϕ]
+  rw [←inner_product_eq_dKL μ H₀ k h_kernel H dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 (fun i x ↦ ϕ i x / ‖ϕ‖) hϕs dϕ]
 
   -- We rewrite the division as a product of inverse.
   have div_to_mul : ∀i, ∀x, ϕ i x / ‖ϕ‖ = ϕ i x * (1 / ‖ϕ‖) := fun i x ↦ div_eq_mul_one_div (ϕ i x) ‖ϕ‖

@@ -4,7 +4,6 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 
 import NMDSProofs.Utils
-import NMDSProofs.RKHS
 import NMDSProofs.PushForward
 import NMDSProofs.SteepestDirection
 
@@ -34,12 +33,9 @@ example : absolutely_continuous μ ν := absolutely_continuous_trans _h1 _h2
 variable (hμ : is_density μ ν dμ) (hπ : is_density π ν dπ) (mdμ : Measurable dμ) (mdπ : Measurable dπ) (hdμ : ∀x, dμ x ≠ 0 ∧ dμ x ≠ ∞) (hdπ : ∀x, dπ x ≠ 0 ∧ dπ x ≠ ∞)
 
 
-
-
 variable [IsProbabilityMeasure μ] [IsProbabilityMeasure π]
 
 variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
-
 
 /-
   We define a RKHS of ((Vector ℝ d) → ℝ) functions.
@@ -52,7 +48,7 @@ variable (k : (Vector ℝ d) → (Vector ℝ d) → ℝ) (h_k : (∀ (x : (Vecto
 variable (h_kernel : is_kernel H₀ k) (h_kernel_positive : positive_definite_kernel μ k)
 
 /- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable {H : Set (ℕ → (Vector ℝ d) → ℝ)} [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
+variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
 
 /-===============================KERNEL STEIN DISCREPANCY===============================-/
 /-
@@ -72,6 +68,7 @@ variable (h_is_ϕ : is_phi μ k dk d_log_π ϕ)
 
 /- We will use this assumption only when the function is trivially integrable (e.g. derivative of integrable functions). -/
 variable (is_integrable_H₀ : ∀ (f : Vector ℝ d → ℝ), Integrable f μ)
+
 
 /-
 d_log_π_μ : i ↦ x ↦ ∂xⁱ log (π(x) / μ(x))
@@ -268,9 +265,9 @@ by
 /--
   We show that it exists a finite and positive θ such that KL(μ || π) ≤ (1 / (2θ)) * KSD(μ | π)
 -/
-theorem Stein_log_Sobolev (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_π_μ KSD) : ∃ θ > 0, (θ ≠ ∞) ∧ (KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (KSD μ π)) :=
+theorem Stein_log_Sobolev (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_π_μ KSD) : ∃ θ > 0, ((θ ≠ ∞) ∧ (KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (KSD μ π))) :=
 by
-by_cases μ = π
+by_cases h : μ = π
 {
   -- μ = π → KSD μ π = 0
   rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD hstein hksd).mp h]
@@ -280,8 +277,6 @@ by_cases μ = π
 
   -- Use any θ > 0 ∧ θ ≠ ∞
   use 1
-  constructor
-  {simp}
   simp
 }
 {

@@ -30,16 +30,7 @@ variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
 /-
   We define a RKHS of ((Vector ℝ d) → ℝ) functions.
 -/
-variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)]
-
-/- The kernel function -/
-variable (k : (Vector ℝ d) → (Vector ℝ d) → ℝ) (h_k : (∀ (x : (Vector ℝ d)), k x ∈ H₀) ∧ (∀ (x : (Vector ℝ d)), (fun y ↦ k y x) ∈ H₀))
-
-def positive_definite_kernel := ∀ (f : ℕ → Vector ℝ d → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
-
-def is_kernel := ∀ (f : (Vector ℝ d) → ℝ), f ∈ H₀ → ∀ (x : (Vector ℝ d)), f x = ⟪f, k x⟫
-
-variable (h_kernel : is_kernel H₀ k) (h_kernel_positive : positive_definite_kernel μ k)
+variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [s : RKHS H₀]
 
 /- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
 variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
@@ -74,9 +65,9 @@ variable (d_log_π : ℕ → (Vector ℝ d) → ℝ)
 /- Definition of the steepest direction ϕ -/
 variable (ϕ : ℕ → (Vector ℝ d) → ℝ) (hϕ : ϕ ∈ H) (dϕ : ℕ → (Vector ℝ d) → ℝ)
 
-def is_phi (ϕ : ℕ → (Vector ℝ d) → ℝ) := ∀ i, ϕ i = (fun x ↦ ∫ y, (d_log_π i y) * (k y x) + (dk y i x) ∂μ)
+def is_phi (ϕ : ℕ → (Vector ℝ d) → ℝ) := ∀ i, ϕ i = (fun x ↦ ∫ y, (d_log_π i y) * (s.k y x) + (dk y i x) ∂μ)
 
-variable (h_is_ϕ : is_phi μ k dk d_log_π ϕ)
+variable (h_is_ϕ : is_phi μ H₀ dk d_log_π ϕ)
 
 /- We allow ourselve to assume that for easier writing. We will use this only when f is trivially finite (e.g. product of finite functions) and well-defined. -/
 variable (is_integrable_H : ∀ (f : ℕ → Vector ℝ d → ℝ), ∀ i ∈ range (d + 1), Integrable (f i) μ)
@@ -91,30 +82,30 @@ by
   simp_rw [h_is_ϕ]
 
   -- First, we get the integral out of the inner product.
-  have invert_inner_integral : ∀i, ⟪(f i), (fun x ↦ (∫ y, d_log_π i y * k y x + dk y i x ∂μ))⟫ = ∫ y, ⟪(f i), (fun y x ↦ d_log_π i y * k y x + dk y i x) y⟫ ∂μ := fun i ↦ inter_inner_integral_right μ (f i) (fun y x ↦ d_log_π i y * k y x + dk y i x)
+  have invert_inner_integral : ∀i, ⟪(f i), (fun x ↦ (∫ y, d_log_π i y * s.k y x + dk y i x ∂μ))⟫ = ∫ y, ⟪(f i), (fun y x ↦ d_log_π i y * s.k y x + dk y i x) y⟫ ∂μ := fun i ↦ inter_inner_integral_right μ (f i) (fun y x ↦ d_log_π i y * s.k y x + dk y i x)
   simp_rw [invert_inner_integral]
 
   -- Then, we switch the integral with the finite sum using *is_integrable_H* assumption.
-  have invert_sum_integral : ∑ i in range (d + 1), ∫ (y : Vector ℝ d), (fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫) i y ∂μ = ∫ (y : Vector ℝ d), ∑ i in range (d + 1), (fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫) i y ∂μ := by {
+  have invert_sum_integral : ∑ i in range (d + 1), ∫ (y : Vector ℝ d), (fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * s.k y x + dk y i x⟫) i y ∂μ = ∫ (y : Vector ℝ d), ∑ i in range (d + 1), (fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * s.k y x + dk y i x⟫) i y ∂μ := by {
     symm
     exact integral_finset_sum (range (d + 1)) (by {
       intros i iin
-      exact is_integrable_H ((fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫)) i iin
+      exact is_integrable_H ((fun i y ↦ ⟪f i, fun x ↦ d_log_π i y * s.k y x + dk y i x⟫)) i iin
     })
   }
   simp_rw [invert_sum_integral]
 
   -- We use the linearity of inner product to develop it and get the constant d_log_π i y out.
-  have linear_inner : ∀y, ∀i, ⟪f i, fun x ↦ d_log_π i y * k y x + dk y i x⟫ = d_log_π i y * ⟪f i, fun x ↦ k y x⟫ + ⟪f i, fun x ↦ dk y i x⟫ := fun y i ↦ inner_linear_left (f i) (k y) (dk y i) (d_log_π i y)
+  have linear_inner : ∀y, ∀i, ⟪f i, fun x ↦ d_log_π i y * s.k y x + dk y i x⟫ = d_log_π i y * ⟪f i, fun x ↦ s.k y x⟫ + ⟪f i, fun x ↦ dk y i x⟫ := fun y i ↦ inner_linear_left (f i) (s.k y) (dk y i) (d_log_π i y)
   simp_rw [linear_inner]
 
   -- We use reproducing properties of H₀ to rewrite ⟪f i, k y⟫ as f i y and ⟪f i, dk y i⟫ as df i y.
-  have sum_reproducing : ∀ y, ∑ i in range (d + 1), (d_log_π i y * ⟪f i, fun x => k y x⟫ + ⟪f i, fun x => dk y i x⟫) = ∑ i in range (d + 1), (d_log_π i y * (f i y) + df i y) := by {
+  have sum_reproducing : ∀ y, ∑ i in range (d + 1), (d_log_π i y * ⟪f i, fun x => s.k y x⟫ + ⟪f i, fun x => dk y i x⟫) = ∑ i in range (d + 1), (d_log_π i y * (f i y) + df i y) := by {
     intro y
-    have reproducing : ∀ x, ∀ i ∈ range (d + 1), ⟪f i, fun y ↦ k x y⟫ = f i x := by {
+    have reproducing : ∀ x, ∀ i ∈ range (d + 1), ⟪f i, fun y ↦ s.k x y⟫ = f i x := by {
       intros x i iin
       symm
-      apply h_kernel (f i)
+      apply s.reproducing (f i)
       exact h1 f hf i iin
     }
     apply sum_congr (Eq.refl _)
@@ -132,7 +123,7 @@ by
 lemma bound_direction (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (hfb : ‖f‖ = 1) (df : ℕ → (Vector ℝ d) → ℝ) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) ∂μ ≤ ‖ϕ‖ :=
 by
   -- We rewrite ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * (f l x) + df l x) as ⟪f, ϕ⟫.
-  rw [←inner_product_eq_dKL μ H₀ k h_kernel H dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 f hf df]
+  rw [←inner_product_eq_dKL μ H₀ H dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 f hf df]
 
   -- We use Cauchy-Schwarz inequality.
   calc ⟪f, ϕ⟫ ≤ ‖⟪f, ϕ⟫‖ := le_abs_self ⟪f, ϕ⟫
@@ -147,7 +138,7 @@ We prove that x ↦ ϕ i x / ‖ϕ‖ is the steepest direction for updating the
 -/
 theorem steepest_descent_trajectory (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (hϕs : (fun i x ↦ ϕ i x / ‖ϕ‖) ∈ H) : ∫ x, ∑ l in range (d + 1), ((d_log_π l x) * ((fun i x ↦ ϕ i x / ‖ϕ‖) l x) + dϕ l x) ∂μ = ‖ϕ‖ :=
 by
-  rw [←inner_product_eq_dKL μ H₀ k h_kernel H dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 (fun i x ↦ ϕ i x / ‖ϕ‖) hϕs dϕ]
+  rw [←inner_product_eq_dKL μ H₀ H dk d_log_π ϕ hϕ h_is_ϕ is_integrable_H h1 h2 (fun i x ↦ ϕ i x / ‖ϕ‖) hϕs dϕ]
 
   -- We rewrite the division as a product of inverse.
   have div_to_mul : ∀i, ∀x, ϕ i x / ‖ϕ‖ = ϕ i x * (1 / ‖ϕ‖) := fun i x ↦ div_eq_mul_one_div (ϕ i x) ‖ϕ‖

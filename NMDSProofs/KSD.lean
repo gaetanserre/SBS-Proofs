@@ -40,12 +40,11 @@ variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
 /-
   We define a RKHS of ((Vector ℝ d) → ℝ) functions.
 -/
-variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)]
+variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [s : RKHS H₀]
 
-/- The kernel function -/
-variable (k : (Vector ℝ d) → (Vector ℝ d) → ℝ) (h_k : (∀ (x : (Vector ℝ d)), k x ∈ H₀) ∧ (∀ (x : (Vector ℝ d)), (fun y ↦ k y x) ∈ H₀))
+def positive_definite_kernel := ∀ (f : ℕ → Vector ℝ d → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
 
-variable (h_kernel : is_kernel H₀ k) (h_kernel_positive : positive_definite_kernel μ k)
+variable (h_kernel_positive : positive_definite_kernel μ H₀)
 
 /- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
 variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
@@ -64,7 +63,7 @@ variable (d_log_π : ℕ → (Vector ℝ d) → ℝ)
 /- Definition of the steepest direction ϕ -/
 variable (ϕ : ℕ → (Vector ℝ d) → ℝ) (hϕ : ϕ ∈ H) (dϕ : ℕ → (Vector ℝ d) → ℝ)
 
-variable (h_is_ϕ : is_phi μ k dk d_log_π ϕ)
+variable (h_is_ϕ : is_phi μ H₀ dk d_log_π ϕ)
 
 /- We will use this assumption only when the function is trivially integrable (e.g. derivative of integrable functions). -/
 variable (is_integrable_H₀ : ∀ (f : Vector ℝ d → ℝ), Integrable f μ)
@@ -106,7 +105,7 @@ variable (KSD : Measure (Vector ℝ d) → Measure (Vector ℝ d) → ℝ)
 /--
 KSD(μ | π) = ⟪∇log π/μ, Pμ ∇log π/μ⟫_L²(μ). We assume here that KSD is also equal to ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ.
 -/
-def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_π_μ i x * k x x' * d_log_π_μ i x') ∂μ) ∂μ) ∧ (KSD μ π = ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ)
+def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_log_π_μ i x * s.k x x' * d_log_π_μ i x') ∂μ) ∂μ) ∧ (KSD μ π = ∫ x, ∑ l in range (d + 1), (d_log_π l x * ϕ l x + dϕ l x) ∂μ)
 
 /-
   KSD(μ | π) is originally defined as ‖ϕ^⋆‖²_H, it is therefore non-negative.
@@ -121,7 +120,7 @@ variable (hstein : SteinClass ϕ dπ)
 /--
   We show that, if ϕ is in the Stein class of π, KSD is a valid discrepancy measure i.e. μ = π ↔ KSD(μ | π) = 0.
 -/
-lemma KSD_is_valid_discrepancy (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_π_μ KSD) : μ = π ↔ KSD μ π = 0 :=
+lemma KSD_is_valid_discrepancy (hksd : is_ksd μ π H₀ d_log_π ϕ dϕ d_log_π_μ KSD) : μ = π ↔ KSD μ π = 0 :=
 by
   constructor
   {
@@ -248,7 +247,7 @@ variable (hkl_iff : μ = π ↔ KL μ dμ dπ = 0) (hkl_diff : μ ≠ π ↔ 0 <
 /--
   We show that μ ≠ π → 0 < KSD μ π (trivial using *KSD_is_valid_discrepancy*).
 -/
-lemma μ_neq_π_imp_ksd_nn (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_π_μ KSD) : μ ≠ π → 0 < KSD μ π :=
+lemma μ_neq_π_imp_ksd_nn (hksd : is_ksd μ π H₀ d_log_π ϕ dϕ d_log_π_μ KSD) : μ ≠ π → 0 < KSD μ π :=
 by
   intro h
   by_contra h2
@@ -257,7 +256,7 @@ by
   cases split_le with
     |inl lt => { linarith }
     |inr eq => {
-      have μ_eq_π := (KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD hstein hksd).mpr eq
+      have μ_eq_π := (KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD hstein hksd).mpr eq
 
       exact h μ_eq_π
     }
@@ -265,12 +264,12 @@ by
 /--
   We show that it exists a finite and positive θ such that KL(μ || π) ≤ (1 / (2θ)) * KSD(μ | π)
 -/
-theorem Stein_log_Sobolev (hksd : is_ksd μ π k d_log_π ϕ dϕ d_log_π_μ KSD) : ∃ θ > 0, ((θ ≠ ∞) ∧ (KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (KSD μ π))) :=
+theorem Stein_log_Sobolev (hksd : is_ksd μ π H₀ d_log_π ϕ dϕ d_log_π_μ KSD) : ∃ θ > 0, ((θ ≠ ∞) ∧ (KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (KSD μ π))) :=
 by
 by_cases h : μ = π
 {
   -- μ = π → KSD μ π = 0
-  rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD hstein hksd).mp h]
+  rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD hstein hksd).mp h]
 
   -- μ = π → KL μ π = 0
   rw [hkl_iff.mp h]
@@ -293,7 +292,7 @@ by_cases h : μ = π
     constructor
     {
       -- We use *μ_neq_π_imp_ksd_nn* as μ ≠ π.
-      exact μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD ksd_nn hstein hksd h
+      exact μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD ksd_nn hstein hksd h
     }
     {
       -- KL is finite (in our framework, as μ << π << ν).
@@ -322,7 +321,7 @@ by_cases h : μ = π
     {
       -- As μ ≠ π, 0 < KSD(μ | π) and thus, KSD(μ | π) ≠ 0.
       have enn_KSD_neq_0 : ENNReal.ofReal (KSD μ π) ≠ 0 := by {
-        have KSD_ge_0 := μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ k h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD ksd_nn hstein hksd h
+        have KSD_ge_0 := μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive d_log_π ϕ dϕ is_integrable_H₀ d_log_π_μ hd_log_π_μ dπ' hπ' KSD ksd_nn hstein hksd h
 
         have enn_KSD_ge_0 := Iff.mpr ofReal_pos KSD_ge_0
 

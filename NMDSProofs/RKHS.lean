@@ -31,7 +31,7 @@ variable {d : ℕ}
 /-
   We define a RKHS of ((Vector ℝ d) → ℝ) functions.
 -/
-variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (Vector ℝ d → ℝ)] [RKHS H₀]
+variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (Vector ℝ d → ℝ)] [s : RKHS H₀]
 
 /- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
 variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [Inner ℝ (ℕ → Vector ℝ d → ℝ)]
@@ -57,7 +57,7 @@ variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
 /--
   H ⊆ L2(μ) i.e., ∀ f ∈ H, ∫⁻ Ω ||f x||^2 ∂μ < ∞.
 -/
-theorem H_subset_of_L2 [s : RKHS H₀] (μ : Measure (Vector ℝ d)) (h1 : product_RKHS H H₀) (h2 : integral_is_finite μ (fun x ↦ s.k x x)) (h3 : norm_H H) : ∀ f ∈ H, ∫⁻ x in Set.univ, ENNReal.ofReal ‖fun i ↦ f i x‖^2 ∂μ < ∞ :=
+theorem H_subset_of_L2 (μ : Measure (Vector ℝ d)) (h1 : product_RKHS H H₀) (h2 : integral_is_finite μ (fun x ↦ s.k x x)) (h3 : norm_H H) : ∀ f ∈ H, ∫⁻ x in Set.univ, ENNReal.ofReal ‖fun i ↦ f i x‖^2 ∂μ < ∞ :=
 by
   intros f finH
 

@@ -21,8 +21,7 @@ set_option maxHeartbeats 4000000
 -/
 class RKHS {E : Type*} {F : Type*} [Inner F (E → F)] (H : Set (E → F)) where
   k : E → E → F
-  membership_left : ∀ (x : E), k x ∈ H
-  membership_right : ∀ (x : E), (fun y ↦ k y x) ∈ H
+  membership  : ∀ (x : E), k x ∈ H
   reproducing : ∀ f ∈ H, ∀ (x : E), f x = inner f (k x)
 
 
@@ -170,7 +169,7 @@ by
   _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have reproducing_prop : ∀ x, ⟪s.k x, s.k x⟫ = s.k x x := by {
       intro x
-      rw [s.reproducing (s.k x) (s.membership_left x) x]
+      rw [s.reproducing (s.k x) (s.membership x) x]
     }
     simp_rw [reproducing_prop]
   }

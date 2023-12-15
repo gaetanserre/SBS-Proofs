@@ -1,6 +1,6 @@
 import os
 
-PROJECT_NAME = "NMDSProofs"
+PROJECT_NAME = "SBSProofs"
 
 # Get path to all Lean files
 for file in os.listdir(PROJECT_NAME):

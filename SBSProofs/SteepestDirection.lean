@@ -75,7 +75,7 @@ d_ln_π_μ : i ↦ x ↦ ∂xⁱ ln (π(x) / μ(x))
 variable (d_ln_π_μ : ℕ → (Vector ℝ d) → ℝ)
 
 /--
-TODO: ϕ i = Tk ∂_x(ln π(⬝) - ln μ(⬝))
+ϕ i = Tk ∂_x(ln π(⬝) - ln μ(⬝)). Trivial using the fact that ϕ is in the Stein class of k and integration by parts. Very heavy in Lean, so we assume it.
 -/
 lemma ϕ_eq : ∀ i ∈ range (d + 1), (ϕ_ μ H₀ dk d_ln_π) i = int_operator H₀ μ (d_ln_π_μ i) := by sorry
 

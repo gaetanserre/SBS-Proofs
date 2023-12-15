@@ -236,7 +236,7 @@ variable [Norm (Vector ℝ d)]
 /--
   Unformal but highly pratical multivariate integration by parts.
 -/
-theorem mv_integration_by_parts (f : Vector ℝ d → ℝ) (g grad_f dg : ℕ → (Vector ℝ d) → ℝ) (h : ∀ x, tends_to_infty (fun (x : Vector ℝ d) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Set.univ, f x * (∑ i in range (d + 1), dg i x) ∂μ = - ∫ x in Set.univ, (∑ i in range (d + 1), grad_f i x * g i x) ∂μ := by sorry
+theorem mv_integration_by_parts (Ω : Set (Vector ℝ d)) (f : Vector ℝ d → ℝ) (g grad_f dg : ℕ → (Vector ℝ d) → ℝ) (h : ∀ x, tends_to_infty (fun (x : Vector ℝ d) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i in range (d + 1), dg i x) ∂μ = - ∫ x in Ω, (∑ i in range (d + 1), grad_f i x * g i x) ∂μ := by sorry
 
 
 noncomputable def exp (a : ℝ) := ENNReal.ofReal (Real.exp a)

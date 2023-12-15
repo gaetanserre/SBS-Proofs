@@ -168,7 +168,7 @@ by
     rw [density_integration π ν dπ hπ (fun x ↦ (∑ l in range (d + 1), dϕ l x)) Set.univ]
 
     -- Use the integration by parts on the right-hand side integral.
-    rw [mv_integration_by_parts (fun x ↦ ENNReal.toReal (dπ x)) ϕ dπ' dϕ (hstein)]
+    rw [mv_integration_by_parts (Set.univ) (fun x ↦ ENNReal.toReal (dπ x)) ϕ dπ' dϕ (hstein)]
     simp
   }
   {

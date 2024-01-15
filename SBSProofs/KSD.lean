@@ -152,7 +152,7 @@ by
 
     -- Get ENNReal.toReal (dπ x) in the sum (a * ∑ b = ∑ b * a).
     have mul_dist : ∀x, ENNReal.toReal (dπ x) * (∑ l in range (d + 1), (fun l ↦ d_ln_π l x * ϕ l x) l) = ∑ l in range (d + 1), (fun l ↦ d_ln_π l x * ϕ l x) l * ENNReal.toReal (dπ x) := by {
-      have mul_dist_sum : ∀ (a : ℝ), ∀ (f : ℕ → ℝ), (∑ i in range (d + 1), f i) * a = ∑ i in range (d + 1), f i * a := fun a f ↦ Finset.sum_mul
+      have mul_dist_sum : ∀ (a : ℝ), ∀ (f : ℕ → ℝ), (∑ i in range (d + 1), f i) * a = ∑ i in range (d + 1), f i * a := λ a f ↦ sum_mul (range (d + 1)) (fun i ↦ f i) a
       intro x
       rw [mul_comm]
       exact mul_dist_sum (ENNReal.toReal (dπ x)) (fun l ↦ d_ln_π l x * ϕ l x)

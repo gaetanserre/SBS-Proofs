@@ -376,3 +376,5 @@ lemma ennreal_quo_ineq (a b c : ℝ≥0∞) (hbI : b ≠ ∞) (hcnn : c ≠ 0) (
   rw [t] at tt
   exact tt
 }
+
+lemma norm_eq_zero_ (f : ℕ → Vector ℝ d → ℝ) : ‖f‖ = 0 ↔ f = 0 := by sorry

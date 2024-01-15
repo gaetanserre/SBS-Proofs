@@ -51,7 +51,7 @@ variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [NormedAddCommGroup (ℕ →
 
 /-===============================KERNEL STEIN DISCREPANCY===============================-/
 /-
-Here, we prove that KSD(μ | π) is a valid discrepancy measure, that the Stein log Sobolev inequality holds, and the exponential convergence of SVGD.
+Here, we prove that KSD(μ | π) is a valid discrepancy measure and that π is the only fixed point of Φₜ(μ).
 -/
 
 /- dk : x ↦ i ↦ y ↦ ∂xⁱ k(x, y) -/
@@ -110,6 +110,7 @@ def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in ran
 /-
   KSD(μ | π) is originally defined as ‖ϕ^⋆‖²_H, it is therefore non-negative.
 -/
+def is_ksd_norm := KSD μ π = ‖ϕ_ μ H₀ dk d_ln_π‖
 variable (ksd_nn : 0 ≤ KSD μ π)
 
 /-
@@ -240,292 +241,23 @@ by
     simp_rw [mul_one, dμ_propor]
   }
 
-/-
-  Basic proprieties of KL.
--/
-variable (hkl_iff : μ = π ↔ KL μ dμ dπ = 0) (hkl_diff : μ ≠ π ↔ 0 < KL μ dμ dπ)
-
 /--
-  We show that μ ≠ π → 0 < KSD μ π (trivial using *KSD_is_valid_discrepancy*).
+  π is the only fixed point of Φₜ(μ). We proved that by showing that, if μ = π, ϕ^* = 0 and ϕ^* ≠ 0 otherwise.
 -/
-lemma μ_neq_π_imp_ksd_nn (hksd : is_ksd μ π H₀ dk d_ln_π dϕ d_ln_π_μ KSD) : μ ≠ π → 0 < KSD μ π :=
+lemma π_unique_fixed_point (hksd : is_ksd μ π H₀ dk d_ln_π dϕ d_ln_π_μ KSD) (ksd_norm : is_ksd_norm μ π H₀ dk d_ln_π KSD) : (μ = π → ϕ_ μ H₀ dk d_ln_π = 0) ∧ (μ ≠ π → ϕ_ μ H₀ dk d_ln_π ≠ 0) :=
 by
-  intro h
-  by_contra h2
-  push_neg at h2
-  have split_le := LE.le.lt_or_eq h2
-  cases split_le with
-    |inl lt => { linarith }
-    |inr eq => {
-      have μ_eq_π := (KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive dk d_ln_π dϕ is_integrable_H₀ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD hstein hksd).mpr eq
-
-      exact h μ_eq_π
-    }
-
-/--
-  We show that it exists a finite and positive θ such that KL(μ || π) ≤ (1 / (2θ)) * KSD(μ | π)
--/
-theorem Stein_log_Sobolev (hksd : is_ksd μ π H₀ dk d_ln_π dϕ d_ln_π_μ KSD) : ∃ θ > 0, ((θ ≠ ∞) ∧ (KL μ dμ dπ ≤ (1 / (2*θ)) * ENNReal.ofReal (KSD μ π))) :=
-by
-  let ϕ := (ϕ_ μ H₀ dk d_ln_π)
-
-  by_cases h : μ = π
+  have KSD_discrepancy := KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive dk d_ln_π dϕ is_integrable_H₀ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD hstein hksd
+  constructor
   {
-    -- μ = π → KSD μ π = 0
-    rw [(KSD_is_valid_discrepancy μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive dk d_ln_π dϕ is_integrable_H₀ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD hstein hksd).mp h]
-
-    -- μ = π → KL μ π = 0
-    rw [hkl_iff.mp h]
-
-    -- Use any θ > 0 ∧ θ ≠ ∞
-    use 1
-    simp
+    -- μ = π → ϕ^* = 0
+    intro μ_eq_π
+    rw [ksd_norm, norm_eq_zero_] at KSD_discrepancy
+    exact KSD_discrepancy.mp μ_eq_π
   }
   {
-    -- μ ≠ π
-    push_neg at h
-    -- Let θ = KSD(μ | π) / (2 KL(μ || π)
-    use ENNReal.ofReal (KSD μ π) / (2 * KL μ dμ dπ)
-    constructor
-    {
-      -- We show that 0 < KSD(μ | π) / (2 KL(μ || π) by showing that 0 < KSD(μ | π) and 2 KL(μ || π) ≠ ∞ (as both are non-negative).
-      have imp_lt : (0 < KSD μ π) ∧ ((2 * KL μ dμ dπ) ≠ ∞) → 0 < ENNReal.ofReal (KSD μ π) / (2 * KL μ dμ dπ) := by simp
-      apply imp_lt
-
-      constructor
-      {
-        -- We use *μ_neq_π_imp_ksd_nn* as μ ≠ π.
-        exact μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive dk d_ln_π dϕ is_integrable_H₀ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD ksd_nn hstein hksd h
-      }
-      {
-        -- KL is finite (in our framework, as μ << π << ν).
-        exact mul_ne_top (by simp) (ofReal_ne_top)
-      }
-    }
-
-    {
-      -- μ ≠ π → KL(μ || π) ≠ 0
-      have KL_neq_0 : KL μ dμ dπ ≠ 0 := Iff.mp zero_lt_iff (hkl_diff.mp h)
-      constructor
-      {
-        -- We show that KSD(μ | π) / (2 KL(μ || π) ≠ ∞ by showing that KSD(μ | π) ≠ ∞ and 2 (KL(μ || π))⁻¹ ≠ ∞ (as both are non-negative).
-        have div_as_inv : ENNReal.ofReal (KSD μ π) / (2 * KL μ dμ dπ) = ENNReal.ofReal (KSD μ π) * (2 * KL μ dμ dπ)⁻¹ := rfl
-        rw [div_as_inv]
-        have enn_KSD_finite : ENNReal.ofReal (KSD μ π) ≠ ∞ := ofReal_ne_top
-
-        -- We show that (KL(μ || π))⁻¹ ≠ ∞ as KL(μ || π) ≠ 0
-        have inv_KL_finite : (2 * KL μ dμ dπ)⁻¹ ≠ ∞ := by {
-          have neq_zero : 2 * KL μ dμ dπ ≠ 0 := by {simp; exact KL_neq_0}
-          exact inv_ne_top.mpr neq_zero
-        }
-
-        exact mul_ne_top enn_KSD_finite inv_KL_finite
-      }
-      {
-        -- As μ ≠ π, 0 < KSD(μ | π) and thus, KSD(μ | π) ≠ 0.
-        have enn_KSD_neq_0 : ENNReal.ofReal (KSD μ π) ≠ 0 := by {
-          have KSD_ge_0 := μ_neq_π_imp_ksd_nn μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive dk d_ln_π dϕ is_integrable_H₀ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD ksd_nn hstein hksd h
-
-          have enn_KSD_ge_0 := Iff.mpr ofReal_pos KSD_ge_0
-
-          exact Iff.mp zero_lt_iff enn_KSD_ge_0
-        }
-
-        -- We show that KL(μ || π) is in fact equal to 1 / (2 * KSD (μ | π) / (2 * KL(μ || π)) * KSD (μ | π)
-        apply Eq.le
-        exact ennreal_quo_eq (ofReal_ne_top) (enn_KSD_neq_0)
-      }
-    }
-  }
-
-/-
-  In this sub-section, we define the flow of measures μ_t:
-  μ_t : ℝ≥0 → Measure (Vector ℝ d)
-        t ↦ T_t#μ, where T_t is the trajectories associated with ϕ(μ_t t), the steepest direction to update μ_t t for minimizing ∂t KL(μ_t t || π).
-  We also define everything that we need to use previous results with each measures given by μ_t.
--/
-variable (μ_t : ℝ≥0 → Measure (Vector ℝ d)) (dμ_t : ℝ≥0 → (Vector ℝ d → ℝ≥0∞)) (hμ_t : ∀ t, is_density (μ_t t) ν (dμ_t t)) (h_prob : ∀ t, IsProbabilityMeasure (μ_t t))
-variable (hdμ_t :∀t, ∀ (x : Vector ℝ d), dμ_t t x ≠ 0 ∧ dμ_t t x ≠ ⊤)
-
-/-
-  d_KL_t : t ↦ ∂t KL(μ_t t || π)
--/
-variable (d_KL_t : ℝ≥0 → ℝ)
-
-variable (ksd_nn_t : ∀t, 0 ≤ KSD (μ_t t) π)
-
-/-
-  Our definition of the Gronwall's lemma.
--/
-variable [MeasureSpace ℝ≥0] [NormedAddCommGroup ℝ≥0∞] [NormedSpace ℝ ℝ≥0∞] [LocallyFiniteOrder ℝ≥0]
-variable (gronwall : ∀ (ψ : ℝ≥0 → ℝ), ∀ t > 0, d_KL_t t ≤ ψ t * ENNReal.toReal (KL (μ_t t) (dμ_t t) dπ) → KL (μ_t t) (dμ_t t) dπ ≤ KL (μ_t 0) (dμ_t 0) dπ * exp (∫ s in Icc 0 t, ψ s))
-
-/-
-  We assume here that ∂t KL(μ_t t || π) = - KSD(μ_t t | π) (showed in the paper).
--/
-variable (dkl_ksd : ∀t, d_KL_t t ≤ - KSD (μ_t t) π)
-
-/-
-  As showed in the paper (and reminded above), t ↦ KL(μ_t t || π) is decreasing.
--/
-variable (kl_decreasing : ∀t, ∀t', t < t' → KL (μ_t t') (dμ_t t') dπ ≤ KL (μ_t t) (dμ_t t) dπ) (kl_finite : ∀t, KL (μ_t t) (dμ_t t) dπ ≠ ∞)
-
-/--
-If t ↦ KL(μ_t t || π) is bounded from below by a strictly positive constant, it means that μ_t cannot be made arbitrary close to π and thus that t ↦ KSD(μ_t | π) can be bounded by a striclty positive constant. Admitted here; we plan on formally show it in the future.
--/
-lemma KL_bounded_imp_bounded_KSD (α : ℝ≥0∞) (hα : 0 < α) (hkl : ∀t, α < KL (μ_t t) (dμ_t t) dπ) : ∃ (β : ℝ≥0∞), (∀t, β < ENNReal.ofReal (KSD (μ_t t) π)) ∧ (0 < β) ∧ (β ≠ ∞) := by sorry
-
-/--
-Squeeze theorem: ∀t, 0 ≤ KL(μ_t t || π) ≤ f(t) ∧ lim_(t → ∞) f(t) = 0 → lim_(t → ∞) KL(μ_t t || π) = 0.
--/
-lemma squeeze_th_KL (f : ℝ≥0 → ℝ≥0∞) (h : limit f 0) : (∀t>0, KL (μ_t t) (dμ_t t) dπ ≤ f t) → limit (fun t ↦ KL (μ_t t) (dμ_t t) dπ) 0 := by sorry
-
-/--
-  We show the convergence of SVGD i.e. lim_(t → ∞) KL (μ_t || π) = 0.
--/
-theorem convergence_SVGD : limit (fun t ↦ KL (μ_t t) (dμ_t t) dπ) 0 :=
-by
-
-  -- As t ↦ KL (μ_t || π) is decreasing and bound from below, it admits a limit l ≥ 0.
-  have admits_limit := decreasing_bounded_function_limit (fun t ↦ KL (μ_t t) (dμ_t t) dπ) 0 (by simp) kl_decreasing
-  rcases admits_limit with ⟨l, lim, _lim_pos, KL_bounded⟩
-
-  -- We proceed by cases on the value of l. If l = 0, the proof is finished. Otherwise, we proceed by contradiction by showing that l ≠ 0 → l = 0.
-  by_cases hl : 0 = l
-  {
-    rwa [hl]
-  }
-  {
-    exfalso
-    push_neg at hl
-    have lim_nn : 0 < l := Iff.mpr zero_lt_iff (Ne.symm hl)
-
-    -- We use the *KL_bounded_imp_bounded_KSD* to extract 0 < γ < KSD(μ_t | π)
-    have KSD_bounded := KL_bounded_imp_bounded_KSD π dπ KSD μ_t dμ_t l lim_nn KL_bounded
-    rcases KSD_bounded with ⟨γ, KSD_bounded, γ_nn, γ_finite⟩
-
-    -- We use the fact that KSD is bounded to specialize the log Sobolev inequality with λ = KSD(μ_t | π) / (2 * KL(μ_t || π)).
-    have log_Sobolev : ∀t, KL (μ_t t) (dμ_t t) dπ = 1 / (2 * (ENNReal.ofReal (KSD (μ_t t) π) / (2 * KL (μ_t t) (dμ_t t) dπ))) * ENNReal.ofReal (KSD (μ_t t) π) := by {
-    intro t
-    have enn_KSD_finite : ENNReal.ofReal (KSD (μ_t t) π) ≠ ∞ := ofReal_ne_top
-    have enn_KSD_nn : ENNReal.ofReal (KSD (μ_t t) π) ≠ 0 := by {
-      have t : 0 < ENNReal.ofReal (KSD (μ_t t) π) := by {
-        specialize KSD_bounded t
-        exact gt_trans KSD_bounded γ_nn
-      }
-      exact zero_lt_iff.mp t
-    }
-    exact ennreal_quo_eq enn_KSD_finite enn_KSD_nn
-  }
-
-    -- We prove that γ/2KL(μ_0 || π) < KSD(μ_t | π) / 2KL(μ_t | π) (we plan on using it with the Stein log-Sobolev inequality).
-    have gamma_star := decrease_bound (fun t ↦ KL (μ_t t) (dμ_t t) dπ) (fun t ↦ ENNReal.ofReal (KSD (μ_t t) π)) kl_decreasing (fun x ↦ Iff.mp zero_lt_iff (gt_trans (KL_bounded x) lim_nn)) kl_finite γ KSD_bounded
-
-    -- γ/2KL(μ_0 || π) ≠ 0
-    have gamma_star_neq : γ / (2 * KL (μ_t 0) (dμ_t 0) dπ) ≠ 0 := by {
-        have two_KL_finite : (2 * KL (μ_t 0) (dμ_t 0) dπ) ≠ ∞ := by {
-          rw [two_mul]
-          exact add_ne_top.mpr ⟨kl_finite 0, kl_finite 0⟩
-        }
-        have inv_two_KL_neq : (2 * KL (μ_t 0) (dμ_t 0) dπ)⁻¹ ≠ 0 := ENNReal.inv_ne_zero.mpr two_KL_finite
-
-        have γ_neq : γ ≠ 0 := Iff.mp zero_lt_iff γ_nn
-
-
-        rw [ENNReal.div_eq_inv_mul]
-        exact mul_ne_zero inv_two_KL_neq γ_neq
-    }
-
-    -- γ/2KL(μ_0 || π) ≠ ∞
-    have gamma_star_finite : γ / (2 * KL (μ_t 0) (dμ_t 0) dπ) ≠ ∞ := by {
-        rw [ENNReal.div_eq_inv_mul]
-        have KL_finite : (2 * KL (μ_t 0) (dμ_t 0) dπ)⁻¹ ≠ ∞ := by {
-          have tmp : (2 * KL (μ_t 0) (dμ_t 0) dπ) ≠ 0 := by {
-            rw [two_mul]
-            simp
-            exact Iff.mp zero_lt_iff (gt_trans (KL_bounded 0) lim_nn)
-          }
-          exact inv_ne_top.mpr tmp
-        }
-        exact mul_ne_top KL_finite γ_finite
-      }
-
-    -- Using the Stein log-Sobolev and the gamma_star inequality, we are able to show that, ∀t, KL(μ_t || π) < 1/(2*γ/2KL(μ_0 || π)) * KSD(μ_t | π).
-    have bounded_log_Sobolev : ∀t, KL (μ_t t) (dμ_t t) dπ < (1/(2 * (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) )) * ENNReal.ofReal (KSD (μ_t t) π) := by
-    {
-      intro t
-      specialize log_Sobolev t
-      specialize gamma_star t
-
-      have le_quotient : ∀(a b : ℝ≥0∞), a ≠ 0 → a < b → 1/(2*b) < 1/(2*a) :=
-      by
-      {
-        intro a b _ha h
-        rw[one_div (2*a), one_div (2*b)]
-
-        have h : 2*a < 2*b := by {
-          repeat rw[two_mul]
-          exact ENNReal.add_lt_add h h
-        }
-
-        exact Iff.mpr ENNReal.inv_lt_inv h
-      }
-
-      specialize le_quotient (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) ((fun t => ENNReal.ofReal (KSD (μ_t t) π)) t / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) t)) gamma_star_neq gamma_star
-
-      have le_prod : ∀(a b c : ℝ≥0∞), c ≠ 0 → c ≠ ∞ → a < b → a * c < b * c :=
-      by
-      {
-        intro a b c hc_nn hc_finite ha
-        exact Iff.mpr (ENNReal.mul_lt_mul_right hc_nn hc_finite) ha
-      }
-
-      have enn_KSD_neq : ENNReal.ofReal (KSD (μ_t t) π) ≠ 0 := by {
-        exact Iff.mp zero_lt_iff (gt_trans (KSD_bounded t) γ_nn)
-      }
-      have enn_KSD_finite : ENNReal.ofReal (KSD (μ_t t) π) ≠ ∞ := by simp
-
-      specialize le_prod (1/(2*((fun t => ENNReal.ofReal (KSD (μ_t t) π)) t / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) t)))) (1/(2*(γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)))) (ENNReal.ofReal (KSD (μ_t t) π)) enn_KSD_neq enn_KSD_finite le_quotient
-
-      calc KL (μ_t t) (dμ_t t) dπ = 1 / (2 * (ENNReal.ofReal (KSD (μ_t t) π) / (2 * KL (μ_t t) (dμ_t t) dπ))) * ENNReal.ofReal (KSD (μ_t t) π) := log_Sobolev
-      _ <  1 / (2 * (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0))) * ENNReal.ofReal (KSD (μ_t t) π) := le_prod
-    }
-
-    -- We use the previous inequality and the Gronwall's lemma to show that ∀t, KL(μ_t || π) ≤ KL (μ_0 || π) * exp(-2t γ/2KL(μ_0 || π)).
-    have bound_gronwall : ∀t>0, (KL (μ_t t) (dμ_t t) dπ ≤ KL (μ_t 0) (dμ_t 0) dπ * exp (-2 * ENNReal.toReal (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) * t)) := by
-    {
-      intro t pos_t
-
-      -- The lemma *ennreal_quo_ineq* allows us to transform the inequality KL(μ_t || π) < 1/(2*γ/2KL(μ_0 || π)) * KSD(μ_t | π) into -KSD(μ_t | π) ≤ -2 * γ/2KL(μ_0 || π) * KL(μ_t || π)
-      have compute_ineq := ennreal_quo_ineq (KL (μ_t t) (dμ_t t) dπ) (ENNReal.ofReal (KSD (μ_t t) π)) ((γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0))) (by simp) gamma_star_neq gamma_star_finite (le_of_lt (bounded_log_Sobolev t))
-
-      rw [toReal_ofReal (ksd_nn_t t)] at compute_ineq
-
-      -- As d_KL_t t ≤ -KSD (μ_t t | π) and -KSD (μ_t t | π) ≤ -2 * γ/2KL(μ_0 || π) * KL(μ_t t || π), then d_KL_t t ≤ -2 * γ/2KL(μ_0 || π) * KL(μ_t t || π).
-      have dkl_ineq : d_KL_t t ≤ -2 * ENNReal.toReal ((γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0))) * ENNReal.toReal (KL (μ_t t) (dμ_t t) dπ) := ge_trans compute_ineq (dkl_ksd t)
-
-      -- We finally can use the Gronwall's lemma with ψ := t ↦ -2 * γ/2KL(μ_0 || π).
-      specialize gronwall (fun t ↦ -2 * ENNReal.toReal ((γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)))) t pos_t dkl_ineq
-
-      -- We rewrite ∫ s ∈ [0, t], -2 * γ/2KL(μ_0 || π) dt as -2t γ/2KL(μ_0 || π).
-      rwa [integral_of_constant] at gronwall
-    }
-
-    have minus_gamma_star_neg : -2 * ENNReal.toReal (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) < 0 := by {
-      have gamma_star_nn : 0 < (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) := Iff.mpr zero_lt_iff gamma_star_neq
-      simp
-      exact toReal_pos_iff.mpr ⟨gamma_star_nn, Ne.lt_top gamma_star_finite⟩
-    }
-
-    -- As -2 γ/2KL(μ_0 || π) < 0, lim_(t → ∞) exp(-2 γ/2KL(μ_0 || π) t) = 0.
-    have exp_limit := exp_tends_to_zero (-2 * ENNReal.toReal ((γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)))) (KL (μ_t 0) (dμ_t 0) dπ) minus_gamma_star_neg
-
-    -- Using the squeeze theorem and the previous result, we prove that lim_(t → ∞) KL(μ_0 || π) t) = 0.
-    have contradiction_limit := squeeze_th_KL dπ μ_t dμ_t (fun t ↦ KL (μ_t 0) (dμ_t 0) dπ * exp (-2 * ENNReal.toReal (γ / (2 * (fun t => KL (μ_t t) (dμ_t t) dπ) 0)) * t)) exp_limit bound_gronwall
-
-    -- The last result implies that l = 0 which is a contradiction as we supposed l ≠ 0.
-    have lim_eq_zero := limit_equiv (fun t => KL (μ_t t) (dμ_t t) dπ) l 0 ⟨lim, contradiction_limit⟩
-
-    exact hl.symm lim_eq_zero
-
+    -- μ ≠ π → ϕ^* ≠ 0
+    intro μ_neq_π
+    by_contra h
+    rw [←norm_eq_zero_, ← ksd_norm] at h
+    exact μ_neq_π (KSD_discrepancy.mpr h)
   }

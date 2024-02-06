@@ -1,3 +1,11 @@
+/-
+ - Created in 2024 by Gaëtan Serré
+-/
+
+/-
+- https://github.com/gaetanserre/SBS-Proofs
+-/
+
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 

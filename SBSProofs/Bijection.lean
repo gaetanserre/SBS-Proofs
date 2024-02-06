@@ -1,6 +1,14 @@
+/-
+ - Created in 2024 by Gaëtan Serré
+-/
+
+/-
+- https://github.com/gaetanserre/SBS-Proofs
+-/
+
 import Mathlib.Tactic
-/-- 
-  A function f is injective if a₁ ≠ a₂ → f a₁ ≠ a₂ 
+/--
+  A function f is injective if a₁ ≠ a₂ → f a₁ ≠ a₂
 -/
 def is_injective {α : Type _} {β : Type _} (f : α → β) :=  ∀ (a₁ a₂ : α), a₁ ≠ a₂ → f a₁ ≠ f a₂
 
@@ -81,7 +89,7 @@ by
   apply h
   exact Eq.refl (f a₂) -/
   contrapose h
-  push_neg at h 
+  push_neg at h
   push_neg
   rw [h]
 
@@ -112,7 +120,7 @@ by
     intro A
     ext a
     constructor
-    { 
+    {
       intro ainA
       unfold Set.image
       use (f a)
@@ -136,7 +144,7 @@ by
     intro B
     ext b
     constructor
-    { 
+    {
       intro binB
       unfold Set.image
       use (f_inv b)

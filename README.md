@@ -1,7 +1,3 @@
-### NMDS Proofs
-
-Proofs in Lean of several results on the asymptotic convergence of the algorithm SBS.
-
 ### SBS Proofs
 Lean 4 proofs associated with the paper "Stein Boltzmann Sampling" by G. Serré, A. Kalogeratos, and N. Vayatis.
 

@@ -2,9 +2,12 @@
 
 Proofs in Lean of several results on the asymptotic convergence of the algorithm SBS.
 
+### SBS Proofs
+Lean 4 proofs associated with the paper "Stein Boltzmann Sampling" by G. Serré, A. Kalogeratos, and N. Vayatis.
+
 #### Usage
 - Install Lean. See instruction [here](https://leanprover-community.github.io/get_started.html);
 - Clone the repo;
-- Remove `.lake` if necessary;
-- Run `lake clean`, `lake update`, and `lake exe cache get` in the root directory of the repo to download mathlib;
+- Install [MKLean](https://github.com/gaetanserre/MKLean) (optional but recommended);
+- Run `mklean update`;
 - Visualize the proofs using the extension for Emacs or Visual Studio Code, or use the `.html` files.`

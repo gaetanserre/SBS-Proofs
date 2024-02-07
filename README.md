@@ -1,5 +1,5 @@
 ### SBS Proofs
-Lean 4 proofs associated with the paper "Stein Boltzmann Sampling" by G. Serré, A. Kalogeratos, and N. Vayatis.
+Lean 4 proofs associated with the paper [Stein Boltzmann Sampling](https://hal.science/hal-04442217) by G. Serré, A. Kalogeratos, and N. Vayatis.
 
 #### Usage
 - Install Lean. See instruction [here](https://leanprover-community.github.io/get_started.html);

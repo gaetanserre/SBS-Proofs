@@ -86,7 +86,7 @@ by
   have H_norm : ∀ x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 := by {
     intro x
     rw [h3 f finH x]
-    have sq_coe : (sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2) : ℝ≥0∞)^2 = ((sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2))^2 : ℝ≥0∞) := by exact nn_square
+    have sq_coe : (sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2) : ℝ≥0∞)^2 = ((sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2))^2 : ℝ≥0∞) := rfl
     rw [sq_coe]
     simp
   }
@@ -110,9 +110,7 @@ by
   -- Coersive squared Cauchy-Schwarz inequality : (↑‖⟪f i, k x⟫‖₊)² ≤ (↑‖f i‖₊)² (↑‖f x‖₊)².
   have cauchy_schwarz_sq : ∀x, ∀i ∈ range (d + 1), (‖⟪f i, s.k x⟫‖₊ : ℝ≥0∞)^2 ≤ (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 := by {
     intros x i _iInRange
-    have distrib : ENNReal.ofNNReal (‖f i‖₊ * ‖s.k x‖₊) = ‖f i‖₊ * ‖s.k x‖₊ := ENNReal.coe_mul
     rw [(distrib_sq (‖f i‖₊ : ℝ≥0∞) (‖s.k x‖₊ : ℝ≥0∞))]
-    rw [←distrib]
     apply le_square
     have nn_cauchy := nnnorm_inner_le_nnnorm (𝕜 := ℝ) (f i) (s.k x)
     exact coe_nnreal_le nn_cauchy
@@ -196,12 +194,6 @@ by
   _ = (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have sum_mul : (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ) = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ) := by exact sum_mul (range (d + 1)) (fun i ↦ (‖f i‖₊ : ℝ≥0∞)^2) (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ)
     rw [←sum_mul]
-  }
-
-  -- Rewrite (↑‖f i‖₊)² as ↑(‖f i‖₊²) to use the *finite_sum* lemma.
-  _ = (∑ i in range (d + 1), (‖f i‖₊^2 : ℝ≥0∞)) * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ := by {
-    have coe_sq : ∀ i, (‖f i‖₊ : ℝ≥0∞)^2 = (‖f i‖₊^2 : ℝ≥0∞) := fun i ↦ nn_square
-    simp_rw [coe_sq]
   }
 
   -- Bound the product from above using the two previously retrieved majorants.

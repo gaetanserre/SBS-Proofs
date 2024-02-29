@@ -92,7 +92,6 @@ by
   rw [←square (ENNReal.ofReal (a)), ←square a]
   exact (ofReal_mul h).symm
 
-lemma nn_square {a : ℝ≥0} : (a : ℝ≥0∞) ^ 2 = (a ^ 2 : ℝ≥0∞) := (ENNReal.coe_pow 2).symm
 
 
 /--

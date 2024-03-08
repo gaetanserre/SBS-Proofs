@@ -1,5 +1,4 @@
 import os
-from alectryon.serapi import annotate
 
 PROJECT_NAME = "SBSProofs"
 

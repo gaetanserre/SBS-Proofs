@@ -21,6 +21,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight .cs, .code .cs { color: #3465a4; font-weight: bold; font-style: italic } /* Comment.Special */
 .highlight .gd, .code .gd { color: #a40000 } /* Generic.Deleted */
 .highlight .ge, .code .ge { color: #000000; font-style: italic } /* Generic.Emph */
+.highlight .ges, .code .ges { color: #000000 } /* Generic.EmphStrong */
 .highlight .gr, .code .gr { color: #a40000 } /* Generic.Error */
 .highlight .gh, .code .gh { color: #a40000; font-weight: bold } /* Generic.Heading */
 .highlight .gi, .code .gi { color: #4e9a06 } /* Generic.Inserted */
@@ -54,7 +55,6 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight .nv, .code .nv { color: #ce5c00 } /* Name.Variable */
 .highlight .ow, .code .ow { color: #8f5902 } /* Operator.Word */
 .highlight .pm, .code .pm { color: #000000 } /* Punctuation.Marker */
-.highlight .w, .code .w { color: #d3d7cf; text-decoration: underline } /* Text.Whitespace */
 .highlight .mb, .code .mb { color: #2e3436 } /* Literal.Number.Bin */
 .highlight .mf, .code .mf { color: #2e3436 } /* Literal.Number.Float */
 .highlight .mh, .code .mh { color: #2e3436 } /* Literal.Number.Hex */

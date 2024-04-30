@@ -28,7 +28,7 @@ set_option maxHeartbeats 400000
 -/
 variable {d : ℕ}
 
-variable [MeasurableSpace (Vector ℝ d)] [MeasureSpace (Vector ℝ d)] [MeasureSpace ℝ]
+variable [MeasureSpace (Vector ℝ d)]
 
 variable (μ π ν : Measure (Vector ℝ d)) (dμ dπ : (Vector ℝ d) → ℝ≥0∞)
 
@@ -50,6 +50,9 @@ variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
 -/
 variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [s : RKHS H₀]
 
+/--
+We consider that the left-hand side of the equivalence holds for all x. In the future, we want to take into account that it only holds for almost all x w.r.t. μ.
+-/
 def positive_definite_kernel := ∀ (f : ℕ → Vector ℝ d → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
 
 variable (h_kernel_positive : positive_definite_kernel μ H₀)
@@ -219,26 +222,22 @@ by
       simp [←cancel_ln_exp, ENNReal.div_eq_inv_mul, mul_right_comm (dπ x)⁻¹ (dμ x) (dπ x), ENNReal.inv_mul_cancel (hdπ x).left (hdπ x).right]
     }
 
-    -- We show by cases that ENNReal.ofReal (Real.exp c) = 1. If it is ≠ 1, this implies a contradiction as dμ x = ENNReal.ofReal (Real.exp c) * dπ x and ∫⁻ x, dμ x ∂ν = 1.
+    -- We show by contradiction that ENNReal.ofReal (Real.exp c) = 1. If it is ≠ 1, this implies a contradiction as dμ x = ENNReal.ofReal (Real.exp c) * dπ x and ∫⁻ x, dμ x ∂ν = 1.
     have exp_c_eq_one : ENNReal.ofReal (Real.exp c) = 1 := by {
-      by_cases hc : ENNReal.ofReal (Real.exp c) = 1
-      {assumption}
-      {
-        push_neg at hc
-        have univ_eq_one_μ : ∫⁻ x in Set.univ, 1 ∂μ = 1 := by simp
-        have univ_eq_one_π : ∫⁻ x in Set.univ, 1 ∂π = 1 := by simp
+      by_contra hc; push_neg at hc
+      have univ_eq_one_μ : ∫⁻ x in Set.univ, 1 ∂μ = 1 := by simp
+      have univ_eq_one_π : ∫⁻ x in Set.univ, 1 ∂π = 1 := by simp
 
-        rw [density_lintegration μ ν dμ hμ (fun x ↦ 1) Set.univ] at univ_eq_one_μ
-        simp_rw [dμ_propor] at univ_eq_one_μ
-        simp_rw [mul_one] at univ_eq_one_μ
+      rw [density_lintegration μ ν dμ hμ (fun x ↦ 1) Set.univ] at univ_eq_one_μ
+      simp_rw [dμ_propor] at univ_eq_one_μ
+      simp_rw [mul_one] at univ_eq_one_μ
 
-        rw [density_lintegration π ν dπ hπ (fun x ↦ 1) Set.univ] at univ_eq_one_π
-        simp_rw [mul_one] at univ_eq_one_π
+      rw [density_lintegration π ν dπ hπ (fun x ↦ 1) Set.univ] at univ_eq_one_π
+      simp_rw [mul_one] at univ_eq_one_π
 
-        rw [lintegral_const_mul (ENNReal.ofReal (Real.exp c)) (mdπ), univ_eq_one_π, mul_one] at univ_eq_one_μ
-        exfalso
-        exact hc univ_eq_one_μ
-      }
+      rw [lintegral_const_mul (ENNReal.ofReal (Real.exp c)) (mdπ), univ_eq_one_π, mul_one] at univ_eq_one_μ
+      exfalso
+      exact hc univ_eq_one_μ
     }
 
     -- We rewrite μ = π as ∀s, ∫⁻ x in s, dμ ∂ν = ∀s, ∫⁻ x in s, dπ ∂ν and use dμ = 1 * dπ.

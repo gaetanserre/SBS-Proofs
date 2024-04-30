@@ -18,7 +18,7 @@ import SBSProofs.RKHS
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
 open scoped RealInnerProductSpace
-open BigOperators Finset ENNReal NNReal MeasureTheory IsROrC
+open BigOperators Finset ENNReal NNReal MeasureTheory RCLike
 
 set_option trace.Meta.Tactic.simp.rewrite true
 set_option maxHeartbeats 4000000

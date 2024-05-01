@@ -13,7 +13,7 @@ import Mathlib.MeasureTheory.Integral.Bochner
 
 import SBSProofs.Utils
 import SBSProofs.PushForward
-import SBSProofs.SteepestDirection
+import SBSProofs.RKHS
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
@@ -74,6 +74,7 @@ variable (d_ln_π : ℕ → Ω → ℝ)
 /-
   Definition of the steepest direction ϕ
 -/
+noncomputable def ϕ_ (i : ℕ) (x : Ω) : ℝ := ∫ y, (d_ln_π i y) * (s.k y x) + (dk y i x) ∂μ
 variable (dϕ : ℕ → Ω → ℝ)
 
 /- We will use this assumption only when the function is trivially integrable (e.g. derivative of integrable functions). -/

@@ -17,8 +17,15 @@ local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
 set_option trace.Meta.Tactic.simp.rewrite true
 
-variable [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)]
-variable [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)] [MeasurableSpace (Vector ℝ d)]
+/--
+  The subtype associated to a subset E: {x // x ∈ E}.
+-/
+def st {α : Type} (E : Set α) := {x // x ∈ E}
+
+variable {α : Type}
+
+variable [NormedAddCommGroup (α → ℝ)] [InnerProductSpace ℝ (α → ℝ)]
+variable [NormedAddCommGroup (ℕ → α → ℝ)] [InnerProductSpace ℝ (ℕ → α → ℝ)] [MeasurableSpace α]
 
 /--
   For all non-empty finite set s, ∃ e ∈ s, ∀ a ∈ s, a ≤ e.
@@ -71,7 +78,7 @@ by
 
 lemma coe_nnreal_le {a b : ℝ≥0} (h : a ≤ b) : (a : ℝ≥0∞) ≤ (b : ℝ≥0∞) := Iff.mpr coe_le_coe h
 
-lemma nn_norm_eq_norm (a : (Vector ℝ d) → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
+lemma nn_norm_eq_norm (a : α → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
 
 lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
 
@@ -85,7 +92,7 @@ by
 /--
   A finite sum of finite elements is finite.
 -/
-theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i in range (d + 1), (f i : ℝ≥0∞) < C :=
+theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i ∈ range (d + 1), (f i : ℝ≥0∞) < C :=
 by
   /- We begin to show that each element of the sum is bounded from above. -/
   have sup_el : ∀ i ∈ range (d + 1), ∃ c, (f i) < c := fun i _ ↦ exists_gt (f i)
@@ -126,19 +133,19 @@ by
   rcases sup_coe with ⟨c, sup_coe⟩
 
   /- The sum is bounded from above by the sum of the majorant -/
-  have sum_le : ∑ i in range (d + 1), (f i : ℝ≥0∞) < ∑ i in range (d + 1), (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (by simp) sup_coe
+  have sum_le : ∑ i ∈ range (d + 1), (f i : ℝ≥0∞) < ∑ i ∈ range (d + 1), (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (by simp) sup_coe
 
   /- Same as above, with coercion -/
-  have sum_coe : ∑ i in range (d + 1), (c : ℝ≥0∞) = ∑ i in range (d + 1), c := coe_finset_sum.symm
+  have sum_coe : ∑ i ∈ range (d + 1), (c : ℝ≥0∞) = ∑ i ∈ range (d + 1), c := coe_finset_sum.symm
 
   /- Sum of constant = constant -/
-  have sum_simpl : ∑ i in range (d + 1), c = (d+1) • c := (nsmul_eq_sum_const c (d + 1)).symm
+  have sum_simpl : ∑ i ∈ range (d + 1), c = (d+1) • c := (nsmul_eq_sum_const c (d + 1)).symm
 
   use ((d+1) • c)
   rw [ENNReal.coe_smul (d + 1) c]
 
-  calc ∑ i in range (d + 1), (f i: ℝ≥0∞) < ∑ i in range (d + 1), (c : ℝ≥0∞) := sum_le
-  _ = ∑ i in range (d + 1), c := sum_coe
+  calc ∑ i ∈ range (d + 1), (f i: ℝ≥0∞) < ∑ i ∈ range (d + 1), (c : ℝ≥0∞) := sum_le
+  _ = ∑ i ∈ range (d + 1), c := sum_coe
   _ = (d+1) • c := by {
     rw [sum_simpl]
     exact ENNReal.coe_smul (d + 1) c
@@ -148,19 +155,19 @@ by
 /--
   Linearity of inner product applied to integral
 -/
-lemma inter_inner_integral_right (μ : Measure (Vector ℝ d)) (g : (Vector ℝ d) → ℝ) (f : (Vector ℝ d) → (Vector ℝ d) → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
+lemma inter_inner_integral_right (μ : Measure α) (g : α → ℝ) (f : α → α → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
 by
 sorry
 
 /--
   Linearity of inner product for function
 -/
-lemma inner_linear_left (f a b : Vector ℝ d → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x + b x⟫ = c * ⟪f, fun x ↦ a x⟫ + ⟪f, fun x ↦ b x⟫ := by sorry
+lemma inner_linear_left (f a b : α → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x + b x⟫ = c * ⟪f, fun x ↦ a x⟫ + ⟪f, fun x ↦ b x⟫ := by sorry
 
 /--
   ⟪f, ∇k(x, ̇)⟫ = ∇f(x)
 -/
-lemma reproducing_derivative (H₀ : Set ((Vector ℝ d) → ℝ)) (dk : Vector ℝ d → ℕ → Vector ℝ d → ℝ) (f : (Vector ℝ d) → ℝ) (df' : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H₀) : ∀x, ∀ i ∈ range (d + 1), ⟪f, dk x i⟫ = df' i x :=
+lemma reproducing_derivative (H₀ : Set (α → ℝ)) (dk : α → ℕ → α → ℝ) (f : α → ℝ) (df' : ℕ → α → ℝ) (hf : f ∈ H₀) : ∀x, ∀ i ∈ range (d + 1), ⟪f, dk x i⟫ = df' i x :=
 by
   -- See Theorem 1 of *Derivative reproducing properties for kernel methods in learning theory, Zhou 2008*.
   sorry
@@ -168,9 +175,9 @@ by
 /--
   Linearity of inner product for function
 -/
-lemma inner_linear_right (f a b : ℕ → Vector ℝ d → ℝ) (c : ℝ) : ⟪fun i x ↦ c * a i x + b i x, f⟫ = c * ⟪fun i x ↦ a i x, f⟫ + ⟪fun i x ↦ b i x, f⟫ := by sorry
+lemma inner_linear_right (f a b : ℕ → α → ℝ) (c : ℝ) : ⟪fun i x ↦ c * a i x + b i x, f⟫ = c * ⟪fun i x ↦ a i x, f⟫ + ⟪fun i x ↦ b i x, f⟫ := by sorry
 
-lemma inner_zero (a : ℕ → Vector ℝ d → ℝ) : ⟪0, a⟫ = 0 := by sorry
+lemma inner_zero (a : ℕ → α → ℝ) : ⟪0, a⟫ = 0 := by sorry
 
 /-==============-/
 
@@ -221,10 +228,10 @@ by
   Definition of infinite limit at infinity for vector-valued function (we use the order of real numbers on the norm of vectors as an order on ℝᵈ).
 -/
 def tends_to_infty {α : Type _} [Norm α] (f : α → ℝ) := ∀ c > 0, ∃ (x : α), ∀ (x':α), ‖x‖ ≤ ‖x'‖ → c < f x
-variable [Norm (Vector ℝ d)]
+variable [Norm α]
 /--
   Unformal but highly pratical multivariate integration by parts.
 -/
-theorem mv_integration_by_parts (Ω : Set (Vector ℝ d)) (f : Vector ℝ d → ℝ) (g grad_f dg : ℕ → (Vector ℝ d) → ℝ) (h : ∀ x, tends_to_infty (fun (x : Vector ℝ d) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i in range (d + 1), dg i x) ∂μ = - ∫ x in Ω, (∑ i in range (d + 1), grad_f i x * g i x) ∂μ := by sorry
+theorem mv_integration_by_parts (Ω : Set α) (f : α → ℝ) (g grad_f dg : ℕ → α → ℝ) (h : ∀ x, tends_to_infty (fun (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i ∈ range (d + 1), dg i x) ∂μ = - ∫ x in Ω, (∑ i ∈ range (d + 1), grad_f i x * g i x) ∂μ := by sorry
 
-lemma norm_eq_zero_ (f : ℕ → Vector ℝ d → ℝ) : ‖f‖ = 0 ↔ f = 0 := by sorry
+lemma norm_eq_zero_ (f : ℕ → α → ℝ) : ‖f‖ = 0 ↔ f = 0 := by sorry

@@ -26,11 +26,11 @@ set_option maxHeartbeats 400000
 /-
   We defined measures μ and π (ν is considered as the standard Lebesgue measure) along with their densities (finite and non-zero on the entire space)
 -/
-variable {d : ℕ}
+variable {d : ℕ} {Ω : Set (Vector ℝ d)}
 
-variable [MeasureSpace (Vector ℝ d)]
+variable [MeasureSpace (st Ω)]
 
-variable (μ π ν : Measure (Vector ℝ d)) (dμ dπ : (Vector ℝ d) → ℝ≥0∞)
+variable (μ π ν : Measure (st Ω)) (dμ dπ : (st Ω) → ℝ≥0∞)
 
 /-
   μ << π << ν, they both admit density w.r.t. ν.
@@ -43,22 +43,22 @@ variable (hμ : is_density μ ν dμ) (hπ : is_density π ν dπ) (mdμ : Measu
 
 variable [IsProbabilityMeasure μ] [IsProbabilityMeasure π]
 
-variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
+variable (h_m_set : ∀ (s : Set (st Ω)), MeasurableSet s)
 
 /-
-  We define a RKHS of ((Vector ℝ d) → ℝ) functions.
+  We define a RKHS of Ω → ℝ functions.
 -/
-variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [s : RKHS H₀]
+variable (H₀ : Set ((st Ω) → ℝ)) [NormedAddCommGroup ((st Ω) → ℝ)] [InnerProductSpace ℝ ((st Ω) → ℝ)] [s : RKHS H₀]
 
 /--
 We consider that the left-hand side of the equivalence holds for all x. In the future, we want to take into account that it only holds for almost all x w.r.t. μ.
 -/
-def positive_definite_kernel := ∀ (f : ℕ → Vector ℝ d → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
+def positive_definite_kernel := ∀ (f : ℕ → (st Ω) → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
 
 variable (h_kernel_positive : positive_definite_kernel μ H₀)
 
-/- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
+/- We define the product RKHS as a space of function on ℕ → (st Ω) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
+variable (H : Set (ℕ → (st Ω) → ℝ)) [NormedAddCommGroup (ℕ → (st Ω) → ℝ)] [InnerProductSpace ℝ (ℕ → (st Ω) → ℝ)]
 
 /-===============================KERNEL STEIN DISCREPANCY===============================-/
 /-
@@ -66,24 +66,24 @@ Here, we prove that KSD(μ | π) is a valid discrepancy measure and that π is t
 -/
 
 /- dk : x ↦ i ↦ y ↦ ∂xⁱ k(x, y) -/
-variable (dk : (Vector ℝ d) → ℕ → (Vector ℝ d) → ℝ)
+variable (dk : (st Ω) → ℕ → (st Ω) → ℝ)
 
 /- d_ln_π : i ↦ x ↦ ∂xⁱ ln (μ(x) / π(x)) -/
-variable (d_ln_π : ℕ → (Vector ℝ d) → ℝ)
+variable (d_ln_π : ℕ → (st Ω) → ℝ)
 
 /-
   Definition of the steepest direction ϕ
 -/
-variable (dϕ : ℕ → (Vector ℝ d) → ℝ)
+variable (dϕ : ℕ → (st Ω) → ℝ)
 
 /- We will use this assumption only when the function is trivially integrable (e.g. derivative of integrable functions). -/
-variable (is_integrable_H₀ : ∀ (f : Vector ℝ d → ℝ), Integrable f μ)
+variable (is_integrable_H₀ : ∀ (f : (st Ω) → ℝ), Integrable f μ)
 
 
 /-
 d_ln_π_μ : i ↦ x ↦ ∂xⁱ ln (π(x) / μ(x))
 -/
-variable (d_ln_π_μ : ℕ → (Vector ℝ d) → ℝ)
+variable (d_ln_π_μ : ℕ → (st Ω) → ℝ)
 
 /-
 Simple derivative rule: if the derivative is 0 ∀x, then the function is constant.
@@ -93,7 +93,7 @@ variable (hd_ln_π_μ : (∀x, ∀i, d_ln_π_μ i x = 0) → (∃ c, ∀ x, log 
 /-
 dπ' : i ↦ x ↦ ∂xⁱ π(x)
 -/
-variable (dπ' : ℕ → (Vector ℝ d) → ℝ)
+variable (dπ' : ℕ → (st Ω) → ℝ)
 
 /-
 Simple derivative rule: ∂xⁱ ln (π(x)) * π(x) = ∂xⁱ π(x).
@@ -101,22 +101,22 @@ Simple derivative rule: ∂xⁱ ln (π(x)) * π(x) = ∂xⁱ π(x).
 variable (hπ' : ∀x, ∀i, ENNReal.toReal (dπ x) * d_ln_π i x = dπ' i x)
 
 
-variable [Norm (Vector ℝ d)]
+variable [Norm (st Ω)]
 /--
   Stein class of measure. f is in the Stein class of μ if, ∀i ∈ range (d + 1), lim_(‖x‖ → ∞) μ(x) * ϕ(x)ⁱ = 0.
 -/
-def SteinClass (f : ℕ → (Vector ℝ d) → ℝ) (dμ : (Vector ℝ d) → ℝ≥0∞) := ∀ x, tends_to_infty (fun (x : Vector ℝ d) ↦ ‖x‖) → ∀i, ENNReal.toReal (dμ x) * f i x = 0
+def SteinClass (f : ℕ → (st Ω) → ℝ) (dμ : (st Ω) → ℝ≥0∞) := ∀ x, tends_to_infty (fun (x : (st Ω)) ↦ ‖x‖) → ∀i, ENNReal.toReal (dμ x) * f i x = 0
 
 
 /-
   Kernel Stein Discrepancy
 -/
-variable (KSD : Measure (Vector ℝ d) → Measure (Vector ℝ d) → ℝ)
+variable (KSD : Measure (st Ω) → Measure (st Ω) → ℝ)
 
 /--
-KSD(μ | π) = ⟪∇ln π/μ, Pμ ∇ln π/μ⟫_L²(μ). We assume here that KSD is also equal to ∫ x, ∑ l in range (d + 1), (d_ln_π l x * ϕ l x + dϕ l x) ∂μ.
+KSD(μ | π) = ⟪∇ln π/μ, Pμ ∇ln π/μ⟫_L²(μ). We assume here that KSD is also equal to ∫ x, ∑ l ∈ range (d + 1), (d_ln_π l x * ϕ l x + dϕ l x) ∂μ.
 -/
-def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i in range (d + 1), d_ln_π_μ i x * s.k x x' * d_ln_π_μ i x') ∂μ) ∂μ) ∧ (KSD μ π = ∫ x, ∑ l in range (d + 1), (d_ln_π l x * (ϕ_ μ H₀ dk d_ln_π) l x + dϕ l x) ∂μ)
+def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ range (d + 1), d_ln_π_μ i x * s.k x x' * d_ln_π_μ i x') ∂μ) ∂μ) ∧ (KSD μ π = ∫ x, ∑ l ∈ range (d + 1), (d_ln_π l x * (ϕ_ μ H₀ dk d_ln_π) l x + dϕ l x) ∂μ)
 
 /-
   KSD(μ | π) is originally defined as ‖ϕ^⋆‖²_H, it is therefore non-negative.
@@ -143,27 +143,27 @@ by
     rw [hksd.right]
 
     -- ∑ i, f i + g i = ∑ i, f i + ∑ i, g i.
-    have split_sum : ∀x, ∑ l in range (d + 1), (d_ln_π l x * ϕ l x + dϕ l x) = (∑ l in range (d + 1), d_ln_π l x * ϕ l x) + (∑ l in range (d + 1), dϕ l x) := fun x ↦ sum_add_distrib
+    have split_sum : ∀x, ∑ l ∈ range (d + 1), (d_ln_π l x * ϕ l x + dϕ l x) = (∑ l ∈ range (d + 1), d_ln_π l x * ϕ l x) + (∑ l ∈ range (d + 1), dϕ l x) := fun x ↦ sum_add_distrib
     simp_rw [split_sum]
 
     -- Split the integral of sum into sum of integral.
-    have h1 : Integrable (fun x ↦ (∑ l in range (d + 1), d_ln_π l x * ϕ l x)) μ := is_integrable_H₀ _
-    have h2 : Integrable (fun x ↦ (∑ l in range (d + 1), dϕ l x)) μ := is_integrable_H₀ _
+    have h1 : Integrable (fun x ↦ (∑ l ∈ range (d + 1), d_ln_π l x * ϕ l x)) μ := is_integrable_H₀ _
+    have h2 : Integrable (fun x ↦ (∑ l ∈ range (d + 1), dϕ l x)) μ := is_integrable_H₀ _
     rw [integral_add (h1) h2]
 
     -- Make the `Set.univ` appears for using the density later.
-    have int_univ : ∫ a, ∑ l in range (d + 1), d_ln_π l a * ϕ l a ∂μ = ∫ a in Set.univ, ∑ l in range (d + 1), d_ln_π l a * ϕ l a ∂μ := by simp
+    have int_univ : ∫ a, ∑ l ∈ range (d + 1), d_ln_π l a * ϕ l a ∂μ = ∫ a in Set.univ, ∑ l ∈ range (d + 1), d_ln_π l a * ϕ l a ∂μ := by simp
     rw [int_univ]
 
     -- Replace μ by π in the integration.
     rw [h]
 
     -- Replace by its density.
-    rw [density_integration π ν dπ hπ (fun x ↦ (∑ l in range (d + 1), d_ln_π l x * ϕ l x)) Set.univ]
+    rw [density_integration π ν dπ hπ (fun x ↦ (∑ l ∈ range (d + 1), d_ln_π l x * ϕ l x)) Set.univ]
 
     -- Get ENNReal.toReal (dπ x) in the sum (a * ∑ b = ∑ b * a).
-    have mul_dist : ∀x, ENNReal.toReal (dπ x) * (∑ l in range (d + 1), (fun l ↦ d_ln_π l x * ϕ l x) l) = ∑ l in range (d + 1), (fun l ↦ d_ln_π l x * ϕ l x) l * ENNReal.toReal (dπ x) := by {
-      have mul_dist_sum : ∀ (a : ℝ), ∀ (f : ℕ → ℝ), (∑ i in range (d + 1), f i) * a = ∑ i in range (d + 1), f i * a := λ a f ↦ sum_mul (range (d + 1)) (fun i ↦ f i) a
+    have mul_dist : ∀x, ENNReal.toReal (dπ x) * (∑ l ∈ range (d + 1), (fun l ↦ d_ln_π l x * ϕ l x) l) = ∑ l ∈ range (d + 1), (fun l ↦ d_ln_π l x * ϕ l x) l * ENNReal.toReal (dπ x) := by {
+      have mul_dist_sum : ∀ (a : ℝ), ∀ (f : ℕ → ℝ), (∑ i ∈ range (d + 1), f i) * a = ∑ i ∈ range (d + 1), f i * a := λ a f ↦ sum_mul (range (d + 1)) (fun i ↦ f i) a
       intro x
       rw [mul_comm]
       exact mul_dist_sum (ENNReal.toReal (dπ x)) (fun l ↦ d_ln_π l x * ϕ l x)
@@ -175,9 +175,9 @@ by
     simp_rw [mul_comm, hπ']
 
     -- Make the `Set.univ` appears to use the density.
-    have int_univ : ∫ a, ∑ l in range (d + 1), dϕ l a ∂π = ∫ a in Set.univ, ∑ l in range (d + 1), dϕ l a ∂π := by simp
+    have int_univ : ∫ a, ∑ l ∈ range (d + 1), dϕ l a ∂π = ∫ a in Set.univ, ∑ l ∈ range (d + 1), dϕ l a ∂π := by simp
     rw [int_univ]
-    rw [density_integration π ν dπ hπ (fun x ↦ (∑ l in range (d + 1), dϕ l x)) Set.univ]
+    rw [density_integration π ν dπ hπ (fun x ↦ (∑ l ∈ range (d + 1), dϕ l x)) Set.univ]
 
     -- Use the integration by parts on the right-hand side integral.
     rw [mv_integration_by_parts (Set.univ) (fun x ↦ ENNReal.toReal (dπ x)) ϕ dπ' dϕ (hstein)]

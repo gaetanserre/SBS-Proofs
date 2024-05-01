@@ -23,25 +23,25 @@ open BigOperators Finset ENNReal NNReal MeasureTheory RCLike
 set_option trace.Meta.Tactic.simp.rewrite true
 set_option maxHeartbeats 4000000
 
-variable {d : ℕ}
+variable {d : ℕ} {Ω : Set (Vector ℝ d)}
 
-variable [MeasurableSpace (Vector ℝ d)] [MeasureSpace (Vector ℝ d)] [MeasureSpace ℝ]
+variable [MeasurableSpace (st Ω)] [MeasureSpace (st Ω)] [MeasureSpace ℝ]
 
-variable (μ : Measure (Vector ℝ d))
+variable (μ : Measure (st Ω))
 
 variable [IsProbabilityMeasure μ]
 
-variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
+variable (h_m_set : ∀ (s : Set (st Ω)), MeasurableSet s)
 
 
 
 /-
-  We define a RKHS of ((Vector ℝ d) → ℝ) functions.
+  We define a RKHS of (Ω → ℝ) functions.
 -/
-variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ ((Vector ℝ d) → ℝ)] [s : RKHS H₀]
+variable (H₀ : Set ((st Ω) → ℝ)) [NormedAddCommGroup ((st Ω) → ℝ)] [InnerProductSpace ℝ ((st Ω) → ℝ)] [s : RKHS H₀]
 
-/- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [NormedAddCommGroup (ℕ → (Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (ℕ → (Vector ℝ d) → ℝ)]
+/- We define the product RKHS as a space of function on ℕ → (st Ω) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
+variable (H : Set (ℕ → (st Ω) → ℝ)) [NormedAddCommGroup (ℕ → (st Ω) → ℝ)] [InnerProductSpace ℝ (ℕ → (st Ω) → ℝ)]
 
 /-==============================STEEPEST DIRECTION SECTION==============================-/
 
@@ -51,36 +51,36 @@ variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [NormedAddCommGroup (ℕ →
 
 /-
   From here, as the derivative of multivariate function are hard to define and to manipulate (defining the gradient, the divergence...), we define the gradient of *f* as follows:
-  f  : Vector ℝ d → ℝ
-  df : ℕ → Vector ℝ d → ℝ
+  f  : Ω → ℝ
+  df : ℕ → Ω → ℝ
        i ↦ x ↦ ∂xⁱ f(x)
 
   For vector-valued function, we defined them as follows:
-  f  : ℕ → Vector ℝ d → ℝ
+  f  : ℕ → Ω → ℝ
        i ↦ x ↦ f(x)ⁱ
-  df : ℕ → Vector ℝ d → ℝ
+  df : ℕ → Ω → ℝ
        i ↦ x ↦ ∂xⁱ f(x)ⁱ
 
   Also, we assume some simple lemmas using the above formalism. Sometimes, these lemmas are not rigorously defined but, in our framework, it is more than enough.
 -/
 
 /- dk : x ↦ i ↦ y ↦ ∂xⁱ k(x, y) -/
-variable (dk : (Vector ℝ d) → ℕ → (Vector ℝ d) → ℝ)
+variable (dk : (st Ω) → ℕ → (st Ω) → ℝ)
 
 /- d_ln_π : i ↦ x ↦ ∂xⁱ ln (μ(x) / π(x)) -/
-variable (d_ln_π : ℕ → (Vector ℝ d) → ℝ)
+variable (d_ln_π : ℕ → (st Ω) → ℝ)
 
 /--
   Definition of the steepest direction ϕ
 -/
-noncomputable def ϕ_ (i : ℕ) (x : Vector ℝ d) : ℝ := ∫ y, (d_ln_π i y) * (s.k y x) + (dk y i x) ∂μ
+noncomputable def ϕ_ (i : ℕ) (x : (st Ω)) : ℝ := ∫ y, (d_ln_π i y) * (s.k y x) + (dk y i x) ∂μ
 
-variable (dϕ : ℕ → (Vector ℝ d) → ℝ)
+variable (dϕ : ℕ → (st Ω) → ℝ)
 
 /-
 d_ln_π_μ : i ↦ x ↦ ∂xⁱ ln (π(x) / μ(x))
 -/
-variable (d_ln_π_μ : ℕ → (Vector ℝ d) → ℝ)
+variable (d_ln_π_μ : ℕ → (st Ω) → ℝ)
 
 /--
 ϕ i = Tk ∂_x(ln π(⬝) - ln μ(⬝)). Trivial using the fact that ϕ is in the Stein class of k and integration by parts. Very heavy in Lean, so we assume it.
@@ -103,12 +103,12 @@ by
   exact g_i_in_H0 i iInRange
 
 /- We allow ourselve to assume that for easier writing. We will use this only when f is trivially finite (e.g. product of finite functions) and well-defined. -/
-variable (is_integrable_H : ∀ (f : ℕ → Vector ℝ d → ℝ), ∀ i ∈ range (d + 1), Integrable (f i) μ)
+variable (is_integrable_H : ∀ (f : ℕ → (st Ω) → ℝ), ∀ i ∈ range (d + 1), Integrable (f i) μ)
 
 /--
-We show that ⟪f, ϕ⟫ = 𝔼 x ∼ μ [∑ l in range (d + 1), ((d_ln_π l x) * (f l x) + df l x)], where ϕ i x = ∫ y, (d_ln_π i y) * (k y x) + (dk y i x) ∂μ.
+We show that ⟪f, ϕ⟫ = 𝔼 x ∼ μ [∑ l ∈ range (d + 1), ((d_ln_π l x) * (f l x) + df l x)], where ϕ i x = ∫ y, (d_ln_π i y) * (k y x) + (dk y i x) ∂μ.
 -/
-lemma inner_product_eq_dKL (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (df : ℕ → (Vector ℝ d) → ℝ) : ⟪f, ϕ_ μ H₀ dk d_ln_π⟫ = ∫ x, ∑ l in range (d + 1), ((d_ln_π l x) * (f l x) + df l x) ∂μ :=
+lemma inner_product_eq_dKL (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (f : ℕ → (st Ω) → ℝ) (hf : f ∈ H) (df : ℕ → (st Ω) → ℝ) : ⟪f, ϕ_ μ H₀ dk d_ln_π⟫ = ∫ x, ∑ l ∈ range (d + 1), ((d_ln_π l x) * (f l x) + df l x) ∂μ :=
 by
   let ϕ := ϕ_ μ H₀ dk d_ln_π
   let hϕ := ϕ_in_H μ H₀ H dk d_ln_π d_ln_π_μ h1
@@ -119,7 +119,7 @@ by
   simp_rw [invert_inner_integral]
 
   -- Then, we switch the integral with the finite sum using *is_integrable_H* assumption.
-  have invert_sum_integral : ∑ i in range (d + 1), ∫ (y : Vector ℝ d), (fun i y ↦ ⟪f i, fun x ↦ d_ln_π i y * s.k y x + dk y i x⟫) i y ∂μ = ∫ (y : Vector ℝ d), ∑ i in range (d + 1), (fun i y ↦ ⟪f i, fun x ↦ d_ln_π i y * s.k y x + dk y i x⟫) i y ∂μ := by {
+  have invert_sum_integral : ∑ i ∈ range (d + 1), ∫ (y : (st Ω)), (fun i y ↦ ⟪f i, fun x ↦ d_ln_π i y * s.k y x + dk y i x⟫) i y ∂μ = ∫ (y : (st Ω)), ∑ i ∈ range (d + 1), (fun i y ↦ ⟪f i, fun x ↦ d_ln_π i y * s.k y x + dk y i x⟫) i y ∂μ := by {
     symm
     exact integral_finset_sum (range (d + 1)) (by {
       intros i iin
@@ -133,7 +133,7 @@ by
   simp_rw [linear_inner]
 
   -- We use reproducing properties of H₀ to rewrite ⟪f i, k y⟫ as f i y and ⟪f i, dk y i⟫ as df i y.
-  have sum_reproducing : ∀ y, ∑ i in range (d + 1), (d_ln_π i y * ⟪f i, fun x => s.k y x⟫ + ⟪f i, fun x => dk y i x⟫) = ∑ i in range (d + 1), (d_ln_π i y * (f i y) + df i y) := by {
+  have sum_reproducing : ∀ y, ∑ i ∈ range (d + 1), (d_ln_π i y * ⟪f i, fun x => s.k y x⟫ + ⟪f i, fun x => dk y i x⟫) = ∑ i ∈ range (d + 1), (d_ln_π i y * (f i y) + df i y) := by {
     intro y
     have reproducing : ∀ x, ∀ i ∈ range (d + 1), ⟪f i, fun y ↦ s.k x y⟫ = f i x := by {
       intros x i iin
@@ -153,10 +153,10 @@ by
 /--
   We show that the derivative of the KL is bounded by ‖ϕ‖.
 -/
-lemma bound_direction (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (f : ℕ → (Vector ℝ d) → ℝ) (hf : f ∈ H) (hfb : ‖f‖ = 1) (df : ℕ → (Vector ℝ d) → ℝ) : ∫ x, ∑ l in range (d + 1), ((d_ln_π l x) * (f l x) + df l x) ∂μ ≤ ‖ϕ_ μ H₀ dk d_ln_π‖ :=
+lemma bound_direction (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (f : ℕ → (st Ω) → ℝ) (hf : f ∈ H) (hfb : ‖f‖ = 1) (df : ℕ → (st Ω) → ℝ) : ∫ x, ∑ l ∈ range (d + 1), ((d_ln_π l x) * (f l x) + df l x) ∂μ ≤ ‖ϕ_ μ H₀ dk d_ln_π‖ :=
 by
   let ϕ := ϕ_ μ H₀ dk d_ln_π
-  -- We rewrite ∫ x, ∑ l in range (d + 1), ((d_ln_π l x) * (f l x) + df l x) as ⟪f, ϕ⟫.
+  -- We rewrite ∫ x, ∑ l ∈ range (d + 1), ((d_ln_π l x) * (f l x) + df l x) as ⟪f, ϕ⟫.
   rw [←inner_product_eq_dKL μ H₀ H dk d_ln_π d_ln_π_μ is_integrable_H h1 h2 f hf df]
 
   -- We use Cauchy-Schwarz inequality.
@@ -168,9 +168,9 @@ by
   }
 
 /--
-We prove that x ↦ ϕ i x / ‖ϕ‖ is the steepest direction for updating the distribution, using ∫ x, ∑ l in range (d + 1), ((d_ln_π l x) * (f l x) + df l x) ∂μ = ⟪f, ϕ⟫ ≤ ‖ϕ‖.
+We prove that x ↦ ϕ i x / ‖ϕ‖ is the steepest direction for updating the distribution, using ∫ x, ∑ l ∈ range (d + 1), ((d_ln_π l x) * (f l x) + df l x) ∂μ = ⟪f, ϕ⟫ ≤ ‖ϕ‖.
 -/
-theorem steepest_descent_trajectory (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (hϕs : (fun i x ↦ (ϕ_ μ H₀ dk d_ln_π) i x / ‖(ϕ_ μ H₀ dk d_ln_π)‖) ∈ H) : ∫ x, ∑ l in range (d + 1), ((d_ln_π l x) * ((fun i x ↦ (ϕ_ μ H₀ dk d_ln_π) i x / ‖(ϕ_ μ H₀ dk d_ln_π)‖) l x) + dϕ l x) ∂μ = ‖(ϕ_ μ H₀ dk d_ln_π)‖ :=
+theorem steepest_descent_trajectory (h1 : product_RKHS H H₀) (h2 : inner_product_H H) (hϕs : (fun i x ↦ (ϕ_ μ H₀ dk d_ln_π) i x / ‖(ϕ_ μ H₀ dk d_ln_π)‖) ∈ H) : ∫ x, ∑ l ∈ range (d + 1), ((d_ln_π l x) * ((fun i x ↦ (ϕ_ μ H₀ dk d_ln_π) i x / ‖(ϕ_ μ H₀ dk d_ln_π)‖) l x) + dϕ l x) ∂μ = ‖(ϕ_ μ H₀ dk d_ln_π)‖ :=
 by
   let ϕ := ϕ_ μ H₀ dk d_ln_π
   rw [←inner_product_eq_dKL μ H₀ H dk d_ln_π d_ln_π_μ is_integrable_H h1 h2 (fun i x ↦ ϕ i x / ‖ϕ‖) hϕs dϕ]

@@ -34,47 +34,48 @@ class RKHS {E : Type*} {F : Type*} [Inner F (E → F)] (H : Set (E → F)) where
 
 
 
-variable {d : ℕ}
+variable {d : ℕ} {Ω : Set (Vector ℝ d)}
+
 /-
-  We define a RKHS of ((Vector ℝ d) → ℝ) functions.
+  We define a RKHS of (Ω → ℝ) functions.
 -/
-variable (H₀ : Set ((Vector ℝ d) → ℝ)) [NormedAddCommGroup ((Vector ℝ d) → ℝ)] [InnerProductSpace ℝ (Vector ℝ d → ℝ)] [s : RKHS H₀]
+variable (H₀ : Set ((st Ω) → ℝ)) [NormedAddCommGroup ((st Ω) → ℝ)] [InnerProductSpace ℝ ((st Ω) → ℝ)] [s : RKHS H₀]
 
-/- We define the product RKHS as a space of function on ℕ → (Vector ℝ d) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable (H : Set (ℕ → (Vector ℝ d) → ℝ)) [Inner ℝ (ℕ → Vector ℝ d → ℝ)]
+/- We define the product RKHS as a space of function on ℕ → Ω to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
+variable (H : Set (ℕ → (st Ω) → ℝ)) [Inner ℝ (ℕ → (st Ω) → ℝ)]
 
-def product_RKHS (H : Set (ℕ → (Vector ℝ d) → ℝ)) (H₀ : Set ((Vector ℝ d) → ℝ)) := ∀ (f : ℕ → (Vector ℝ d) → ℝ), (f ∈ H ↔ (∀ i ∈ range (d + 1), f i ∈ H₀))
+def product_RKHS (H : Set (ℕ → (st Ω) → ℝ)) (H₀ : Set ((st Ω) → ℝ)) := ∀ (f : ℕ → (st Ω) → ℝ), (f ∈ H ↔ (∀ i ∈ range (d + 1), f i ∈ H₀))
 
-def inner_product_H (H : Set (ℕ → (Vector ℝ d) → ℝ)) := ∀ f ∈ H, ∀ g ∈ H, ⟪f, g⟫ = ∑ i in range (d + 1), ⟪f i, g i⟫
+def inner_product_H (H : Set (ℕ → (st Ω) → ℝ)) := ∀ f ∈ H, ∀ g ∈ H, ⟪f, g⟫ = ∑ i ∈ range (d + 1), ⟪f i, g i⟫
 
 variable [NormedAddCommGroup (ℕ → ℝ)]
 /--
   The euclidean norm.
 -/
-def norm_H (H : Set (ℕ → (Vector ℝ d) → ℝ)) := ∀ f ∈ H, ∀x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞) = sqrt (∑ i in range (d + 1), ‖f i x‖₊^2)
+def norm_H (H : Set (ℕ → (st Ω) → ℝ)) := ∀ f ∈ H, ∀x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞) = sqrt (∑ i ∈ range (d + 1), ‖f i x‖₊^2)
 
-variable [MeasurableSpace (Vector ℝ d)]
+variable [MeasurableSpace (st Ω)]
 
 /--
 We define the integral operator Tkf.
 -/
-noncomputable def int_operator (μ : Measure (Vector ℝ d)) (f : (Vector ℝ d) → ℝ) : (Vector ℝ d) → ℝ := λ y ↦ ∫ x, s.k y x * f x ∂μ
+noncomputable def int_operator (μ : Measure (st Ω)) (f : (st Ω) → ℝ) : (st Ω) → ℝ := λ y ↦ ∫ x, s.k y x * f x ∂μ
 
 /--
 TODO. Define L².
 -/
-lemma op_inclusion (f : (Vector ℝ d) → ℝ) : int_operator H₀ μ f ∈ H₀ := by sorry
+lemma op_inclusion (f : (st Ω) → ℝ) : int_operator H₀ μ f ∈ H₀ := by sorry
 
-def integral_is_finite (μ : Measure (Vector ℝ d)) (f : (Vector ℝ d) → ℝ) := ∃ (C : ℝ≥0), ∫⁻ x in Set.univ, ENNReal.ofReal |f x| ∂μ < C
+def integral_is_finite (μ : Measure (st Ω)) (f : (st Ω) → ℝ) := ∃ (C : ℝ≥0), ∫⁻ x in Set.univ, ENNReal.ofReal |f x| ∂μ < C
 
 /-
-For simplicity, we will use this assumption to prove that some functions are mesurable. We don't use it for proving false statements.
+For simplicity, we will use this assumption to prove that some trivial functions are mesurable.
 -/
-variable (h_m_set : ∀ (s : Set (Vector ℝ d)), MeasurableSet s)
+variable (h_m_set : ∀ (s : Set (st Ω)), MeasurableSet s)
 /--
-  H ⊆ L2(μ) i.e., ∀ f ∈ H, ∫⁻ Ω ||f x||^2 ∂μ < ∞.
+  H ⊆ L2(μ) i.e., ∀ f ∈ H, ∫⁻ Ω ||f x||^2 ∂μ < ∞. Please note that (x : st Ω) ∈ Set.univ represent the same statement as (x : Vector ℝ d) ∈ Ω. However, the Lean system handles subtypes better than subsets.
 -/
-theorem H_subset_of_L2 (μ : Measure (Vector ℝ d)) (h1 : product_RKHS H H₀) (h2 : integral_is_finite μ (fun x ↦ s.k x x)) (h3 : norm_H H) : ∀ f ∈ H, ∫⁻ x in Set.univ, ENNReal.ofReal ‖fun i ↦ f i x‖^2 ∂μ < ∞ :=
+theorem H_subset_of_L2 (μ : Measure (st Ω)) (h1 : product_RKHS H H₀) (h2 : integral_is_finite μ (fun x ↦ s.k x x)) (h3 : norm_H H) : ∀ f ∈ H, ∫⁻ x in Set.univ, ENNReal.ofReal ‖fun i ↦ f i x‖^2 ∂μ < ∞ :=
 by
   intros f finH
 
@@ -83,18 +84,18 @@ by
   simp_rw [abs_to_nnorm]
 
   -- We use the property of H to rewrite the norm as a sum of norm of function in H₀
-  have H_norm : ∀ x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 := by {
+  have H_norm : ∀ x, (‖fun i ↦ f i x‖₊ : ℝ≥0∞)^2 = ∑ i ∈ range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 := by {
     intro x
     rw [h3 f finH x]
-    have sq_coe : (sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2) : ℝ≥0∞)^2 = ((sqrt (∑ i in range (d + 1), ‖f i x‖₊ ^ 2))^2 : ℝ≥0∞) := rfl
+    have sq_coe : (sqrt (∑ i ∈ range (d + 1), ‖f i x‖₊ ^ 2) : ℝ≥0∞)^2 = ((sqrt (∑ i ∈ range (d + 1), ‖f i x‖₊ ^ 2))^2 : ℝ≥0∞) := rfl
     rw [sq_coe]
     simp
   }
   simp_rw [H_norm]
 
   -- We use the reproducing propriety of H₀ to rewrite f i x as ⟪f i, k x⟫.
-  have rkhs : ∀ (x : (Vector ℝ d)), ∑ i in range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 = ∑ i in range (d + 1), (‖⟪f i, s.k x⟫‖₊ : ℝ≥0∞)^2 := by {
-    have temp : ∀ (x : (Vector ℝ d)), ∀ (i : ℕ), i ∈ range (d + 1) → f i x = ⟪f i, s.k x⟫ := by
+  have rkhs : ∀ (x : (st Ω)), ∑ i ∈ range (d + 1), (‖f i x‖₊ : ℝ≥0∞)^2 = ∑ i ∈ range (d + 1), (‖⟪f i, s.k x⟫‖₊ : ℝ≥0∞)^2 := by {
+    have temp : ∀ (x : (st Ω)), ∀ (i : ℕ), i ∈ range (d + 1) → f i x = ⟪f i, s.k x⟫ := by
     {
       intros x i iInRange
       apply s.reproducing
@@ -116,11 +117,11 @@ by
     exact coe_nnreal_le nn_cauchy
   }
 
-  -- If f ≤ g, ∑ i in s, f ≤ ∑ i in s, g. Thus, ∑ i in range (d + 1), (↑‖⟪f i, k x⟫‖₊)² ≤ ∑ i in range (d + 1), (↑‖f i‖)² * (↑‖k x‖₊)².
-  have sum_le : (fun x ↦ ∑ i in range (d + 1), (‖⟪f i, s.k x⟫‖₊ : ℝ≥0∞)^2) ≤ (fun x ↦ ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2) := fun x ↦ sum_le_sum (cauchy_schwarz_sq x)
+  -- If f ≤ g, ∑ i ∈ s, f ≤ ∑ i ∈ s, g. Thus, ∑ i ∈ range (d + 1), (↑‖⟪f i, k x⟫‖₊)² ≤ ∑ i ∈ range (d + 1), (↑‖f i‖)² * (↑‖k x‖₊)².
+  have sum_le : (fun x ↦ ∑ i ∈ range (d + 1), (‖⟪f i, s.k x⟫‖₊ : ℝ≥0∞)^2) ≤ (fun x ↦ ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2) := fun x ↦ sum_le_sum (cauchy_schwarz_sq x)
 
   -- A lower-Lebesgue integral of a finite sum is equal to a finite sum of lower-Lebesgue integral.
-  have inverse_sum_int : ∫⁻ x in Set.univ, ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ = ∑ i in range (d + 1), ∫⁻ x in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+  have inverse_sum_int : ∫⁻ x in Set.univ, ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ = ∑ i ∈ range (d + 1), ∫⁻ x in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
     have is_measurable : ∀ i ∈ range (d + 1), Measurable ((fun i ↦ fun x ↦ (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2) i) := by
     {
       intros i _InRange s _h
@@ -129,11 +130,11 @@ by
     exact lintegral_finset_sum (range (d + 1)) is_measurable
   }
 
-  -- Retrieve the majorant of the finite sum : ∑ i in range (d + 1), (↑‖f i‖₊)².
-  have finite_sum : ∃ (C : ℝ≥0), ∑ i in range (d + 1), (‖f i‖₊^2 : ℝ≥0∞) < C := finite_sum (fun i ↦ ‖f i‖₊^2)
+  -- Retrieve the majorant of the finite sum : ∑ i ∈ range (d + 1), (↑‖f i‖₊)².
+  have finite_sum : ∃ (C : ℝ≥0), ∑ i ∈ range (d + 1), (‖f i‖₊^2 : ℝ≥0∞) < C := finite_sum (fun i ↦ ‖f i‖₊^2)
   rcases finite_sum with ⟨C1, finite_sum⟩
 
-  -- Retrieve the majorant of the integral ∫⁻ (x : (Vector ℝ d)) in Set.univ, ↑|k x x| ∂μ, supposed finite.
+  -- Retrieve the majorant of the integral ∫⁻ x ∈ Ω, ↑|k x x| ∂μ, supposed finite.
   rcases h2 with ⟨C2, h2⟩
 
   -- Rewrite ↑|k x x| as  ↑‖k x x‖₊.
@@ -141,18 +142,18 @@ by
   simp_rw [abs_to_nnorm] at h2
 
   -- 1. ∀ f ≤ g, ∫⁻ x, f x ∂μ ≤ ∫⁻ x, g x ∂μ. We use this lemma with *sum_le*.
-  calc ∫⁻ (x : (Vector ℝ d)) in Set.univ, ∑ i in range (d + 1), (‖⟪f i, s.k x⟫‖₊ : ℝ≥0∞)^2 ∂μ ≤ ∫⁻ (x : (Vector ℝ d)) in Set.univ, ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := lintegral_mono sum_le
+  calc ∫⁻ (x : (st Ω)) in Set.univ, ∑ i ∈ range (d + 1), (‖⟪f i, s.k x⟫‖₊ : ℝ≥0∞)^2 ∂μ ≤ ∫⁻ (x : (st Ω)) in Set.univ, ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := lintegral_mono sum_le
 
   -- 2. Inversion sum integral.
-  _ = ∑ i in range (d + 1), ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := inverse_sum_int
+  _ = ∑ i ∈ range (d + 1), ∫⁻ (x : (st Ω)) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := inverse_sum_int
 
   -- 3. As (↑‖f i‖₊)² is a constant in the integral, get it out.
-  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+  _ = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (st Ω)) in Set.univ, (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
     have is_measurable : Measurable (fun x ↦ (‖s.k x‖₊ : ℝ≥0∞)^2) := by {
       intros s _hs
       exact h_m_set _
     }
-    have const_int : ∀ i, ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ = (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+    have const_int : ∀ i, ∫⁻ (x : (st Ω)) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ = (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (st Ω)) in Set.univ, (‖s.k x‖₊ : ℝ≥0∞)^2 ∂μ := by {
       intro i
       exact lintegral_const_mul ((‖f i‖₊ : ℝ≥0∞)^2) is_measurable
     }
@@ -160,7 +161,7 @@ by
   }
 
   -- Rewrite  (↑‖k x‖₊)² as ↑‖⟪k x, k x⟫‖₊ (lot of coercions).
-  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖⟪s.k x, s.k x⟫‖₊ : ℝ≥0∞) ∂μ := by {
+  _ = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (st Ω)) in Set.univ, (‖⟪s.k x, s.k x⟫‖₊ : ℝ≥0∞) ∂μ := by {
 
     simp_rw [fun x ↦ nn_norm_eq_norm (s.k x)]
 
@@ -182,7 +183,7 @@ by
   }
 
   -- Use the reproducing propriety of H₀ to write ⟪k x, k x⟫ as k x x.
-  _ = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ := by {
+  _ = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : (st Ω)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ := by {
     have reproducing_prop : ∀ x, ⟪s.k x, s.k x⟫ = s.k x x := by {
       intro x
       rw [s.reproducing (s.k x) (s.membership x) x]
@@ -190,9 +191,9 @@ by
     simp_rw [reproducing_prop]
   }
 
-  -- As the integral is a constant in the sum, write ∑ i in ... * ∫⁻ ... as (∑ i in ...) * ∫⁻ ...
-  _ = (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * ∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ := by {
-    have sum_mul : (∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ) = ∑ i in range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ) := by exact sum_mul (range (d + 1)) (fun i ↦ (‖f i‖₊ : ℝ≥0∞)^2) (∫⁻ (x : (Vector ℝ d)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ)
+  -- As the integral is a constant in the sum, write ∑ i ∈ ... * ∫⁻ ... as (∑ i ∈ ...) * ∫⁻ ...
+  _ = (∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * ∫⁻ (x : (st Ω)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ := by {
+    have sum_mul : (∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2) * (∫⁻ (x : (st Ω)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ) = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (∫⁻ (x : (st Ω)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ) := by exact sum_mul (range (d + 1)) (fun i ↦ (‖f i‖₊ : ℝ≥0∞)^2) (∫⁻ (x : (st Ω)) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ)
     rw [←sum_mul]
   }
 

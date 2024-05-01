@@ -28,9 +28,9 @@ set_option maxHeartbeats 400000
 -/
 variable {d : ℕ} {Ω : Set (Vector ℝ d)}
 
-variable [MeasureSpace (st Ω)]
+variable [MeasureSpace Ω]
 
-variable (μ π ν : Measure (st Ω)) (dμ dπ : (st Ω) → ℝ≥0∞)
+variable (μ π ν : Measure Ω) (dμ dπ : Ω → ℝ≥0∞)
 
 /-
   μ << π << ν, they both admit density w.r.t. ν.
@@ -43,22 +43,22 @@ variable (hμ : is_density μ ν dμ) (hπ : is_density π ν dπ) (mdμ : Measu
 
 variable [IsProbabilityMeasure μ] [IsProbabilityMeasure π]
 
-variable (h_m_set : ∀ (s : Set (st Ω)), MeasurableSet s)
+variable (h_m_set : ∀ (s : Set Ω), MeasurableSet s)
 
 /-
   We define a RKHS of Ω → ℝ functions.
 -/
-variable (H₀ : Set ((st Ω) → ℝ)) [NormedAddCommGroup ((st Ω) → ℝ)] [InnerProductSpace ℝ ((st Ω) → ℝ)] [s : RKHS H₀]
+variable (H₀ : Set (Ω → ℝ)) [NormedAddCommGroup (Ω → ℝ)] [InnerProductSpace ℝ (Ω → ℝ)] [s : RKHS H₀]
 
 /--
 We consider that the left-hand side of the equivalence holds for all x. In the future, we want to take into account that it only holds for almost all x w.r.t. μ.
 -/
-def positive_definite_kernel := ∀ (f : ℕ → (st Ω) → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
+def positive_definite_kernel := ∀ (f : ℕ → Ω → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ range (d + 1), f i x * s.k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀x, ∀i, f i x = 0)
 
 variable (h_kernel_positive : positive_definite_kernel μ H₀)
 
-/- We define the product RKHS as a space of function on ℕ → (st Ω) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
-variable (H : Set (ℕ → (st Ω) → ℝ)) [NormedAddCommGroup (ℕ → (st Ω) → ℝ)] [InnerProductSpace ℝ (ℕ → (st Ω) → ℝ)]
+/- We define the product RKHS as a space of function on ℕ → Ω to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/
+variable (H : Set (ℕ → Ω → ℝ)) [NormedAddCommGroup (ℕ → Ω → ℝ)] [InnerProductSpace ℝ (ℕ → Ω → ℝ)]
 
 /-===============================KERNEL STEIN DISCREPANCY===============================-/
 /-
@@ -66,24 +66,24 @@ Here, we prove that KSD(μ | π) is a valid discrepancy measure and that π is t
 -/
 
 /- dk : x ↦ i ↦ y ↦ ∂xⁱ k(x, y) -/
-variable (dk : (st Ω) → ℕ → (st Ω) → ℝ)
+variable (dk : Ω → ℕ → Ω → ℝ)
 
 /- d_ln_π : i ↦ x ↦ ∂xⁱ ln (μ(x) / π(x)) -/
-variable (d_ln_π : ℕ → (st Ω) → ℝ)
+variable (d_ln_π : ℕ → Ω → ℝ)
 
 /-
   Definition of the steepest direction ϕ
 -/
-variable (dϕ : ℕ → (st Ω) → ℝ)
+variable (dϕ : ℕ → Ω → ℝ)
 
 /- We will use this assumption only when the function is trivially integrable (e.g. derivative of integrable functions). -/
-variable (is_integrable_H₀ : ∀ (f : (st Ω) → ℝ), Integrable f μ)
+variable (is_integrable_H₀ : ∀ (f : Ω → ℝ), Integrable f μ)
 
 
 /-
 d_ln_π_μ : i ↦ x ↦ ∂xⁱ ln (π(x) / μ(x))
 -/
-variable (d_ln_π_μ : ℕ → (st Ω) → ℝ)
+variable (d_ln_π_μ : ℕ → Ω → ℝ)
 
 /-
 Simple derivative rule: if the derivative is 0 ∀x, then the function is constant.
@@ -93,7 +93,7 @@ variable (hd_ln_π_μ : (∀x, ∀i, d_ln_π_μ i x = 0) → (∃ c, ∀ x, log 
 /-
 dπ' : i ↦ x ↦ ∂xⁱ π(x)
 -/
-variable (dπ' : ℕ → (st Ω) → ℝ)
+variable (dπ' : ℕ → Ω → ℝ)
 
 /-
 Simple derivative rule: ∂xⁱ ln (π(x)) * π(x) = ∂xⁱ π(x).
@@ -101,17 +101,17 @@ Simple derivative rule: ∂xⁱ ln (π(x)) * π(x) = ∂xⁱ π(x).
 variable (hπ' : ∀x, ∀i, ENNReal.toReal (dπ x) * d_ln_π i x = dπ' i x)
 
 
-variable [Norm (st Ω)]
+variable [Norm Ω]
 /--
   Stein class of measure. f is in the Stein class of μ if, ∀i ∈ range (d + 1), lim_(‖x‖ → ∞) μ(x) * ϕ(x)ⁱ = 0.
 -/
-def SteinClass (f : ℕ → (st Ω) → ℝ) (dμ : (st Ω) → ℝ≥0∞) := ∀ x, tends_to_infty (fun (x : (st Ω)) ↦ ‖x‖) → ∀i, ENNReal.toReal (dμ x) * f i x = 0
+def SteinClass (f : ℕ → Ω → ℝ) (dμ : Ω → ℝ≥0∞) := ∀ x, tends_to_infty (fun (x : Ω) ↦ ‖x‖) → ∀i, ENNReal.toReal (dμ x) * f i x = 0
 
 
 /-
   Kernel Stein Discrepancy
 -/
-variable (KSD : Measure (st Ω) → Measure (st Ω) → ℝ)
+variable (KSD : Measure Ω → Measure Ω → ℝ)
 
 /--
 KSD(μ | π) = ⟪∇ln π/μ, Pμ ∇ln π/μ⟫_L²(μ). We assume here that KSD is also equal to ∫ x, ∑ l ∈ range (d + 1), (d_ln_π l x * ϕ l x + dϕ l x) ∂μ.

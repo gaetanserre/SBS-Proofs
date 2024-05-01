@@ -43,7 +43,7 @@
 <span class="cm">-/</span>
 <span class="kd">variable</span> (H₀ : Set ((st <span class="bp">Ω</span>) <span class="bp">→</span> ℝ)) [NormedAddCommGroup ((st <span class="bp">Ω</span>) <span class="bp">→</span> ℝ)] [InnerProductSpace ℝ ((st <span class="bp">Ω</span>) <span class="bp">→</span> ℝ)] [s : RKHS H₀]
 
-<span class="c">/-</span><span class="cm"> We define the product RKHS as a space of function on ℕ → (st Ω) to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/</span>
+<span class="c">/-</span><span class="cm"> We define the product RKHS as a space of function on ℕ → Ω to ℝ (vector-valued function in our Lean formalism). A function belongs to such a RKHS if f = (f_1, ..., f_d) and ∀ 1 ≤ i ≤ d, fᵢ ∈ H₀. -/</span>
 <span class="kd">variable</span> (H : Set (ℕ <span class="bp">→</span> (st <span class="bp">Ω</span>) <span class="bp">→</span> ℝ)) [NormedAddCommGroup (ℕ <span class="bp">→</span> (st <span class="bp">Ω</span>) <span class="bp">→</span> ℝ)] [InnerProductSpace ℝ (ℕ <span class="bp">→</span> (st <span class="bp">Ω</span>) <span class="bp">→</span> ℝ)]
 
 <span class="c">/-</span><span class="cm">==============================STEEPEST DIRECTION SECTION==============================-/</span>

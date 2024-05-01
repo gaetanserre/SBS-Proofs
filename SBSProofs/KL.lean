@@ -19,7 +19,7 @@ set_option trace.Meta.Tactic.simp.rewrite true
 
 open MeasureTheory MeasureTheory.Measure
 
-variable {α β : Type _} [MeasurableSpace α] [MeasurableSpace β] [NormedAddCommGroup α] [NormedSpace ℝ α] [FiniteDimensional ℝ α] [BorelSpace α]
+variable {α β : Type*} [MeasurableSpace α] [MeasurableSpace β] [NormedAddCommGroup α] [NormedSpace ℝ α] [FiniteDimensional ℝ α] [BorelSpace α]
 variable {ν : Measure α} [IsAddHaarMeasure ν] -- Lebesgue
 variable (μ_t : Pushforward_Measure α α) {is_prob_m_μ : IsProbabilityMeasure μ_t.μ} {is_prob_m_p_μ : IsProbabilityMeasure μ_t.p_μ}
 variable {habs1 : absolutely_continuous μ_t.μ ν}

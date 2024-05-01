@@ -10,9 +10,9 @@ import Mathlib.Tactic
 /--
   A function f is injective if a₁ ≠ a₂ → f a₁ ≠ a₂
 -/
-def is_injective {α : Type _} {β : Type _} (f : α → β) :=  ∀ (a₁ a₂ : α), a₁ ≠ a₂ → f a₁ ≠ f a₂
+def is_injective {α β: Type*} (f : α → β) :=  ∀ (a₁ a₂ : α), a₁ ≠ a₂ → f a₁ ≠ f a₂
 
-lemma is_inj_imp_set_inj {α : Type _} {β : Type _} (f : α → β) : is_injective f → ∀ (A : Set α), Set.InjOn f A :=
+lemma is_inj_imp_set_inj {α β: Type*} (f : α → β) : is_injective f → ∀ (A : Set α), Set.InjOn f A :=
 by
   intros h _A x₁ _x₁InA x₂ _x₂InA hf
   specialize h x₁ x₂
@@ -20,9 +20,9 @@ by
   push_neg at xdif
   exact h xdif hf
 
-def is_surjective {α : Type _} {β : Type _} (f : α → β) := ∀ (b : β), ∃ (a : α), f a = b
+def is_surjective {α β: Type*} (f : α → β) := ∀ (b : β), ∃ (a : α), f a = b
 
-lemma is_surj_imp_set_surj {α : Type _} {β : Type _} (f : α → β) : is_surjective f → Set.SurjOn f (Set.univ) (Set.univ) :=
+lemma is_surj_imp_set_surj {α β: Type*} (f : α → β) : is_surjective f → Set.SurjOn f (Set.univ) (Set.univ) :=
 by
   intros h b _huniv
   specialize h b
@@ -32,10 +32,10 @@ by
   {simp}
   {exact h}
 
-/- def is_bijective {α : Type _} {β : Type _} (f : α → β) := ∀ (b : β),
+/- def is_bijective {α β: Type*} (f : α → β) := ∀ (b : β),
 ∃ (a : α), (f a = b) ∧ (∀ (a₂ : α), a ≠ a₂ → f a ≠ f a₂)
 
-theorem bijective_is_inj_and_surj {α : Type _} {β : Type _} (f : α → β) (hinj : is_injective f) (hsurj : is_surjective f) : is_bijective f := by
+theorem bijective_is_inj_and_surj {α β: Type*} (f : α → β) (hinj : is_injective f) (hsurj : is_surjective f) : is_bijective f := by
 intro b
 specialize hsurj b
 cases hsurj with
@@ -48,9 +48,9 @@ cases hsurj with
         exact hinj a a2 neqa
       } -/
 
-def is_bijective {α : Type _} {β : Type _} (f : α → β) := is_injective f ∧ is_surjective f
+def is_bijective {α β: Type*} (f : α → β) := is_injective f ∧ is_surjective f
 
-lemma is_bij_imp_set_bij {α : Type _} {β : Type _} (f : α → β) : is_bijective f → Set.BijOn f Set.univ Set.univ :=
+lemma is_bij_imp_set_bij {α β: Type*} (f : α → β) : is_bijective f → Set.BijOn f Set.univ Set.univ :=
 by
   intro h
   constructor
@@ -62,7 +62,7 @@ by
   {exact is_inj_imp_set_inj f h.left Set.univ}
   {exact is_surj_imp_set_surj f h.right}
 
-lemma bijective_imp_inversible {α : Type _} {β : Type _} (f : α → β) (h : is_bijective f) : ∃ (f_inv : β → α), (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a) :=
+lemma bijective_imp_inversible {α β: Type*} (f : α → β) (h : is_bijective f) : ∃ (f_inv : β → α), (∀ (b : β), f (f_inv b) = b ∧ ∀ (a : α), f_inv (f a) = a) :=
 by
   rcases h with ⟨hinj, hsurj⟩
   choose f_inv h using hsurj
@@ -79,9 +79,9 @@ by
   have key : f (f_inv (f a)) ≠ f a := hinj _ _ hbar
   exact key h -- (a ≠ b : a = b → False)
 
-def is_reciprocal {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) := (∀ (b : β), f (f_inv b) = b) ∧ (∀ (a : α), f_inv (f a) = a)
+def is_reciprocal {α β: Type*} (f : α → β) (f_inv : β → α) := (∀ (b : β), f (f_inv b) = b) ∧ (∀ (a : α), f_inv (f a) = a)
 
-lemma deterministic_function {α : Type _} {β : Type _} (f : α → β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ → a₁ ≠ a₂ :=
+lemma deterministic_function {α β: Type*} (f : α → β) : ∀ (a₁ a₂ : α), f a₁ ≠ f a₂ → a₁ ≠ a₂ :=
 by
   intros a₁ a₂ h
   /- by_contra h2
@@ -93,7 +93,7 @@ by
   push_neg
   rw [h]
 
-lemma reciprocal_of_bij_is_bij {α : Type _} {β : Type _} (f : α → β) (f_inv : β → α) (h1 : is_reciprocal f f_inv) (h2 : is_bijective f) : is_bijective f_inv := by
+lemma reciprocal_of_bij_is_bij {α β: Type*} (f : α → β) (f_inv : β → α) (h1 : is_reciprocal f f_inv) (h2 : is_bijective f) : is_bijective f_inv := by
   constructor
   {
     intros b₁ b₂ difb₁b₂

@@ -18,13 +18,13 @@ open ENNReal
 
 namespace MeasureTheory
 
-variable {α : Type _} {β : Type _} [MeasurableSpace α] [MeasurableSpace β]
+variable {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
 
 def measure_set_of_pushforward_measure (μ : Measure α) (p_μ : Measure β) (f : β → α) := ∀ (B : Set β), p_μ B = μ (f '' B)
 
 def push_forward_integration (μ : Measure α) (p_μ : Measure β) (T : α → β) (T_inv : β → α) := ∀ (φ : β → ℝ), ∀ (B : Set β), ∫ x in B, φ x ∂p_μ = ∫ x in T_inv '' B, (φ ∘ T) x ∂μ
 
-structure Pushforward_Measure (α : Type _) (β : Type _) [MeasurableSpace α] [MeasurableSpace β] extends Measure β where
+structure Pushforward_Measure (α β : Type*) [MeasurableSpace α] [MeasurableSpace β] extends Measure β where
 p_μ : Measure β
 μ : Measure α
 T : α → β

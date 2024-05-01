@@ -17,12 +17,7 @@ local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
 set_option trace.Meta.Tactic.simp.rewrite true
 
-/--
-  The subtype associated to a subset E: {x // x ∈ E}.
--/
-def st {α : Type} (E : Set α) := {x // x ∈ E}
-
-variable {α : Type}
+variable {α : Type*}
 
 variable [NormedAddCommGroup (α → ℝ)] [InnerProductSpace ℝ (α → ℝ)]
 variable [NormedAddCommGroup (ℕ → α → ℝ)] [InnerProductSpace ℝ (ℕ → α → ℝ)] [MeasurableSpace α]
@@ -30,7 +25,7 @@ variable [NormedAddCommGroup (ℕ → α → ℝ)] [InnerProductSpace ℝ (ℕ �
 /--
   For all non-empty finite set s, ∃ e ∈ s, ∀ a ∈ s, a ≤ e.
 -/
-theorem exist_max_finset {ι : Type _} [LinearOrder ι] (s : Finset ι) (h : Finset.Nonempty s) : ∃ e ∈ s, ∀ a ∈ s, a ≤ e :=
+theorem exist_max_finset {ι : Type*} [LinearOrder ι] (s : Finset ι) (h : Finset.Nonempty s) : ∃ e ∈ s, ∀ a ∈ s, a ≤ e :=
 by
   use (Finset.max' s h)
   constructor
@@ -43,7 +38,7 @@ by
 /--
   Given a non-empty finite set s and a function f on elements of s, ∃ j ∈ s, ∀ i ∈ s, f i ≤ f j.
 -/
-theorem exist_max_image_finset {ι E : Type _} [LinearOrder E] (s : Finset ι) (h : Finset.Nonempty s) (f : ι → E) : ∃ j ∈ s, ∀ i ∈ s, f i ≤ f j :=
+theorem exist_max_image_finset {ι E : Type*} [LinearOrder E] (s : Finset ι) (h : Finset.Nonempty s) (f : ι → E) : ∃ j ∈ s, ∀ i ∈ s, f i ≤ f j :=
 by
   let sf := Finset.image f s
   have hf : Finset.Nonempty sf := Nonempty.image h f
@@ -65,7 +60,7 @@ by
 /--
   a² * b² = (a * b)²
 -/
-lemma distrib_sq {M : Type _} [CommMonoid M] (a b : M) : a^2 * b^2 = (a * b)^2 := (mul_pow a b 2).symm
+lemma distrib_sq {M : Type*} [CommMonoid M] (a b : M) : a^2 * b^2 = (a * b)^2 := (mul_pow a b 2).symm
 /--
   ∀ a b ∈ ℝ⁺ ∪ {∞}, a ≤ b → a² ≤ b²
 -/
@@ -187,7 +182,7 @@ variable [MeasureSpace ℝ≥0] [NormedAddCommGroup ℝ≥0∞] [NormedSpace ℝ
 /- Def of ℝ≥0∞ coerced log. -/
 noncomputable def log (a : ℝ≥0∞) := Real.log (ENNReal.toReal a)
 
-noncomputable def KL {α : Type _} [MeasurableSpace α] (μ : Measure α) (dμ dπ : α → ℝ≥0∞) := ENNReal.ofReal (∫ x in Set.univ, log ((dμ x) / (dπ x)) ∂μ)
+noncomputable def KL {α : Type*} [MeasurableSpace α] (μ : Measure α) (dμ dπ : α → ℝ≥0∞) := ENNReal.ofReal (∫ x in Set.univ, log ((dμ x) / (dπ x)) ∂μ)
 
 /--
  ∀ a ∈ ]0, ∞[, exp (log a) = (a : ℝ).
@@ -227,7 +222,7 @@ by
 /--
   Definition of infinite limit at infinity for vector-valued function (we use the order of real numbers on the norm of vectors as an order on ℝᵈ).
 -/
-def tends_to_infty {α : Type _} [Norm α] (f : α → ℝ) := ∀ c > 0, ∃ (x : α), ∀ (x':α), ‖x‖ ≤ ‖x'‖ → c < f x
+def tends_to_infty {α : Type*} [Norm α] (f : α → ℝ) := ∀ c > 0, ∃ (x : α), ∀ (x':α), ‖x‖ ≤ ‖x'‖ → c < f x
 variable [Norm α]
 /--
   Unformal but highly pratical multivariate integration by parts.

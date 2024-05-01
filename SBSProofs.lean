@@ -12,5 +12,5 @@ import SBSProofs.Bijection
 import SBSProofs.KL
 import SBSProofs.KSD
 import SBSProofs.PushForward
-import SBSProofs.SteepestDirection
+--import SBSProofs.SteepestDirection
 import SBSProofs.Utils

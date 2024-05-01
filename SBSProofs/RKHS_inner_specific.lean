@@ -30,10 +30,13 @@ set_option maxHeartbeats 4000000
 
 class RKHS {E F : Type*} [RCLike F] (H : Set (E → F)) [NormedAddCommGroup H] [InnerProductSpace F H] where
   k : E → E → F
-  memb  : ∀ (x : E), k x ∈ H
-  repro : ∀ (hf : f ∈ H), ∀ (x : E), f x = inner (⟨f, hf⟩ : H) ⟨(k x), memb x⟩
+  memb : ∀ (x : E), k x ∈ H
+  repro : ∀ (hf : f ∈ H), ∀ (x : E), f x = inner (⟨f, hf⟩ : H) ⟨k x, memb x⟩
 
-
+namespace RKHS
+variable {E F : Type*} [RCLike F] {H : Set (E → F)} [NormedAddCommGroup H] [InnerProductSpace F H] [s : RKHS H]
+def kx (x : E) : H := ⟨s.k x, s.memb x⟩
+end RKHS
 
 variable {d : ℕ} {Ω : Set (Vector ℝ d)}
 
@@ -97,8 +100,8 @@ by
   simp_rw [H_norm]
 
   -- We use the reproducing propriety of H₀ to rewrite f i x as ⟪f i, k x⟫.
-  have rkhs : ∀ (x : Ω), ∑ i ∈ range (d + 1), (‖(f i).1 x‖₊ : ℝ≥0∞)^2 = ∑ i ∈ range (d + 1), (‖⟪(f i), ⟨s.k x, s.memb x⟩⟫‖₊ : ℝ≥0∞)^2 := by {
-    have temp : ∀ (x : Ω), ∀ (i : ℕ), i ∈ range (d + 1) → (f i).1 x = ⟪f i, ⟨s.k x, s.memb x⟩⟫ := by
+  have rkhs : ∀ (x : Ω), ∑ i ∈ range (d + 1), (‖(f i).1 x‖₊ : ℝ≥0∞)^2 = ∑ i ∈ range (d + 1), (‖⟪(f i), s.kx x⟫‖₊ : ℝ≥0∞)^2 := by {
+    have temp : ∀ (x : Ω), ∀ (i : ℕ), i ∈ range (d + 1) → (f i).1 x = ⟪f i, s.kx x⟫ := by
     {
       intro x i iInRange
       rw (config := {occs := .pos [2]}) [show f i = ⟨(f i).1, (f i).2⟩ by rfl]
@@ -112,20 +115,20 @@ by
   simp_rw [rkhs]
 
   -- Coersive squared Cauchy-Schwarz inequality : (↑‖⟪f i, k x⟫‖₊)² ≤ (↑‖f i‖₊)² (↑‖f x‖₊)².
-  have cauchy_schwarz_sq : ∀x, ∀i ∈ range (d + 1), (‖⟪(f i), ⟨s.k x, s.memb x⟩⟫‖₊ : ℝ≥0∞)^2 ≤ (‖f i‖₊ : ℝ≥0∞)^2 * (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2 := by {
+  have cauchy_schwarz_sq : ∀x, ∀i ∈ range (d + 1), (‖⟪(f i), s.kx x⟫‖₊ : ℝ≥0∞)^2 ≤ (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.kx x‖₊ : ℝ≥0∞)^2 := by {
     intro x i _iInRange
-    rw [(distrib_sq (‖f i‖₊ : ℝ≥0∞) (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞))]
+    rw [(distrib_sq (‖f i‖₊ : ℝ≥0∞) (‖s.kx x‖₊ : ℝ≥0∞))]
     apply le_square
-    have nn_cauchy := nnnorm_inner_le_nnnorm (𝕜 := ℝ) (f i) ⟨s.k x, s.memb x⟩
+    have nn_cauchy := nnnorm_inner_le_nnnorm (𝕜 := ℝ) (f i) (s.kx x)
     exact coe_nnreal_le nn_cauchy
   }
 
   -- If f ≤ g, ∑ i ∈ s, f ≤ ∑ i ∈ s, g. Thus, ∑ i ∈ range (d + 1), (↑‖⟪f i, k x⟫‖₊)² ≤ ∑ i ∈ range (d + 1), (↑‖f i‖)² * (↑‖k x‖₊)².
-  have sum_le : (fun x ↦ ∑ i ∈ range (d + 1), (‖⟪f i, ⟨s.k x, s.memb x⟩⟫‖₊ : ℝ≥0∞)^2) ≤ (fun x ↦ ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2) := fun x ↦ sum_le_sum (cauchy_schwarz_sq x)
+  have sum_le : (fun x ↦ ∑ i ∈ range (d + 1), (‖⟪f i, s.kx x⟫‖₊ : ℝ≥0∞)^2) ≤ (fun x ↦ ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.kx x‖₊ : ℝ≥0∞)^2) := fun x ↦ sum_le_sum (cauchy_schwarz_sq x)
 
   -- A lower-Lebesgue integral of a finite sum is equal to a finite sum of lower-Lebesgue integral.
-  have inverse_sum_int : ∫⁻ x in Set.univ, ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2 ∂μ = ∑ i ∈ range (d + 1), ∫⁻ x in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2 ∂μ := by {
-    have is_measurable : ∀ i ∈ range (d + 1), Measurable ((fun i ↦ fun x ↦ (‖f i‖₊ : ℝ≥0∞)^2 * (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2) i) := by
+  have inverse_sum_int : ∫⁻ x in Set.univ, ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.kx x‖₊ : ℝ≥0∞)^2 ∂μ = ∑ i ∈ range (d + 1), ∫⁻ x in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.kx x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+    have is_measurable : ∀ i ∈ range (d + 1), Measurable ((fun i ↦ fun x ↦ (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.kx x‖₊ : ℝ≥0∞)^2) i) := by
     {
       intro i _InRange s _h
       exact h_m_set _
@@ -145,18 +148,18 @@ by
   simp_rw [abs_to_nnorm] at h1
 
   -- 1. ∀ f ≤ g, ∫⁻ x, f x ∂μ ≤ ∫⁻ x, g x ∂μ. We use this lemma with *sum_le*.
-  calc ∫⁻ (x : Ω) in Set.univ, ∑ i ∈ range (d + 1), (‖⟪f i, ⟨s.k x, s.memb x⟩⟫‖₊ : ℝ≥0∞)^2 ∂μ ≤ ∫⁻ (x : Ω) in Set.univ, ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2 ∂μ := lintegral_mono sum_le
+  calc ∫⁻ (x : Ω) in Set.univ, ∑ i ∈ range (d + 1), (‖⟪f i, s.kx x⟫‖₊ : ℝ≥0∞)^2 ∂μ ≤ ∫⁻ (x : Ω) in Set.univ, ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.kx x‖₊ : ℝ≥0∞)^2 ∂μ := lintegral_mono sum_le
 
   -- 2. Inversion sum integral.
-  _ = ∑ i ∈ range (d + 1), ∫⁻ (x : Ω) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2 ∂μ := inverse_sum_int
+  _ = ∑ i ∈ range (d + 1), ∫⁻ (x : Ω) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.kx x‖₊ : ℝ≥0∞)^2 ∂μ := inverse_sum_int
 
   -- 3. As (↑‖f i‖₊)² is a constant in the integral, get it out.
-  _ = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : Ω) in Set.univ, (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2 ∂μ := by {
-    have is_measurable : Measurable (fun x ↦ (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2) := by {
+  _ = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : Ω) in Set.univ, (‖s.kx x‖₊ : ℝ≥0∞)^2 ∂μ := by {
+    have is_measurable : Measurable (fun x ↦ (‖s.kx x‖₊ : ℝ≥0∞)^2) := by {
       intro s _hs
       exact h_m_set _
     }
-    have const_int : ∀ i, ∫⁻ (x : Ω) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2 ∂μ = (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : Ω) in Set.univ, (‖(⟨s.k x, s.memb x⟩ : H₀)‖₊ : ℝ≥0∞)^2 ∂μ := by {
+    have const_int : ∀ i, ∫⁻ (x : Ω) in Set.univ, (‖f i‖₊ : ℝ≥0∞)^2 * (‖s.kx x‖₊ : ℝ≥0∞)^2 ∂μ = (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : Ω) in Set.univ, (‖s.kx x‖₊ : ℝ≥0∞)^2 ∂μ := by {
       intro i
       exact lintegral_const_mul ((‖f i‖₊ : ℝ≥0∞)^2) is_measurable
     }
@@ -164,22 +167,22 @@ by
   }
 
   -- Rewrite  (↑‖k x‖₊)² as ↑‖⟪k x, k x⟫‖₊ (lot of coercions).
-  _ = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : Ω) in Set.univ, (‖⟪(⟨s.k x, s.memb x⟩ : H₀), ⟨s.k x, s.memb x⟩⟫‖₊ : ℝ≥0∞) ∂μ := by {
+  _ = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : Ω) in Set.univ, (‖⟪s.kx x, s.kx x⟫‖₊ : ℝ≥0∞) ∂μ := by {
 
-    simp_rw [fun x ↦ nn_norm_eq_norm (⟨s.k x, s.memb x⟩ : H₀)]
+    simp_rw [fun x ↦ nn_norm_eq_norm (s.kx x)]
 
-    simp_rw [fun x ↦ enn_square (norm_nonneg (⟨s.k x, s.memb x⟩ : H₀))]
+    simp_rw [fun x ↦ enn_square (norm_nonneg (s.kx x))]
 
-    have norm_sq_eq_inner : ∀ x, ⟪(⟨s.k x, s.memb x⟩ : H₀), ⟨s.k x, s.memb x⟩⟫ = ‖(⟨s.k x, s.memb x⟩ : H₀)‖ ^ 2 := by {
+    have norm_sq_eq_inner : ∀ x, ⟪s.kx x, s.kx x⟫ = ‖s.kx x‖ ^ 2 := by {
       intro x
-      rw [inner_self_eq_norm_sq_to_K (𝕜 := ℝ) (⟨s.k x, s.memb x⟩ : H₀)]
+      rw [inner_self_eq_norm_sq_to_K (𝕜 := ℝ) (s.kx x)]
       simp
     }
     simp_rw [norm_sq_eq_inner]
 
-    have coe : ∀x, ENNReal.ofReal (‖(⟨s.k x, s.memb x⟩ : H₀)‖ ^ 2) = ↑‖‖(⟨s.k x, s.memb x⟩ : H₀)‖ ^ 2‖₊ := by {
+    have coe : ∀x, ENNReal.ofReal (‖s.kx x‖ ^ 2) = ↑‖‖s.kx x‖ ^ 2‖₊ := by {
       intro x
-      rw [nn_norm_eq_norm_re (‖(⟨s.k x, s.memb x⟩ : H₀)‖ ^ 2)]
+      rw [nn_norm_eq_norm_re (‖s.kx x‖ ^ 2)]
       simp
     }
     simp_rw [coe]
@@ -187,9 +190,9 @@ by
 
   -- Use the reproducing propriety of H₀ to write ⟪k x, k x⟫ as k x x.
   _ = ∑ i ∈ range (d + 1), (‖f i‖₊ : ℝ≥0∞)^2 * ∫⁻ (x : Ω) in Set.univ, (‖s.k x x‖₊ : ℝ≥0∞) ∂μ := by {
-    have reproducing_prop : ∀ x, ⟪(⟨s.k x, s.memb x⟩ : H₀), ⟨s.k x, s.memb x⟩⟫ = s.k x x := by {
+    have reproducing_prop : ∀ x, ⟪s.kx x, s.kx x⟫ = s.k x x := by {
       intro x
-      rw [s.repro (s.memb x) x]
+      rw [s.repro (s.memb x) x, show s.kx x = ⟨s.k x, s.memb x⟩ by rfl]
     }
     simp_rw [reproducing_prop]
   }

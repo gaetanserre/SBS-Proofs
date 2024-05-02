@@ -11,6 +11,6 @@ import SBSProofs.AbsoluteContinuity
 import SBSProofs.Bijection
 import SBSProofs.KL
 import SBSProofs.KSD
+import SBSProofs.RKHS
 import SBSProofs.PushForward
---import SBSProofs.SteepestDirection
 import SBSProofs.Utils

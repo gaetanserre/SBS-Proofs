@@ -21,13 +21,13 @@
 
 <span class="kn">namespace</span> MeasureTheory
 
-<span class="kd">variable</span> {α : <span class="kt">Type</span> _} {β : <span class="kt">Type</span> _} [MeasurableSpace α] [MeasurableSpace β]
+<span class="kd">variable</span> {α β : <span class="kt">Type</span><span class="bp">*</span>} [MeasurableSpace α] [MeasurableSpace β]
 
 <span class="kd">def</span> measure_set_of_pushforward_measure (μ : Measure α) (p_μ : Measure β) (f : β <span class="bp">→</span> α) := <span class="bp">∀</span> (B : Set β), p_μ B <span class="bp">=</span> μ (f <span class="bp">&#39;&#39;</span> B)
 
 <span class="kd">def</span> push_forward_integration (μ : Measure α) (p_μ : Measure β) (T : α <span class="bp">→</span> β) (T_inv : β <span class="bp">→</span> α) := <span class="bp">∀</span> (φ : β <span class="bp">→</span> ℝ), <span class="bp">∀</span> (B : Set β), <span class="bp">∫</span> x <span class="k">in</span> B, φ x <span class="bp">∂</span>p_μ <span class="bp">=</span> <span class="bp">∫</span> x <span class="k">in</span> T_inv <span class="bp">&#39;&#39;</span> B, (φ <span class="bp">∘</span> T) x <span class="bp">∂</span>μ
 
-<span class="kd">structure</span> Pushforward_Measure (α : <span class="kt">Type</span> _) (β : <span class="kt">Type</span> _) [MeasurableSpace α] [MeasurableSpace β] <span class="kd">extends</span> Measure β where
+<span class="kd">structure</span> Pushforward_Measure (α β : <span class="kt">Type</span><span class="bp">*</span>) [MeasurableSpace α] [MeasurableSpace β] <span class="kd">extends</span> Measure β where
 p_μ : Measure β
 μ : Measure α
 T : α <span class="bp">→</span> β

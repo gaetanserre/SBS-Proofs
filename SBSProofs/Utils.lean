@@ -20,7 +20,8 @@ set_option trace.Meta.Tactic.simp.rewrite true
 variable {α : Type*}
 
 variable [NormedAddCommGroup (α → ℝ)] [InnerProductSpace ℝ (α → ℝ)]
-variable [NormedAddCommGroup (ℕ → α → ℝ)] [InnerProductSpace ℝ (ℕ → α → ℝ)] [MeasurableSpace α]
+--variable [NormedAddCommGroup (ℕ → α → ℝ)] [InnerProductSpace ℝ (ℕ → α → ℝ)]
+variable [MeasurableSpace α]
 
 /--
   For all non-empty finite set s, ∃ e ∈ s, ∀ a ∈ s, a ≤ e.
@@ -73,7 +74,7 @@ by
 
 lemma coe_nnreal_le {a b : ℝ≥0} (h : a ≤ b) : (a : ℝ≥0∞) ≤ (b : ℝ≥0∞) := Iff.mpr coe_le_coe h
 
-lemma nn_norm_eq_norm (a : α → ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
+lemma nn_norm_eq_norm {α : Type*} [NormedAddCommGroup α] [InnerProductSpace ℝ α] (a : α) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
 
 lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
 
@@ -167,13 +168,6 @@ by
   -- See Theorem 1 of *Derivative reproducing properties for kernel methods in learning theory, Zhou 2008*.
   sorry
 
-/--
-  Linearity of inner product for function
--/
-lemma inner_linear_right (f a b : ℕ → α → ℝ) (c : ℝ) : ⟪fun i x ↦ c * a i x + b i x, f⟫ = c * ⟪fun i x ↦ a i x, f⟫ + ⟪fun i x ↦ b i x, f⟫ := by sorry
-
-lemma inner_zero (a : ℕ → α → ℝ) : ⟪0, a⟫ = 0 := by sorry
-
 /-==============-/
 
 variable [MeasureSpace ℝ≥0] [NormedAddCommGroup ℝ≥0∞] [NormedSpace ℝ ℝ≥0∞] [LocallyFiniteOrder ℝ≥0]
@@ -229,4 +223,4 @@ variable [Norm α]
 -/
 theorem mv_integration_by_parts (Ω : Set α) (f : α → ℝ) (g grad_f dg : ℕ → α → ℝ) (h : ∀ x, tends_to_infty (fun (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i ∈ range (d + 1), dg i x) ∂μ = - ∫ x in Ω, (∑ i ∈ range (d + 1), grad_f i x * g i x) ∂μ := by sorry
 
-lemma norm_eq_zero_ (f : ℕ → α → ℝ) : ‖f‖ = 0 ↔ f = 0 := by sorry
+lemma norm_eq_zero_ {α : Type*} [NormedAddCommGroup α] (f : ℕ → α) [Norm (ℕ → α)] : ‖f‖ = 0 ↔ ∀ i, f i = 0 := by sorry

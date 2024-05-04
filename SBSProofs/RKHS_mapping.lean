@@ -10,12 +10,12 @@ import Mathlib
 
 import SBSProofs.Utils
 
-open Classical MeasureTheory
+open Classical MeasureTheory ENNReal NNReal
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
 set_option trace.Meta.Tactic.simp.rewrite true
---set_option maxHeartbeats 600000
+set_option maxHeartbeats 600000
 
 variable {d : ℕ} {Ω : Set (Vector ℝ d)} [MeasureSpace Ω]
 
@@ -44,7 +44,7 @@ variable {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f g : H v e μ)
 /--
  - ∀ f, 0 <= ⟨f, f⟩
 -/
-example : 0 <= H_inner f f := by
+lemma inner_nonneg : 0 <= H_inner f f := by
   unfold H_inner
   let a := (h_repr_ne f).some
   have sq : ∀ i, v.1 i * a i * a i = (v.1 i) * (a i)^2 := by {
@@ -105,6 +105,71 @@ lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (zero = λ x ↦ (�
 instance : Zero (H v e μ) where
   zero := ⟨zero, zero_in_H⟩
 
-example : H_inner f 0 = 0 := by
+axiom zero_repr : (h_repr_ne (0 : H v e μ)).some = (λ i ↦ 0)
+axiom inner_summable : Summable (λ i ↦ (v.1 i) * ((h_repr_ne f).some i) * ((h_repr_ne g).some i))
 
-  sorry
+lemma inner_zero_eq_zero : H_inner f 0 = 0 := by
+  unfold H_inner
+  rw [zero_repr]
+
+  have summand_eq_zero : ∀ i, v.1 i * (h_repr_ne f).some i * (λ i ↦ 0) i = 0 := by {
+    intro i
+    rw [show (λ (i : ℕ) ↦ (0 : ℝ)) i = 0 by rfl]
+    ring
+  }
+  simp_rw [summand_eq_zero]
+  exact tsum_zero
+
+example : f ≠ 0 → 0 < H_inner f f := by
+  intro f_neq_0
+  by_contra h; push_neg at h
+  have inner_pos := inner_nonneg f
+  have inner_eq_0 : H_inner f f = 0 := by linarith
+  unfold H_inner at inner_eq_0
+
+  let a := (h_repr_ne f).some
+
+  have sq_summand : ∀ i, v.1 i * a i * a i = v.1 i * (a i)^2 := λ i ↦ by ring
+  simp_rw [sq_summand] at inner_eq_0
+
+  have summand_nonneg : ∀ i, (0 : ℝ) <= v.1 i * (a i)^2 := by {
+    intro i
+    exact Left.mul_nonneg (v.2 i) (sq_nonneg (a i))
+  }
+
+  have summand_summable : Summable (λ i ↦ v.1 i * (a i)^2) := by {
+    simp_rw [←sq_summand]
+    exact inner_summable f f
+  }
+
+  have summand_eq_zero := (summable_nonneg_iff_0 summand_nonneg summand_summable).mp inner_eq_0
+
+  have prod_v_a_eq_0 : ∀ i, v.1 i * a i = 0 := by {
+    intro i
+    cases mul_eq_zero.mp (summand_eq_zero i) with
+    | inl hv =>
+      rw [hv]
+      ring
+    | inr ha =>
+      rw [sq_eq_zero_iff.mp ha]
+      ring
+  }
+
+  have f_eq_0 : f = 0 := by {
+    ext x
+    rw [show (0 : H v e μ).1 = zero by rfl]
+    rw [show zero x = 0 by rfl]
+    rcases (h_repr_ne f).some_mem with ⟨ha, _⟩
+    rw [ha, show (h_repr_ne f).some = a by rfl]
+
+    have summand_eq_0 : ∀ i, (v.1 i) * (a i) * (e i x) = 0 := by {
+      intro i
+      rw [prod_v_a_eq_0]
+      ring
+    }
+
+    simp_rw [summand_eq_0]
+    exact tsum_zero
+  }
+
+  exact f_neq_0 f_eq_0

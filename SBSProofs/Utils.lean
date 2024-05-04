@@ -224,3 +224,37 @@ variable [Norm α]
 theorem mv_integration_by_parts (Ω : Set α) (f : α → ℝ) (g grad_f dg : ℕ → α → ℝ) (h : ∀ x, tends_to_infty (fun (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i ∈ range (d + 1), dg i x) ∂μ = - ∫ x in Ω, (∑ i ∈ range (d + 1), grad_f i x * g i x) ∂μ := by sorry
 
 lemma norm_eq_zero_ {α : Type*} [NormedAddCommGroup α] (f : ℕ → α) [Norm (ℕ → α)] : ‖f‖ = 0 ↔ ∀ i, f i = 0 := by sorry
+
+lemma summable_nonneg_iff_0 {f : ℕ → ℝ} (h_nonneg : ∀ i, 0 <= f i) (s : Summable f) : ∑' i, f i = 0 ↔ ∀ i, f i = 0 := by
+  let g := λ i ↦ (f i).toNNReal
+
+  have f_coe : f = fun a => (g a : ℝ) := by {
+      ext a
+      rw [λ i ↦ Real.coe_toNNReal (f i) (h_nonneg i)]
+    }
+
+  have coe_summable : Summable g := by {
+    rw [f_coe] at s
+    exact NNReal.summable_coe.mp s
+  }
+
+  constructor
+  · intro h_tsum
+    have sum_coe_eq_0 : ∑' i, (g i : ℝ) = 0 := by {
+      simp_rw [show ∀ i, (g i : ℝ) = f i by intro i; rw [f_coe]]
+      exact h_tsum
+    }
+    have coe_sum_eq_0 : ↑(∑' i, g i) = 0 := by {
+      have coe_tsum : ↑(∑' i, g i) = ∑' i, (g i : ℝ) := NNReal.coe_tsum
+      rw [sum_coe_eq_0] at coe_tsum
+      exact NNReal.coe_eq_zero.mp coe_tsum
+    }
+
+    have g_eq_0 := (tsum_eq_zero_iff coe_summable).mp coe_sum_eq_0
+    intro i
+    specialize g_eq_0 i
+    rw [f_coe]
+    exact NNReal.coe_eq_zero.mpr g_eq_0
+  intro hf
+  simp_rw [hf]
+  exact tsum_zero

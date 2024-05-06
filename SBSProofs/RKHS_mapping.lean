@@ -36,10 +36,77 @@ lemma h_repr_ne {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f : H v 
   use a
   exact ha
 
+axiom h_repr_singleton {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f : H v e μ) : ∃ a, h_repr f = ({a} : Set (ℕ → ℝ))
+
+lemma unique_repr {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} {f : H v e μ} {a : ℕ → ℝ} (h : a ∈ h_repr f) : (h_repr_ne f).some = a := by
+  rcases h_repr_singleton f with ⟨b, hb⟩
+  let g := (h_repr_ne f).some
+  have g_in : g ∈ h_repr f := (h_repr_ne f).some_mem
+  simp_rw [hb] at g_in
+
+  have g_eq_b : (h_repr_ne f).some = b := g_in
+  simp_rw [hb] at h
+  rwa [show a = b by exact h]
+
 noncomputable def H_inner {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f g : H v e μ) : ℝ := ∑' i, (v.1 i) * ((h_repr_ne f).some i) * ((h_repr_ne g).some i)
 
 variable {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f g : H v e μ)
 
+def zero : Ω → ℝ := λ _ ↦ 0
+
+lemma zero_in_L2 : zero ∈ L2 μ := by
+  have integrable : ∃ C, ∫ x, |zero x|^2 ∂μ <= C := by {
+    simp_rw [
+        show ∀ (x : Ω), zero x = 0 by exact λ x ↦ rfl,
+        abs_zero,
+        sq_eq_zero_iff.mpr rfl,
+        integral_zero Ω ℝ
+      ]
+    use 0
+  }
+  exact integrable
+
+lemma zero_repr : zero = λ x ↦ (∑' i, (v.1 i) * ((λ _ ↦ 0) i) * (e i x)) := by
+  let a : ℕ → ℝ := λ _ ↦ 0
+  ext x
+  have summand_zero : ∀ i, v.1 i * a i * e i x = 0 := by {
+    intro i
+    rw [show v.1 i * a i * e i x = v.1 i * 0 * e i x by rfl]
+    ring
+  }
+  simp_rw [summand_zero, tsum_zero]
+  rfl
+
+lemma zero_summable : Summable (λ i ↦ (v.1 i) * (0 : ℝ)^2) := by
+  have zero_fun : (λ i ↦ v.1 i * (0 : ℝ)^2) = (λ (i : ℕ) ↦ (0 : ℝ)) := by {
+    ext i
+    ring
+  }
+  rw [zero_fun]
+  have hf : ∀ b ∉ (∅ : Finset ℕ), (λ (i : ℕ) ↦ (0 : ℝ)) b = 0 := by {
+    intro b b_not_in
+    rfl
+  }
+  exact summable_of_ne_finset_zero hf
+
+lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (zero = λ x ↦ (∑' i, (v.1 i) * (a i) * (e i x))) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2) := by
+  refine ⟨zero_in_L2, ?_⟩
+  let a : ℕ → ℝ := λ _ ↦ 0
+  use (λ _ ↦ 0)
+  refine ⟨zero_repr, zero_summable⟩
+
+instance : Zero (H v e μ) where
+  zero := ⟨zero, zero_in_H⟩
+
+lemma zero_unique_repr : (h_repr_ne (0 : H v e μ)).some = (λ i ↦ 0) := by
+  let a : ℕ → ℝ := λ i ↦ 0
+  have a_in_repr : a ∈ h_repr 0 := by {
+    have tmp : (0 : H v e μ) = λ x ↦ (∑' i, (v.1 i) * ((λ _ ↦ 0) i) * (e i x)) := zero_repr
+    exact ⟨tmp, zero_summable⟩
+  }
+  exact unique_repr a_in_repr
+
+axiom inner_summable : Summable (λ i ↦ (v.1 i) * ((h_repr_ne f).some i) * ((h_repr_ne g).some i))
 
 /--
  - ∀ f, 0 <= ⟨f, f⟩
@@ -63,54 +130,9 @@ lemma inner_symmetric : H_inner f g = H_inner g f := by
   have comm : ∀ i, (v.1 i) * ((h_repr_ne f).some i) * ((h_repr_ne g).some i) = (v.1 i) * ((h_repr_ne g).some i) * ((h_repr_ne f).some i) := λ i ↦ by ring
   simp_rw [comm]
 
-def zero : Ω → ℝ := λ _ ↦ 0
-
-lemma zero_in_L2 : zero ∈ L2 μ := by
-  have integrable : ∃ C, ∫ x, |zero x|^2 ∂μ <= C := by {
-    simp_rw [
-        show ∀ (x : Ω), zero x = 0 by exact λ x ↦ rfl,
-        abs_zero,
-        sq_eq_zero_iff.mpr rfl,
-        integral_zero Ω ℝ
-      ]
-    use 0
-  }
-  exact integrable
-
-lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (zero = λ x ↦ (∑' i, (v.1 i) * (a i) * (e i x))) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2) := by
-  refine ⟨zero_in_L2, ?_⟩
-  let a : ℕ → ℝ := λ _ ↦ 0
-  use a
-  constructor
-  · ext x
-    have summand_zero : ∀ i, v.1 i * a i * e i x = 0 := by {
-      intro i
-      rw [show v.1 i * a i * e i x = v.1 i * 0 * e i x by rfl]
-      ring
-    }
-    simp_rw [summand_zero, tsum_zero]
-    rfl
-  have zero_fun : (λ i ↦ v.1 i * a i ^ 2) = (λ (i : ℕ) ↦ (0 : ℝ)) := by {
-    ext i
-    rw [show a i = 0 by rfl]
-    ring
-  }
-  rw [zero_fun]
-  have hf : ∀ b ∉ (∅ : Finset ℕ), (λ (i : ℕ) ↦ (0 : ℝ)) b = 0 := by {
-    intro b b_not_in
-    rfl
-  }
-  exact summable_of_ne_finset_zero hf
-
-instance : Zero (H v e μ) where
-  zero := ⟨zero, zero_in_H⟩
-
-axiom zero_repr : (h_repr_ne (0 : H v e μ)).some = (λ i ↦ 0)
-axiom inner_summable : Summable (λ i ↦ (v.1 i) * ((h_repr_ne f).some i) * ((h_repr_ne g).some i))
-
 lemma inner_zero_eq_zero : H_inner f 0 = 0 := by
   unfold H_inner
-  rw [zero_repr]
+  rw [zero_unique_repr]
 
   have summand_eq_zero : ∀ i, v.1 i * (h_repr_ne f).some i * (λ i ↦ 0) i = 0 := by {
     intro i
@@ -173,3 +195,68 @@ example : f ≠ 0 → 0 < H_inner f f := by
   }
 
   exact f_neq_0 f_eq_0
+
+lemma mul_in_H (a : ℝ) : (λ x ↦ a * f.1 x) ∈ (H v e μ) := by
+  let g := λ x ↦ a * f.1 x
+  have g_in_L2 : g ∈ L2 μ := by {
+    unfold L2
+    rcases f.2 with ⟨⟨C, hC⟩, _⟩
+    use a^2 * C
+    have g_to_f : ∀ x, |g x|^2 = |a * f.1 x|^2 := by {
+      intro x
+      rfl
+    }
+    simp_rw [g_to_f, show ∀ x, |a * f.1 x|^2 = (a * f.1 x)^2 by intro x; simp]
+    simp_rw [λ x ↦ mul_pow a (f.1 x) 2]
+    rw [integral_mul_left (a^2) fun x ↦ (f.1 x)^2]
+    simp_rw [show ∀ x, (f.1 x)^2 = |f.1 x|^2 by simp]
+    exact mul_le_mul_of_nonneg_left hC (sq_nonneg a)
+  }
+
+  refine ⟨g_in_L2, ?_⟩
+  let h := (h_repr_ne f).some
+  let g_h := λ i ↦ a * h i
+  use g_h
+  have h_repr : h ∈ h_repr f := (h_repr_ne f).some_mem
+  have g_eq_tsum : g = λ x ↦ ∑' i, v.1 i * g_h i * e i x := by {
+    ext x
+    rcases h_repr with ⟨f_repr, _⟩
+    have g_eq_tsum : g = λ x ↦ ∑' i, v.1 i * a * h i * e i x := by {
+      ext x
+      have comm : ∀ i, v.1 i * a * h i * e i x = a * v.1 i * h i * e i x := λ i ↦ by ring
+      simp_rw [comm]
+
+      have summand_comm : ∀ i, a * v.1 i * h i * e i x = a * (v.1 i * h i * e i x) := by {
+        intro i
+        ring
+      }
+      simp_rw [summand_comm]
+
+      have const_out : ∑' i, a * (λ i ↦ (v.1 i * h i * e i x)) i = a * ∑' i, (λ i ↦ (v.1 i * h i * e i x)) i := by exact tsum_mul_left
+      rw [const_out, ←congrFun f_repr x]
+    }
+    have g_x := congrFun g_eq_tsum x
+    simp_rw [show ∀ i, v.1 i * a * h i * e i x = v.1 i * (a * h i) * e i x by intro i; ring] at g_x
+    simp_rw [show ∀ i, a * h i = g_h i by intro i; rfl] at g_x
+    exact g_x
+  }
+  refine ⟨g_eq_tsum, ?_⟩
+  rcases h_repr with ⟨_, h_summable⟩
+  have comm_fun : (λ i ↦ v.1 i * (g_h i)^2) = (λ i ↦ a^2 * (v.1 i * (h i)^2)) := by {
+    ext i
+    rw [show g_h i = a * h i by rfl]
+    rw [mul_pow a (h i) 2]
+    rw [show (v.1 i) * (a^2 * (h i)^2) = (a^2) * (v.1 i * (h i)^2) by ring]
+
+  }
+  rw [comm_fun]
+  exact (h_summable.mul_left (a^2))
+
+instance : HMul ℝ (H v e μ) (H v e μ) where
+  hMul := λ a f ↦ ⟨λ x ↦ a * f.1 x, mul_in_H f a⟩
+
+/- example (a : ℝ) : H_inner (a * f) g = a * H_inner f g := by
+  have : (a * f).1 = (λ x ↦ a * f.1 x) := rfl
+  let h_af := (h_repr_ne (a * f)).some
+  have :
+  sorry -/

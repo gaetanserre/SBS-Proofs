@@ -3,7 +3,7 @@
 -/
 
 /-
-- https://github.com/gaetanserre/SBS-Proofs
+ - https://github.com/gaetanserre/SBS-Proofs
 -/
 
 import Mathlib

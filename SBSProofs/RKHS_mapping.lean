@@ -353,10 +353,13 @@ noncomputable instance : Norm (H v e μ) where
 instance : HSub (H v e μ) (H v e μ) (H v e μ) where
   hSub := λ f g ↦ f + (-1 : ℝ) * g
 
-lemma H_add_left_neg (a : H v e μ) : a - a = 0 := by
-  rw [show a - a = a + (-1 : ℝ) * a by rfl]
+instance : Neg (H v e μ) where
+  neg := λ f ↦ (-1 : ℝ) * f
+
+lemma H_add_left_neg (a : H v e μ) : -a + a = 0 := by
+  rw [show -a = (-1 : ℝ) * a by rfl]
   ext x
-  rw [show (a + (-1 : ℝ) * a).1 x = a.1 x + ((-1 : ℝ) * a).1 x by rfl]
+  rw [show ((-1 : ℝ) * a + a).1 x = ((-1 : ℝ) * a).1 x + a.1 x by rfl]
   rw [show ((-1 : ℝ) * a).1 x = (-1 : ℝ) * a.1 x by rfl]
   rw [show (0 : H v e μ).1 x = 0 by rfl]
   ring
@@ -366,7 +369,15 @@ noncomputable instance : Dist (H v e μ) where
 
 lemma H_dist_self (a : H v e μ) : dist a a = 0 := by
   rw [show dist a a = norm (a - a) by rfl]
-  rw [H_add_left_neg a]
+  have a_sub_a_eq_0 : a - a = 0 := by {
+    rw [show a - a = a + (-1 : ℝ) * a by rfl]
+    ext x
+    rw [show (a + (-1 : ℝ) * a).1 x = a.1 x + ((-1 : ℝ) * a).1 x by rfl]
+    rw [show ((-1 : ℝ) * a).1 x = (-1 : ℝ) * a.1 x by rfl]
+    rw [show (0 : H v e μ).1 x = 0 by rfl]
+    ring
+  }
+  rw [a_sub_a_eq_0]
   rw [show norm (0 : H v e μ) = Real.sqrt (H_inner 0 0) by rfl]
   rw [inner_zero_eq_zero]
   exact Real.sqrt_zero
@@ -420,46 +431,90 @@ lemma H_eq_of_dist_eq_zero {a b : H v e μ} : dist a b = 0 → a = b := by
   rw [congrFun a_minus_b_eq_zero_val x]
   rfl
 
+lemma H_dist_triangle (a b c : H v e μ) : dist a c ≤ dist a b + dist b c := by
+  let a_r := (set_repr_ne a).some
+  let b_r := (set_repr_ne b).some
+  let c_r := (set_repr_ne c).some
+
+  have apply_sq : (dist a c)^2 ≤ (dist a b + dist b c)^2 → dist a c ≤ dist a b + dist b c := by {
+    intro h
+    rw [show (dist a c)^2 = (dist a c) * (dist a c) by ring] at h
+    rw [show (dist a b + dist b c)^2 = (dist a b + dist b c) * (dist a b + dist b c) by ring] at h
+    exact nonneg_le_nonneg_of_sq_le_sq (Left.add_nonneg (H_dist_nonneg a b) (H_dist_nonneg b c)) h
+  }
+  apply apply_sq
+
+  rw [dist_rw a c, dist_rw a b, dist_rw b c]
+  rw [show (set_repr_ne a).some = a_r by rfl]
+  rw [show (set_repr_ne b).some = b_r by rfl]
+  rw [show (set_repr_ne c).some = c_r by rfl]
+
+  have sum_nonneg : (0 : ℝ) ≤ ∑' (i : ℕ), v.1 i * (a_r i - c_r i)^2 := by {
+    have nonneg : ∀ i, (0 : ℝ) <= v.1 i * (a_r i - c_r i)^2 := by {
+      intro i
+      exact Left.mul_nonneg (v.2 i) (sq_nonneg _)
+    }
+    exact tsum_nonneg nonneg
+  }
+  rw [Real.sq_sqrt sum_nonneg]
+
+  have trans1 : ∀ i, v.1 i * (a_r i - c_r i)^2 = v.1 i * (a_r i - b_r i)^2 +( v.1 i * (2:ℝ) * (a_r i - b_r i) * (b_r i - c_r i) + v.1 i * (b_r i - c_r i)^2) := by intro i; ring
+
+  have s1 : Summable (λ i ↦ v.1 i * (a_r i - b_r i)^2) := by sorry
+  have s2 : Summable (λ i ↦ v.1 i * (2:ℝ) * (a_r i - b_r i) * (b_r i - c_r i) + v.1 i * (b_r i - c_r i)^2) := by sorry
+
+  simp_rw [trans1]
+  rw [tsum_add s1 s2]
+  have s3 : Summable (λ i ↦ v.1 i * 2 * (a_r i - b_r i) * (b_r i - c_r i)) := by sorry
+  have s4 : Summable (λ i ↦ v.1 i * (b_r i - c_r i)^2) := by sorry
+  rw [tsum_add s3 s4]
+
+  simp_rw [show ∀ b : ℕ, v.1 b * 2 * (a_r b - b_r b) * (b_r b - c_r b) = 2 * v.1 b * (a_r b - b_r b) * (b_r b - c_r b) by intro b; ring]
+
+
+
+  --tsum_mul_left
+
+  sorry
+
+lemma H_nsmul_zero : ∀ (x : ↑(H v e μ)), (fun (n:ℤ) (f : H v e μ) ↦ (n:ℝ) * f) 0 x = (0 : H v e μ) := by sorry
+
+lemma H_nsmul_succ : ∀ (n : ℕ) (x : ↑(H v e μ)), (fun (n : ℤ) (f : H v e μ) ↦ (n:ℝ) * f) (n + 1) x = (fun (n : ℤ) (f : H v e μ) ↦ (n:ℝ) * f) lemma H_zsmul_zero' : ∀ (a : ↑(H v e μ)), (fun (z:ℤ) (f : H v e μ) ↦ (z:ℝ) * f) 0 a = 0 := by sorry
+
+lemma H_zsmul_succ' : ∀ (n : ℕ) (a : ↑(H v e μ)), (fun (z:ℤ) (f : H v e μ) ↦ (z:ℝ) * f) (Int.ofNat (Nat.succ n)) a = (fun (z:ℤ) (f : H v e μ) ↦ (z:ℝ) * f) (Int.ofNat n) a + a := by sorry
+
+lemma H_zsmul_neg' : ∀ (n : ℕ) (a : ↑(H v e μ)), (fun (z:ℤ) (f : H v e μ) ↦ (z:ℝ) * f) (Int.negSucc n) a = -(fun (z:ℤ) (f : H v e μ) ↦ (z:ℝ) * f) (↑(Nat.succ n)) a := by sorry
+
 noncomputable instance : NormedAddCommGroup (H v e μ) where
+  dist := λ f g ↦ dist f g
+  edist := λ f g ↦ ENNReal.ofReal (dist f g)
   norm := λ f ↦ norm f
   add := λ f g ↦ f + g
   add_assoc := H_add_assoc
   zero_add := H_zero_add
   add_zero := H_add_zero
   nsmul := λ n f ↦ (n : ℝ) * f
-  neg := λ f ↦ (-1 : ℝ) * f
+  neg := λ f ↦ -f
   zsmul := λ z f ↦ (z : ℝ) * f
   add_left_neg := H_add_left_neg
   add_comm := H_add_comm
   dist_self := H_dist_self
   dist_comm := H_dist_comm
-  dist_triangle := by sorry
-  edist_dist := by {
-    intro x y
-    exact (ENNReal.ofReal_eq_coe_nnreal (H_dist_nonneg x y)).symm
-  }
+  dist_triangle := H_dist_triangle
+  edist_dist := λ f g ↦ rfl
   eq_of_dist_eq_zero := H_eq_of_dist_eq_zero
-  /- nsmul_zero := by sorry
-  nsmul_succ := by sorry
-  zsmul_zero' := by sorry
-  zsmul_succ' := by sorry
-  zsmul_neg' := by {
-    intro n a
-    rw [show Int.negSucc n = -(n + 1 : ℤ) by rfl]
-    rw [show Nat.succ n = n + 1 by rfl]
-    rw [show ↑(n + 1) = (n + 1 : ℤ) by rfl]
-    have tt : @Neg.neg ↑(H v e μ) { neg := fun f ↦ (-1 : ℝ) * f } ((λ (z : ℤ) (f : H v e μ) ↦ (z : ℝ) * f) ((n + 1) : ℤ) a) = @Neg.neg ↑(H v e μ) { neg := fun f ↦ (-1 : ℝ) * f } ((((n + 1) : ℤ) : ℝ) * a) := by rfl
-    rw [tt]
-    have ttt: (fun (z : ℤ) (f : H v e μ) ↦ (z : ℝ) * f) (-(n + 1 : ℤ)) a = (-(n + 1 : ℤ) : ℝ) * a := by simp
-    rw [ttt]
-    have tttt : @Neg.neg ↑(H v e μ) { neg := fun f ↦ (-1 : ℝ) * f } (((n + 1 : ℤ) : ℝ) * a) = (-1 : ℝ) * (((n + 1 : ℤ) : ℝ) * a) := by rfl
-    rw [tttt]
-    ext x
+  nsmul_zero := H_nsmul_zero
+  nsmul_succ := H_nsmul_succ
+  zsmul_zero' := H_zsmul_zero'
+  zsmul_succ' := H_zsmul_succ'
+  zsmul_neg' := H_zsmul_neg'
+  toUniformSpace := by sorry
+  uniformity_dist := by sorry
+  toBornology := by sorry
+  cobounded_sets := by sorry
+  dist_eq := by sorry
 
-    sorry
-  } -/
-
-noncomputable instance [NormedAddCommGroup (H v e μ)] : InnerProductSpace ℝ (H v e μ) where
+noncomputable instance : InnerProductSpace ℝ (H v e μ) where
 smul := λ a f ↦ a * f
 one_smul := by sorry
 mul_smul := by sorry

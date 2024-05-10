@@ -30,7 +30,7 @@ variable {d : ℕ} {Ω : Set (Vector ℝ d)}
 
 variable [MeasureSpace Ω]
 
-variable (μ π ν : Measure Ω) (dμ dπ : Ω → ℝ≥0∞)
+variable (μ π ν : Measure Ω) [IsFiniteMeasure μ] [IsFiniteMeasure π] (dμ dπ : Ω → ℝ≥0∞)
 
 /-
   μ << π << ν, they both admit density w.r.t. ν.

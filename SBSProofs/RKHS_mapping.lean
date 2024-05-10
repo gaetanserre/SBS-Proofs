@@ -21,7 +21,9 @@ variable {d : ℕ} {Ω : Set (Vector ℝ d)} [MeasureSpace Ω]
 
 --variable (k : Ω → Ω → ℝ) (e : ℕ → ℝ) (ϕ : ℕ → Ω → ℝ)
 
-def L2 (μ : Measure Ω) := {f : Ω → ℝ | ∃ C, ∫ x, |f x|^2 ∂μ <= C}
+--def L2 (μ : Measure Ω) := {f : Ω → ℝ | ∃ C, ∫ x, |f x|^2 ∂μ <= C}
+
+def L2 (μ : Measure Ω) [IsFiniteMeasure μ] := {f : Ω → ℝ | Memℒp f 2 μ}
 
 /- theorem mercer (x y : Ω) : Summable ((e ·) * (ϕ · x) * (ϕ · y)) ∧  k x y = ∑' i, (e i) * (ϕ i x) * (ϕ i y) := by sorry -/
 
@@ -29,36 +31,24 @@ def eigen := {e : ℕ → ℝ // ∀ i, 0 <= e i}
 
 def f_repr (v : eigen) (e : ℕ → Ω → ℝ) (f : Ω → ℝ) (a : ℕ → ℝ) := (f = λ x ↦ (∑' i, (v.1 i) * (a i) * (e i x))) ∧ (∀ x, Summable (λ i ↦ (v.1 i) * (a i) * (e i x)))
 
-def H (v : eigen) (e : ℕ → Ω → ℝ) (μ : Measure Ω) := {f | f ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e f a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2)}
+def H (v : eigen) (e : ℕ → Ω → ℝ) (μ : Measure Ω) [IsFiniteMeasure μ] := {f | f ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e f a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2)}
 
-def set_repr {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f : H v e μ) := {a : ℕ → ℝ | (f_repr v e f.1 a) ∧ (Summable (λ i ↦ (v.1 i) * (a i)^2))}
+def set_repr {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (f : H v e μ) := {a : ℕ → ℝ | (f_repr v e f.1 a) ∧ (Summable (λ i ↦ (v.1 i) * (a i)^2))}
 
-lemma set_repr_ne {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f : H v e μ) : (set_repr f).Nonempty := by
+lemma set_repr_ne {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (f : H v e μ) : (set_repr f).Nonempty := by
   rcases f.2 with ⟨_, ⟨a, ha⟩⟩
   use a
   exact ha
 
-axiom set_repr_unique {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} {f : H v e μ} {a b : ℕ → ℝ} (ha : a ∈ set_repr f) (hb : b ∈ set_repr f) : a = b
+axiom set_repr_unique {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] {f : H v e μ} {a b : ℕ → ℝ} (ha : a ∈ set_repr f) (hb : b ∈ set_repr f) : a = b
 
-lemma unique_choice {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} {f : H v e μ} {a : ℕ → ℝ} (h : a ∈ set_repr f) : (set_repr_ne f).some = a := set_repr_unique (set_repr_ne f).some_mem h
+lemma unique_choice {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] {f : H v e μ} {a : ℕ → ℝ} (h : a ∈ set_repr f) : (set_repr_ne f).some = a := set_repr_unique (set_repr_ne f).some_mem h
 
-noncomputable def H_inner {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f g : H v e μ) : ℝ := ∑' i, (v.1 i) * ((set_repr_ne f).some i) * ((set_repr_ne g).some i)
+noncomputable def H_inner {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (f g : H v e μ) : ℝ := ∑' i, (v.1 i) * ((set_repr_ne f).some i) * ((set_repr_ne g).some i)
 
-variable {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} (f g : H v e μ)
+variable {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (f g : H v e μ)
 
 def zero : Ω → ℝ := λ _ ↦ 0
-
-lemma zero_in_L2 : zero ∈ L2 μ := by
-  have integrable : ∃ C, ∫ x, |zero x|^2 ∂μ <= C := by {
-    simp_rw [
-        show ∀ (x : Ω), zero x = 0 by exact λ x ↦ rfl,
-        abs_zero,
-        sq_eq_zero_iff.mpr rfl,
-        integral_zero Ω ℝ
-      ]
-    use 0
-  }
-  exact integrable
 
 lemma zero_repr : f_repr v e zero (λ _ ↦ 0) := by
   let a : ℕ → ℝ := λ _ ↦ 0
@@ -92,7 +82,7 @@ lemma zero_summable : Summable (λ i ↦ (v.1 i) * (0 : ℝ)^2) := by
   }
   exact summable_of_ne_finset_zero hf
 
-lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e zero a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2) := ⟨zero_in_L2, (λ _ ↦ 0), zero_repr, zero_summable⟩
+lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e zero a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2) := ⟨memℒp_const 0, (λ _ ↦ 0), zero_repr, zero_summable⟩
 
 instance : Zero (H v e μ) where
   zero := ⟨zero, zero_in_H⟩
@@ -247,21 +237,7 @@ lemma prod_f_summable (a : ℝ) : Summable (λ i ↦ v.1 i * (λ i ↦ a * (set_
 
 lemma mul_in_H (a : ℝ) : (λ x ↦ a * f.1 x) ∈ (H v e μ) := by
   let g := λ x ↦ a * f.1 x
-  have g_in_L2 : g ∈ L2 μ := by {
-    unfold L2
-    rcases f.2 with ⟨⟨C, hC⟩, _⟩
-    use a^2 * C
-    have g_to_f : ∀ x, |g x|^2 = |a * f.1 x|^2 := by {
-      intro x
-      rfl
-    }
-    simp_rw [g_to_f, show ∀ x, |a * f.1 x|^2 = (a * f.1 x)^2 by intro x; simp]
-    simp_rw [λ x ↦ mul_pow a (f.1 x) 2]
-    rw [integral_mul_left (a^2) fun x ↦ (f.1 x)^2]
-    simp_rw [show ∀ x, (f.1 x)^2 = |f.1 x|^2 by simp]
-    exact mul_le_mul_of_nonneg_left hC (sq_nonneg a)
-  }
-
+  have g_in_L2 : g ∈ L2 μ := Memℒp.const_mul (f.2).1 a
   let h := (set_repr_ne f).some
   let g_h := λ i ↦ a * h i
   refine ⟨g_in_L2, g_h, prod_f_repr f a, prod_f_summable f a⟩

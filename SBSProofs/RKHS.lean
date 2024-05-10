@@ -68,14 +68,14 @@ variable [MeasurableSpace Ω]
 /--
 We define the integral operator Tkf.
 -/
-noncomputable def int_operator (μ : Measure Ω) (f : Ω → ℝ) : Ω → ℝ := λ y ↦ ∫ x, s.k y x * f x ∂μ
+noncomputable def int_operator (μ : Measure Ω) [IsFiniteMeasure μ] (f : Ω → ℝ) : Ω → ℝ := λ y ↦ ∫ x, s.k y x * f x ∂μ
 
 /--
 TODO. Define L².
 -/
-lemma op_inclusion (f : Ω → ℝ) : int_operator H₀ μ f ∈ H₀ := by sorry
+lemma op_inclusion (μ : Measure Ω) [IsFiniteMeasure μ] (f : Ω → ℝ) : int_operator H₀ μ f ∈ H₀ := by sorry
 
-def integral_is_finite (μ : Measure Ω) (f : Ω → ℝ) := ∃ (C : ℝ≥0), ∫⁻ x in Set.univ, ENNReal.ofReal |f x| ∂μ < C
+def integral_is_finite (μ : Measure Ω) [IsFiniteMeasure μ] (f : Ω → ℝ) := ∃ (C : ℝ≥0), ∫⁻ x in Set.univ, ENNReal.ofReal |f x| ∂μ < C
 
 /-
 For simplicity, we will use this assumption to prove that some trivial functions are mesurable.
@@ -84,7 +84,7 @@ variable (h_m_set : ∀ (s : Set Ω), MeasurableSet s)
 /--
   H ⊆ L2(μ) i.e., ∀ f ∈ H, ∫⁻ Ω ||f x||^2 ∂μ < ∞. Please note that (x : Ω) ∈ Set.univ represent the same statement as (x : Vector ℝ d) ∈ Ω. However, the Lean system handles subtypes better than subsets.
 -/
-theorem H_subset_of_L2 (μ : Measure Ω) (h1 : integral_is_finite μ (fun x ↦ s.k x x)) (h2 : norm_H H₀) : ∀ (f : product_RKHS H₀), ∫⁻ x in Set.univ, ENNReal.ofReal ‖fun i ↦ (f i).1 x‖^2 ∂μ < ∞ :=
+theorem H_subset_of_L2 (μ : Measure Ω) [IsFiniteMeasure μ] (h1 : integral_is_finite μ (fun x ↦ s.k x x)) (h2 : norm_H H₀) : ∀ (f : product_RKHS H₀), ∫⁻ x in Set.univ, ENNReal.ofReal ‖fun i ↦ (f i).1 x‖^2 ∂μ < ∞ :=
 by
   intro f
 

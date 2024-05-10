@@ -151,7 +151,7 @@ by
 /--
   Linearity of inner product applied to integral
 -/
-lemma inter_inner_integral_right (μ : Measure α) (g : α → ℝ) (f : α → α → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
+lemma inter_inner_integral_right (μ : Measure α) [IsFiniteMeasure μ] (g : α → ℝ) (f : α → α → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
 by
 sorry
 
@@ -176,7 +176,7 @@ variable [MeasureSpace ℝ≥0] [NormedAddCommGroup ℝ≥0∞] [NormedSpace ℝ
 /- Def of ℝ≥0∞ coerced log. -/
 noncomputable def log (a : ℝ≥0∞) := Real.log (ENNReal.toReal a)
 
-noncomputable def KL {α : Type*} [MeasurableSpace α] (μ : Measure α) (dμ dπ : α → ℝ≥0∞) := ENNReal.ofReal (∫ x in Set.univ, log ((dμ x) / (dπ x)) ∂μ)
+noncomputable def KL {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ] (dμ dπ : α → ℝ≥0∞) := ENNReal.ofReal (∫ x in Set.univ, log ((dμ x) / (dπ x)) ∂μ)
 
 /--
  ∀ a ∈ ]0, ∞[, exp (log a) = (a : ℝ).

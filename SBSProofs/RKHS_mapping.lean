@@ -29,9 +29,10 @@ def eigen := {e : ℕ → ℝ // ∀ i, 0 <= e i}
 
 def f_repr (v : eigen) (e : ℕ → Ω → ℝ) (f : Ω → ℝ) (a : ℕ → ℝ) := (f = λ x ↦ (∑' i, (v.1 i) * (a i) * (e i x))) ∧ (∀ x, Summable (λ i ↦ (v.1 i) * (a i) * (e i x)))
 
-/--
+/-
   We define a set of functions that depends on a finite measure μ. Each function is representable by a infinite sum.
 -/
+
 def H (v : eigen) (e : ℕ → Ω → ℝ) (μ : Measure Ω) [IsFiniteMeasure μ] := {f | f ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e f a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2)}
 
 def set_repr {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (f : H v e μ) := {a : ℕ → ℝ | (f_repr v e f.1 a) ∧ (Summable (λ i ↦ (v.1 i) * (a i)^2))}
@@ -107,30 +108,14 @@ lemma mul_in_H (a : ℝ) : (λ x ↦ a * f.1 x) ∈ (H v e μ) := by
 instance : HMul ℝ (H v e μ) (H v e μ) where
   hMul := λ a f ↦ ⟨λ x ↦ a * f.1 x, mul_in_H f a⟩
 
-/- example (a : ℝ) : H_inner (a * f) g = a * H_inner f g := by
-  let h := (set_repr_ne f).some
-  let h_af := λ i ↦ a * h i
-
-  have h_af_in : h_af ∈ set_repr (a * f) := ⟨mul_repr f a, mul_summable f a⟩
-  unfold H_inner
-  rw [unique_choice h_af_in]
-  have comm_summand : ∀ i, v.1 i * h_af i * (set_repr_ne g).some i = a * v.1 i * h i * (set_repr_ne g).some i := by {
-    intro i
-    ring
-  }
-  have lambda_comm : ∀ i, a * v.1 i * h i * (set_repr_ne g).some i = a * (λ i ↦ v.1 i * h i * (set_repr_ne g).some i) i := by {
-    intro i
-    ring
-  }
-  simp_rw [comm_summand, lambda_comm]
-  exact tsum_mul_left -/
-
+instance : HSMul ℝ (H v e μ) (H v e μ) where
+  hSMul := λ r f ↦ r * f
 
 /-
   We define the sum between two functions in H as the pointwise sum. We show that the result lies in H.
 -/
 
-/--
+/-
   ∀ f, g ∈ H, f + g ∈ L2. Assume it.
 -/
 lemma add_in_L2 : (λ x ↦ f.1 x + g.1 x) ∈ L2 μ := by sorry
@@ -173,26 +158,29 @@ instance : Neg (H v e μ) where
   neg := λ f ↦ (-1 : ℝ) * f
 
 
-/--
+/-
   We assume that the the representative of each function in H is unique (property of v and e).
 -/
+
 axiom set_repr_unique {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] {f : H v e μ} {a b : ℕ → ℝ} (ha : a ∈ set_repr f) (hb : b ∈ set_repr f) : a = b
 
 lemma unique_choice {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] {f : H v e μ} {a : ℕ → ℝ} (h : a ∈ set_repr f) : (set_repr_ne f).some = a := set_repr_unique (set_repr_ne f).some_mem h
 
-/--
+/-
   We define a function : H × H → ℝ. The purpose of the following is to prove that H endowed with this function is a inner product space.
 -/
 noncomputable def H_inner {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (f g : H v e μ) : ℝ := ∑' i, (v.1 i) * ((set_repr_ne f).some i) * ((set_repr_ne g).some i)
 
-/--
+/-
   We assume that the inner production is always defined.
 -/
+
 axiom inner_summable {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (f g : H v e μ) : Summable (λ i ↦ (v.1 i) * ((set_repr_ne f).some i) * ((set_repr_ne g).some i))
 
-/--
+/-
   We give H a inner product as well as the induced norm and distance. We show the required properties that H is an additive commutative group.
 -/
+
 noncomputable instance : Inner ℝ (H v e μ) where
   inner := H_inner
 
@@ -202,10 +190,58 @@ noncomputable instance : Norm (H v e μ) where
 noncomputable instance : Dist (H v e μ) where
   dist := λ f g ↦ norm (f - g)
 
+/-
+  We show basic properties on the inner product.
+-/
 
-/--
+lemma inner_mul_left (a : ℝ) : inner (a * f) g = a * inner f g := by
+  let h := (set_repr_ne f).some
+  let h_af := λ i ↦ a * h i
+
+  have h_af_in : h_af ∈ set_repr (a * f) := ⟨mul_repr f a, mul_summable f a⟩
+  rw [show inner (a * f) g = H_inner (a * f) g by rfl]
+  unfold H_inner
+  rw [unique_choice h_af_in]
+  have comm_summand : ∀ i, v.1 i * h_af i * (set_repr_ne g).some i = a * v.1 i * h i * (set_repr_ne g).some i := by {
+    intro i
+    ring
+  }
+  have lambda_comm : ∀ i, a * v.1 i * h i * (set_repr_ne g).some i = a * (λ i ↦ v.1 i * h i * (set_repr_ne g).some i) i := by {
+    intro i
+    ring
+  }
+  simp_rw [comm_summand, lambda_comm]
+  exact tsum_mul_left
+
+lemma H_inner_add_left (h : H v e μ) : (inner (f + g) h : ℝ) = inner f h + inner g h := by
+  let a_f := (set_repr_ne f).some
+  let a_g := (set_repr_ne g).some
+  let a_h := (set_repr_ne h).some
+  let a_fg := λ i ↦ a_f i + a_g i
+
+  have a_fg_repr : a_fg ∈ set_repr (f + g) := ⟨add_repr f g, add_summable f g⟩
+  rw [show inner (f + g) h = H_inner (f + g) h by rfl]
+  unfold H_inner
+  rw [unique_choice a_fg_repr]
+  simp_rw [show ∀ i, v.1 i * a_fg i * a_h i = v.1 i * (a_f i + a_g i) * a_h i by intro i; rfl]
+
+  simp_rw [show ∀ i, v.1 i * (a_f i + a_g i) * a_h i = v.1 i * a_f i * a_h i + v.1 i * a_g i * a_h i by intro i; ring]
+
+  rw [tsum_add (inner_summable f h) (inner_summable g h)]
+  rfl
+
+lemma inner_symmetric : (inner f g : ℝ) = inner g f := by
+  rw [show inner f g = H_inner f g by rfl]
+  unfold H_inner
+  have comm : ∀ i, (v.1 i) * ((set_repr_ne f).some i) * ((set_repr_ne g).some i) = (v.1 i) * ((set_repr_ne g).some i) * ((set_repr_ne f).some i) := λ i ↦ by ring
+  simp_rw [comm]
+  rfl
+
+
+/-
  We define the 0 of H as pointwise 0 function. We show that it lies in H.
 -/
+
 def zero : Ω → ℝ := λ _ ↦ 0
 
 lemma zero_repr : f_repr v e zero (λ _ ↦ 0) := by
@@ -261,7 +297,7 @@ lemma zero_unique_repr : (set_repr_ne (0 : H v e μ)).some = (λ i ↦ 0) := by
   exact unique_choice a_in_repr
 
 
-/--
+/-
   We show properties on the inner product and the 0 function.
 -/
 
@@ -279,13 +315,6 @@ lemma inner_nonneg : (0 : ℝ) <= inner f f := by
     exact Left.mul_nonneg (v.2 i) (sq_nonneg (a i))
   }
   exact tsum_nonneg nonneg
-
-/- lemma inner_symmetric : (inner f g : ℝ) = inner g f := by
-  rw [show inner f g = H_inner f g by rfl]
-  rw [show inner g f = H_inner g f by rfl]
-  unfold H_inner
-  have comm : ∀ i, (v.1 i) * ((set_repr_ne f).some i) * ((set_repr_ne g).some i) = (v.1 i) * ((set_repr_ne g).some i) * ((set_repr_ne f).some i) := λ i ↦ by ring
-  simp_rw [comm] -/
 
 lemma inner_zero_eq_zero : inner f 0 = (0 : ℝ) := by
   rw [show inner f 0 = H_inner f 0 by rfl]
@@ -473,7 +502,7 @@ lemma distrib_H_norm (t : ℝ) : ‖f + t*g‖^2 = ‖f‖^2 + (2 : ℝ) * t * i
   have tsum_to_inner : ∑' i, v.1 i * a_f i * a_g i = inner f g := by rfl
   rw [tsum_to_inner]
 
-lemma H_dist_cauchy_schwarz : inner f g <= ‖f‖ * ‖g‖ := by
+lemma H_cauchy_schwarz : inner f g <= ‖f‖ * ‖g‖ := by
   by_cases hg : ‖g‖ ≠ 0
   · have hg_sq := pow_ne_zero 2 hg
     let P := λ (t : ℝ) ↦ ‖f + t*g‖^2
@@ -486,15 +515,10 @@ lemma H_dist_cauchy_schwarz : inner f g <= ‖f‖ * ‖g‖ := by
       rw [P_t0]
       rw [show t₀^2 = (inner f g)^2 / (‖g‖^2 * ‖g‖^2) by ring]
       rw [show (inner f g)^2 / (‖g‖^2 * ‖g‖^2) = (inner f g)^2 / ‖g‖^2 * (1:ℝ) / ‖g‖^2 by ring]
-
       rw [show (inner f g)^2 / ‖g‖^2 * (1:ℝ) / ‖g‖^2 * ‖g‖^2 = (inner f g)^2 / ‖g‖^2 * ((1:ℝ) / ‖g‖^2 * ‖g‖^2) by ring]
-
       rw [one_div_mul_cancel hg_sq]
-
       rw [show (inner f g)^2 / ‖g‖^2 * (1:ℝ) = (inner f g)^2 / ‖g‖^2 by ring]
-
       rw [show (2:ℝ) * t₀ * inner f g = (-2:ℝ) * (inner f g)^2 / ‖g‖^2 by ring]
-
       rw [show ‖f‖^2 + (-2:ℝ) * (inner f g)^2 / ‖g‖^2 + (inner f g)^2 / ‖g‖^2 = ‖f‖^2 -(inner f g)^2 / ‖g‖^2 by ring]
     }
 
@@ -522,48 +546,50 @@ lemma H_dist_cauchy_schwarz : inner f g <= ‖f‖ * ‖g‖ := by
   rw [inner_zero_eq_zero 0]
   simp
 
-/- lemma H_dist_triangle (a b c : H v e μ) : dist a c ≤ dist a b + dist b c := by
-  let a_r := (set_repr_ne a).some
-  let b_r := (set_repr_ne b).some
-  let c_r := (set_repr_ne c).some
+lemma ineq_add_norm : ‖f + g‖ <= ‖f‖ + ‖g‖ := by
+  apply nonneg_le_nonneg_of_sq_le_sq
+  · exact Left.add_nonneg (H_norm_nonneg f) (H_norm_nonneg g)
+  rw [show ‖f + g‖ * ‖f + g‖ = ‖f + g‖^2 by ring]
+  rw [show (‖f‖ + ‖g‖) * (‖f‖ + ‖g‖) = (‖f‖ + ‖g‖)^2 by ring]
 
-  have apply_sq : (dist a c)^2 ≤ (dist a b + dist b c)^2 → dist a c ≤ dist a b + dist b c := by {
-    intro h
-    rw [show (dist a c)^2 = (dist a c) * (dist a c) by ring] at h
-    rw [show (dist a b + dist b c)^2 = (dist a b + dist b c) * (dist a b + dist b c) by ring] at h
-    exact nonneg_le_nonneg_of_sq_le_sq (Left.add_nonneg (H_dist_nonneg a b) (H_dist_nonneg b c)) h
-  }
-  apply apply_sq
+  have sq_ineq : ‖f‖^2 + (2 : ℝ) * inner f g + ‖g‖^2 <= (‖f‖ + ‖g‖)^2 := by {
 
-  rw [dist_rw a c, dist_rw a b, dist_rw b c]
-  rw [show (set_repr_ne a).some = a_r by rfl]
-  rw [show (set_repr_ne b).some = b_r by rfl]
-  rw [show (set_repr_ne c).some = c_r by rfl]
-
-  have sum_nonneg : (0 : ℝ) ≤ ∑' (i : ℕ), v.1 i * (a_r i - c_r i)^2 := by {
-    have nonneg : ∀ i, (0 : ℝ) <= v.1 i * (a_r i - c_r i)^2 := by {
-      intro i
-      exact Left.mul_nonneg (v.2 i) (sq_nonneg _)
+    have cauchy_schwarz : 2 * inner f g <= 2 * (‖f‖ * ‖g‖) := by {
+      have := H_cauchy_schwarz f g
+      linarith
     }
-    exact tsum_nonneg nonneg
+
+    have ineq := add_le_add_right (add_le_add_left cauchy_schwarz (‖f‖^2)) (‖g‖^2)
+    rwa [show ‖f‖^2 + (2 : ℝ) * (‖f‖ * ‖g‖) + ‖g‖^2 = (‖f‖ + ‖g‖)^2 by ring] at ineq
   }
-  rw [Real.sq_sqrt sum_nonneg]
 
-  have trans1 : ∀ i, v.1 i * (a_r i - c_r i)^2 = v.1 i * (a_r i - b_r i)^2 +( v.1 i * (2:ℝ) * (a_r i - b_r i) * (b_r i - c_r i) + v.1 i * (b_r i - c_r i)^2) := by intro i; ring
-
-  have s1 : Summable (λ i ↦ v.1 i * (a_r i - b_r i)^2) := by sorry
-  have s2 : Summable (λ i ↦ v.1 i * (2:ℝ) * (a_r i - b_r i) * (b_r i - c_r i) + v.1 i * (b_r i - c_r i)^2) := by sorry
-
-  simp_rw [trans1]
-  rw [tsum_add s1 s2]
-  have s3 : Summable (λ i ↦ v.1 i * 2 * (a_r i - b_r i) * (b_r i - c_r i)) := by sorry
-  have s4 : Summable (λ i ↦ v.1 i * (b_r i - c_r i)^2) := by sorry
-  rw [tsum_add s3 s4]
-
-  simp_rw [show ∀ b : ℕ, v.1 b * 2 * (a_r b - b_r b) * (b_r b - c_r b) = 2 * v.1 b * (a_r b - b_r b) * (b_r b - c_r b) by intro b; ring]
+  have distrib_norm := distrib_H_norm f g 1
+  rw [show (2:ℝ) * (1:ℝ) * inner f g = 2 * inner f g by ring] at distrib_norm
+  rw [show (1:ℝ)^2 * ‖g‖^2 = ‖g‖^2 by ring] at distrib_norm
+  rw [←distrib_norm] at sq_ineq
+  have one_mul_g_eq_g : (1 : ℝ) * g = g := by {
+    ext x
+    rw [show ((1 : ℝ) * g).1 x = (1 : ℝ) * g.1 x by rfl]
+    rw [show (1 : ℝ) * g.1 x = g.1 x by ring]
+  }
+  rwa [one_mul_g_eq_g] at sq_ineq
 
 
-  sorry -/
+lemma H_dist_triangle (a b c : H v e μ) : dist a c ≤ dist a b + dist b c := by
+  rw [show dist a c = norm (a - c) by rfl]
+  rw [show dist a b = norm (a - b) by rfl]
+  rw [show dist b c = norm (b - c) by rfl]
+  have split_a_sub_c : a - c = (a - b) + (b - c) := by {
+    ext x
+    rw [show (a - b + (b - c)).1 x = (a - b).1 x + (b - c).1 x by rfl]
+    rw [show (a - b).1 x = a.1 x + (-1:ℝ)*b.1 x by rfl]
+    rw [show (b - c).1 x = b.1 x + (-1:ℝ)*c.1 x by rfl]
+    rw [show a.1 x + -1 * b.1 x + (b.1 x + -1 * c.1 x) = a.1 x + (-1:ℝ)*c.1 x by ring]
+    rw [show (a - c).1 x = a.1 x + (-1:ℝ)*c.1 x by rfl]
+  }
+  rw [split_a_sub_c]
+
+  exact ineq_add_norm (a - b) (b - c)
 
 lemma H_add_assoc (a b c : H v e μ) : a + b + c = a + (b + c) := by
   ext x
@@ -621,31 +647,96 @@ noncomputable instance : NormedAddCommGroup (H v e μ) where
   add_comm := H_add_comm
   dist_self := H_dist_self
   dist_comm := H_dist_comm
-  dist_triangle := by sorry
+  dist_triangle := H_dist_triangle
   edist_dist := λ f g ↦ rfl
   eq_of_dist_eq_zero := H_eq_of_dist_eq_zero
+  dist_eq := λ x y ↦ by rfl
   nsmul_zero := by sorry
   nsmul_succ := by sorry
   zsmul_zero' := by sorry
   zsmul_succ' := by sorry
   zsmul_neg' := by sorry
-  toUniformSpace := by sorry
-  uniformity_dist := by sorry
   toBornology := by sorry
   cobounded_sets := by sorry
-  dist_eq := by sorry
 
 noncomputable instance : InnerProductSpace ℝ (H v e μ) where
 smul := λ a f ↦ a * f
-one_smul := by sorry
-mul_smul := by sorry
-smul_zero := by sorry
-smul_add := by sorry
-add_smul := by sorry
-zero_smul := by sorry
-norm_smul_le := by sorry
+one_smul := by {
+  intro b
+  ext x
+  rw [show ((1:ℝ) • b).1 x = (1:ℝ) * b.1 x by rfl]
+  ring
+}
+mul_smul := by {
+  intro x y b
+  ext e
+  rw [show ((x*y) • b).1 e = (x*y) * b.1 e by rfl]
+  rw [show (x • y • b).1 e = x * y • b.1 e by rfl]
+  rw [show y • b.1 e = y * b.1 e by rfl]
+  ring
+}
+smul_zero := by {
+  intro a
+  ext x
+  rw [show (a • (0 : H v e μ)).1 x = a * 0 by rfl]
+  rw [show (0 : H v e μ).1 x = 0 by rfl]
+  ring
+}
+smul_add := by {
+  intro a f g
+  ext x
+  rw [show (a • (f + g)).1 x = a * (f + g).1 x by rfl]
+  rw [show (f + g).1 x = f.1 x + g.1 x by rfl]
+  rw [show (a • f + a • g).1 x = a * f.1 x + a * g.1 x by rfl]
+  ring
+}
+add_smul := by {
+  intro r s f
+  ext x
+  rw [show ((r + s) • f).1 x = (r + s) * f.1 x by rfl]
+  rw [show (r • f + s • f).1 x = r * f.1 x + s * f.1 x by rfl]
+  ring
+}
+zero_smul := by {
+  intro f
+  ext x
+  rw [show ((0:ℝ) • f).1 x = (0:ℝ) * f.1 x by rfl]
+  rw [show (0 : H v e μ).1 x = 0 by rfl]
+  ring
+}
+norm_smul_le := by {
+  intro r f
+  have norm_mul_eq : ‖r • f‖ = ‖r‖ * ‖f‖ := by {
+    rw [show r • f = r * f by rfl]
+    rw [show ‖r‖ = |r| by rfl]
+
+    rw [←mul_self_inj (H_norm_nonneg (r * f)) (Left.mul_nonneg (abs_nonneg r) (H_norm_nonneg (f)))]
+    rw [show ‖r * f‖ * ‖r * f‖ = ‖r * f‖^2 by ring]
+    rw [show |r| * ‖f‖ * (|r| * ‖f‖) = (|r| * ‖f‖)^2 by ring]
+    rw [←inner_eq_sq_norm (r * f), inner_mul_left f (r * f) r]
+    rw [inner_symmetric, inner_mul_left f f r, inner_eq_sq_norm]
+    rw [show r * (r * ‖f‖^2) = r^2 * ‖f‖^2 by ring, ←sq_abs r]
+    ring
+  }
+  exact le_of_eq norm_mul_eq
+}
 inner := H_inner
-norm_sq_eq_inner := by sorry
-conj_symm := by sorry
-add_left := by sorry
-smul_left := by sorry
+norm_sq_eq_inner := by {
+  intro f
+  rw [←inner_eq_sq_norm]
+  rfl
+}
+conj_symm := by {
+  intro f g
+  rw [inner_symmetric f g]
+  rfl
+}
+add_left := by {
+  intro f g h
+  exact H_inner_add_left f g h
+}
+smul_left := by {
+  intro f g r
+  rw [show r • f = r * f by rfl]
+  exact inner_mul_left f g r
+}

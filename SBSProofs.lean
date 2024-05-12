@@ -7,12 +7,11 @@
 -/
 
 
-/- import SBSProofs.AbsoluteContinuity
+import SBSProofs.AbsoluteContinuity
 import SBSProofs.Bijection
 import SBSProofs.KL
 import SBSProofs.KSD
 import SBSProofs.RKHS
 import SBSProofs.PushForward
-import SBSProofs.Utils -/
-
-import SBSProofs.RKHS_mapping
+import SBSProofs.Utils
+import SBSProofs.RKHS_inner

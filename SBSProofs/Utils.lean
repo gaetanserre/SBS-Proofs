@@ -84,25 +84,24 @@ by
   exact (ofReal_mul h).symm
 
 
-
+variable {d : ℕ} (hd : d ≠ 0)
 /--
   A finite sum of finite elements is finite.
 -/
-theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i ∈ range (d + 1), (f i : ℝ≥0∞) < C :=
+theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i ∈ range d, (f i : ℝ≥0∞) < C :=
 by
   /- We begin to show that each element of the sum is bounded from above. -/
-  have sup_el : ∀ i ∈ range (d + 1), ∃ c, (f i) < c := fun i _ ↦ exists_gt (f i)
+  have sup_el : ∀ i ∈ range d, ∃ c, (f i) < c := fun i _ ↦ exists_gt (f i)
 
-  /- We find the argmax of the set {f i | ∀ i ∈ range (d + 1)} using the *exist_max_image_finset* lemma. -/
-  have max : ∃ j ∈ range (d+1), ∀ i ∈ range (d+1), f i ≤ f j := by {
-    have non_empty : ∀ (n : ℕ), Finset.Nonempty (range (n+1)) := fun n ↦ nonempty_range_succ
-    have max := exist_max_image_finset (range (d+1)) (non_empty d) (fun i ↦ f i)
+  /- We find the argmax of the set {f i | ∀ i ∈ range d} using the *exist_max_image_finset* lemma. -/
+  have max : ∃ j ∈ range d, ∀ i ∈ range d, f i ≤ f j := by {
+    have max := exist_max_image_finset (range d) (nonempty_range_iff.mpr hd) (fun i ↦ f i)
     rcases max with ⟨j, jin, max⟩
     use j
   }
 
   /- We show that the majorant of the biggest element majors every element of the sum  -/
-  have sup : ∃ c, ∀ i ∈ range (d + 1), f i < c := by {
+  have sup : ∃ c, ∀ i ∈ range d, f i < c := by {
     rcases max with ⟨j, jin, max⟩
     choose C sup_el using sup_el
     use (C j jin)
@@ -114,7 +113,7 @@ by
   }
 
   /- Same as above, with coercion -/
-  have sup_coe : ∃ (c:ℝ≥0), ∀ (i : ℕ), i ∈ range (d + 1) → (f i : ℝ≥0∞) < c := by {
+  have sup_coe : ∃ (c:ℝ≥0), ∀ (i : ℕ), i ∈ range d → (f i : ℝ≥0∞) < c := by {
     rcases sup with ⟨C, sup⟩
     use C
     intros i iin
@@ -129,29 +128,29 @@ by
   rcases sup_coe with ⟨c, sup_coe⟩
 
   /- The sum is bounded from above by the sum of the majorant -/
-  have sum_le : ∑ i ∈ range (d + 1), (f i : ℝ≥0∞) < ∑ i ∈ range (d + 1), (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (by simp) sup_coe
+  have sum_le : ∑ i ∈ range d, (f i : ℝ≥0∞) < ∑ i ∈ range d, (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (nonempty_range_iff.mpr hd) sup_coe
 
   /- Same as above, with coercion -/
-  have sum_coe : ∑ i ∈ range (d + 1), (c : ℝ≥0∞) = ∑ i ∈ range (d + 1), c := coe_finset_sum.symm
+  have sum_coe : ∑ i ∈ range d, (c : ℝ≥0∞) = ∑ i ∈ range d, c := coe_finset_sum.symm
 
   /- Sum of constant = constant -/
-  have sum_simpl : ∑ i ∈ range (d + 1), c = (d+1) • c := (nsmul_eq_sum_const c (d + 1)).symm
+  have sum_simpl : ∑ i ∈ range d, c = d • c := (nsmul_eq_sum_const c d).symm
 
-  use ((d+1) • c)
-  rw [ENNReal.coe_smul (d + 1) c]
+  use (d • c)
+  rw [ENNReal.coe_smul d c]
 
-  calc ∑ i ∈ range (d + 1), (f i: ℝ≥0∞) < ∑ i ∈ range (d + 1), (c : ℝ≥0∞) := sum_le
-  _ = ∑ i ∈ range (d + 1), c := sum_coe
-  _ = (d+1) • c := by {
+  calc ∑ i ∈ range d, (f i: ℝ≥0∞) < ∑ i ∈ range d, (c : ℝ≥0∞) := sum_le
+  _ = ∑ i ∈ range d, c := sum_coe
+  _ = d • c := by {
     rw [sum_simpl]
-    exact ENNReal.coe_smul (d + 1) c
+    exact ENNReal.coe_smul d c
   }
 
 /-ASSUMED LEMMAS-/
 /--
   Linearity of inner product applied to integral
 -/
-lemma inter_inner_integral_right (μ : Measure α) (g : α → ℝ) (f : α → α → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
+lemma inter_inner_integral_right (μ : Measure α) [IsFiniteMeasure μ] (g : α → ℝ) (f : α → α → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
 by
 sorry
 
@@ -163,7 +162,7 @@ lemma inner_linear_left (f a b : α → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x
 /--
   ⟪f, ∇k(x, ̇)⟫ = ∇f(x)
 -/
-lemma reproducing_derivative (H₀ : Set (α → ℝ)) (dk : α → ℕ → α → ℝ) (f : α → ℝ) (df' : ℕ → α → ℝ) (hf : f ∈ H₀) : ∀x, ∀ i ∈ range (d + 1), ⟪f, dk x i⟫ = df' i x :=
+lemma reproducing_derivative (H₀ : Set (α → ℝ)) (dk : α → ℕ → α → ℝ) (f : α → ℝ) (df' : ℕ → α → ℝ) (hf : f ∈ H₀) : ∀x, ∀ i ∈ range d, ⟪f, dk x i⟫ = df' i x :=
 by
   -- See Theorem 1 of *Derivative reproducing properties for kernel methods in learning theory, Zhou 2008*.
   sorry
@@ -176,7 +175,7 @@ variable [MeasureSpace ℝ≥0] [NormedAddCommGroup ℝ≥0∞] [NormedSpace ℝ
 /- Def of ℝ≥0∞ coerced log. -/
 noncomputable def log (a : ℝ≥0∞) := Real.log (ENNReal.toReal a)
 
-noncomputable def KL {α : Type*} [MeasurableSpace α] (μ : Measure α) (dμ dπ : α → ℝ≥0∞) := ENNReal.ofReal (∫ x in Set.univ, log ((dμ x) / (dπ x)) ∂μ)
+noncomputable def KL {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ] (dμ dπ : α → ℝ≥0∞) := ENNReal.ofReal (∫ x in Set.univ, log ((dμ x) / (dπ x)) ∂μ)
 
 /--
  ∀ a ∈ ]0, ∞[, exp (log a) = (a : ℝ).
@@ -221,6 +220,38 @@ variable [Norm α]
 /--
   Unformal but highly pratical multivariate integration by parts.
 -/
-theorem mv_integration_by_parts (Ω : Set α) (f : α → ℝ) (g grad_f dg : ℕ → α → ℝ) (h : ∀ x, tends_to_infty (fun (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i ∈ range (d + 1), dg i x) ∂μ = - ∫ x in Ω, (∑ i ∈ range (d + 1), grad_f i x * g i x) ∂μ := by sorry
+theorem mv_integration_by_parts (Ω : Set α) (f : α → ℝ) (g grad_f dg : range d → α → ℝ) (h : ∀ x, tends_to_infty (fun (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i ∈ Set.univ, dg i x) ∂μ = - ∫ x in Ω, (∑ i ∈ Set.univ, grad_f i x * g i x) ∂μ := by sorry
 
-lemma norm_eq_zero_ {α : Type*} [NormedAddCommGroup α] (f : ℕ → α) [Norm (ℕ → α)] : ‖f‖ = 0 ↔ ∀ i, f i = 0 := by sorry
+lemma summable_nonneg_iff_0 {f : ℕ → ℝ} (h_nonneg : ∀ i, 0 <= f i) (s : Summable f) : ∑' i, f i = 0 ↔ ∀ i, f i = 0 := by
+  let g := λ i ↦ (f i).toNNReal
+
+  have f_coe : f = fun a => (g a : ℝ) := by {
+      ext a
+      rw [λ i ↦ Real.coe_toNNReal (f i) (h_nonneg i)]
+    }
+
+  have coe_summable : Summable g := by {
+    rw [f_coe] at s
+    exact NNReal.summable_coe.mp s
+  }
+
+  constructor
+  · intro h_tsum
+    have sum_coe_eq_0 : ∑' i, (g i : ℝ) = 0 := by {
+      simp_rw [show ∀ i, (g i : ℝ) = f i by intro i; rw [f_coe]]
+      exact h_tsum
+    }
+    have coe_sum_eq_0 : ↑(∑' i, g i) = 0 := by {
+      have coe_tsum : ↑(∑' i, g i) = ∑' i, (g i : ℝ) := NNReal.coe_tsum
+      rw [sum_coe_eq_0] at coe_tsum
+      exact NNReal.coe_eq_zero.mp coe_tsum
+    }
+
+    have g_eq_0 := (tsum_eq_zero_iff coe_summable).mp coe_sum_eq_0
+    intro i
+    specialize g_eq_0 i
+    rw [f_coe]
+    exact NNReal.coe_eq_zero.mpr g_eq_0
+  intro hf
+  simp_rw [hf]
+  exact tsum_zero

@@ -14,3 +14,4 @@ import SBSProofs.KSD
 import SBSProofs.RKHS
 import SBSProofs.PushForward
 import SBSProofs.Utils
+import SBSProofs.RKHS_inner

@@ -115,10 +115,7 @@ instance : HSMul ℝ (H v e μ) (H v e μ) where
   We define the sum between two functions in H as the pointwise sum. We show that the result lies in H.
 -/
 
-/-
-  ∀ f, g ∈ H, f + g ∈ L2. Assume it.
--/
-lemma add_in_L2 : (λ x ↦ f.1 x + g.1 x) ∈ L2 μ := by sorry
+lemma add_in_L2 : (λ x ↦ f.1 x + g.1 x) ∈ L2 μ := Memℒp.add (f.2.1) (g.2.1)
 
 lemma add_summable : Summable (λ i ↦ v.1 i * ((set_repr_ne f).some i + (set_repr_ne g).some i)^2) := by sorry
 
@@ -706,19 +703,16 @@ zero_smul := by {
 }
 norm_smul_le := by {
   intro r f
-  have norm_mul_eq : ‖r • f‖ = ‖r‖ * ‖f‖ := by {
-    rw [show r • f = r * f by rfl]
-    rw [show ‖r‖ = |r| by rfl]
-
-    rw [←mul_self_inj (H_norm_nonneg (r * f)) (Left.mul_nonneg (abs_nonneg r) (H_norm_nonneg (f)))]
-    rw [show ‖r * f‖ * ‖r * f‖ = ‖r * f‖^2 by ring]
-    rw [show |r| * ‖f‖ * (|r| * ‖f‖) = (|r| * ‖f‖)^2 by ring]
-    rw [←inner_eq_sq_norm (r * f), inner_mul_left f (r * f) r]
-    rw [inner_symmetric, inner_mul_left f f r, inner_eq_sq_norm]
-    rw [show r * (r * ‖f‖^2) = r^2 * ‖f‖^2 by ring, ←sq_abs r]
-    ring
-  }
-  exact le_of_eq norm_mul_eq
+  apply le_of_eq
+  rw [show r • f = r * f by rfl]
+  rw [show ‖r‖ = |r| by rfl]
+  rw [←mul_self_inj (H_norm_nonneg (r * f)) (Left.mul_nonneg (abs_nonneg r) (H_norm_nonneg (f)))]
+  rw [show ‖r * f‖ * ‖r * f‖ = ‖r * f‖^2 by ring]
+  rw [show |r| * ‖f‖ * (|r| * ‖f‖) = (|r| * ‖f‖)^2 by ring]
+  rw [←inner_eq_sq_norm (r * f), inner_mul_left f (r * f) r]
+  rw [inner_symmetric, inner_mul_left f f r, inner_eq_sq_norm]
+  rw [show r * (r * ‖f‖^2) = r^2 * ‖f‖^2 by ring, ←sq_abs r]
+  ring
 }
 inner := H_inner
 norm_sq_eq_inner := by {

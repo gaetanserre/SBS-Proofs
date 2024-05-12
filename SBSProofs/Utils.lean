@@ -84,25 +84,24 @@ by
   exact (ofReal_mul h).symm
 
 
-
+variable {d : ℕ} (hd : d ≠ 0)
 /--
   A finite sum of finite elements is finite.
 -/
-theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i ∈ range (d + 1), (f i : ℝ≥0∞) < C :=
+theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i ∈ range d, (f i : ℝ≥0∞) < C :=
 by
   /- We begin to show that each element of the sum is bounded from above. -/
-  have sup_el : ∀ i ∈ range (d + 1), ∃ c, (f i) < c := fun i _ ↦ exists_gt (f i)
+  have sup_el : ∀ i ∈ range d, ∃ c, (f i) < c := fun i _ ↦ exists_gt (f i)
 
-  /- We find the argmax of the set {f i | ∀ i ∈ range (d + 1)} using the *exist_max_image_finset* lemma. -/
-  have max : ∃ j ∈ range (d+1), ∀ i ∈ range (d+1), f i ≤ f j := by {
-    have non_empty : ∀ (n : ℕ), Finset.Nonempty (range (n+1)) := fun n ↦ nonempty_range_succ
-    have max := exist_max_image_finset (range (d+1)) (non_empty d) (fun i ↦ f i)
+  /- We find the argmax of the set {f i | ∀ i ∈ range d} using the *exist_max_image_finset* lemma. -/
+  have max : ∃ j ∈ range d, ∀ i ∈ range d, f i ≤ f j := by {
+    have max := exist_max_image_finset (range d) (nonempty_range_iff.mpr hd) (fun i ↦ f i)
     rcases max with ⟨j, jin, max⟩
     use j
   }
 
   /- We show that the majorant of the biggest element majors every element of the sum  -/
-  have sup : ∃ c, ∀ i ∈ range (d + 1), f i < c := by {
+  have sup : ∃ c, ∀ i ∈ range d, f i < c := by {
     rcases max with ⟨j, jin, max⟩
     choose C sup_el using sup_el
     use (C j jin)
@@ -114,7 +113,7 @@ by
   }
 
   /- Same as above, with coercion -/
-  have sup_coe : ∃ (c:ℝ≥0), ∀ (i : ℕ), i ∈ range (d + 1) → (f i : ℝ≥0∞) < c := by {
+  have sup_coe : ∃ (c:ℝ≥0), ∀ (i : ℕ), i ∈ range d → (f i : ℝ≥0∞) < c := by {
     rcases sup with ⟨C, sup⟩
     use C
     intros i iin
@@ -129,22 +128,22 @@ by
   rcases sup_coe with ⟨c, sup_coe⟩
 
   /- The sum is bounded from above by the sum of the majorant -/
-  have sum_le : ∑ i ∈ range (d + 1), (f i : ℝ≥0∞) < ∑ i ∈ range (d + 1), (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (by simp) sup_coe
+  have sum_le : ∑ i ∈ range d, (f i : ℝ≥0∞) < ∑ i ∈ range d, (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (nonempty_range_iff.mpr hd) sup_coe
 
   /- Same as above, with coercion -/
-  have sum_coe : ∑ i ∈ range (d + 1), (c : ℝ≥0∞) = ∑ i ∈ range (d + 1), c := coe_finset_sum.symm
+  have sum_coe : ∑ i ∈ range d, (c : ℝ≥0∞) = ∑ i ∈ range d, c := coe_finset_sum.symm
 
   /- Sum of constant = constant -/
-  have sum_simpl : ∑ i ∈ range (d + 1), c = (d+1) • c := (nsmul_eq_sum_const c (d + 1)).symm
+  have sum_simpl : ∑ i ∈ range d, c = d • c := (nsmul_eq_sum_const c d).symm
 
-  use ((d+1) • c)
-  rw [ENNReal.coe_smul (d + 1) c]
+  use (d • c)
+  rw [ENNReal.coe_smul d c]
 
-  calc ∑ i ∈ range (d + 1), (f i: ℝ≥0∞) < ∑ i ∈ range (d + 1), (c : ℝ≥0∞) := sum_le
-  _ = ∑ i ∈ range (d + 1), c := sum_coe
-  _ = (d+1) • c := by {
+  calc ∑ i ∈ range d, (f i: ℝ≥0∞) < ∑ i ∈ range d, (c : ℝ≥0∞) := sum_le
+  _ = ∑ i ∈ range d, c := sum_coe
+  _ = d • c := by {
     rw [sum_simpl]
-    exact ENNReal.coe_smul (d + 1) c
+    exact ENNReal.coe_smul d c
   }
 
 /-ASSUMED LEMMAS-/
@@ -163,7 +162,7 @@ lemma inner_linear_left (f a b : α → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x
 /--
   ⟪f, ∇k(x, ̇)⟫ = ∇f(x)
 -/
-lemma reproducing_derivative (H₀ : Set (α → ℝ)) (dk : α → ℕ → α → ℝ) (f : α → ℝ) (df' : ℕ → α → ℝ) (hf : f ∈ H₀) : ∀x, ∀ i ∈ range (d + 1), ⟪f, dk x i⟫ = df' i x :=
+lemma reproducing_derivative (H₀ : Set (α → ℝ)) (dk : α → ℕ → α → ℝ) (f : α → ℝ) (df' : ℕ → α → ℝ) (hf : f ∈ H₀) : ∀x, ∀ i ∈ range d, ⟪f, dk x i⟫ = df' i x :=
 by
   -- See Theorem 1 of *Derivative reproducing properties for kernel methods in learning theory, Zhou 2008*.
   sorry
@@ -221,9 +220,7 @@ variable [Norm α]
 /--
   Unformal but highly pratical multivariate integration by parts.
 -/
-theorem mv_integration_by_parts (Ω : Set α) (f : α → ℝ) (g grad_f dg : ℕ → α → ℝ) (h : ∀ x, tends_to_infty (fun (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i ∈ range (d + 1), dg i x) ∂μ = - ∫ x in Ω, (∑ i ∈ range (d + 1), grad_f i x * g i x) ∂μ := by sorry
-
-lemma norm_eq_zero_ {α : Type*} [NormedAddCommGroup α] (f : ℕ → α) [Norm (ℕ → α)] : ‖f‖ = 0 ↔ ∀ i, f i = 0 := by sorry
+theorem mv_integration_by_parts (Ω : Set α) (f : α → ℝ) (g grad_f dg : range d → α → ℝ) (h : ∀ x, tends_to_infty (fun (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i ∈ Set.univ, dg i x) ∂μ = - ∫ x in Ω, (∑ i ∈ Set.univ, grad_f i x * g i x) ∂μ := by sorry
 
 lemma summable_nonneg_iff_0 {f : ℕ → ℝ} (h_nonneg : ∀ i, 0 <= f i) (s : Summable f) : ∑' i, f i = 0 ↔ ∀ i, f i = 0 := by
   let g := λ i ↦ (f i).toNNReal

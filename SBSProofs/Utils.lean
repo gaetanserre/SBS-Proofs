@@ -6,7 +6,6 @@
 - https://github.com/gaetanserre/SBS-Proofs
 -/
 
-import Mathlib.Data.Real.EReal
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 
@@ -91,11 +90,11 @@ variable {d : ℕ} (hd : d ≠ 0)
 theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i ∈ range d, (f i : ℝ≥0∞) < C :=
 by
   /- We begin to show that each element of the sum is bounded from above. -/
-  have sup_el : ∀ i ∈ range d, ∃ c, (f i) < c := fun i _ ↦ exists_gt (f i)
+  have sup_el : ∀ i ∈ range d, ∃ c, (f i) < c := λ i _ ↦ exists_gt (f i)
 
   /- We find the argmax of the set {f i | ∀ i ∈ range d} using the *exist_max_image_finset* lemma. -/
   have max : ∃ j ∈ range d, ∀ i ∈ range d, f i ≤ f j := by {
-    have max := exist_max_image_finset (range d) (nonempty_range_iff.mpr hd) (fun i ↦ f i)
+    have max := exist_max_image_finset (range d) (nonempty_range_iff.mpr hd) (λ i ↦ f i)
     rcases max with ⟨j, jin, max⟩
     use j
   }
@@ -150,14 +149,14 @@ by
 /--
   Linearity of inner product applied to integral
 -/
-lemma inter_inner_integral_right (μ : Measure α) [IsFiniteMeasure μ] (g : α → ℝ) (f : α → α → ℝ) : ⟪g, (fun x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
+lemma inter_inner_integral_right (μ : Measure α) [IsFiniteMeasure μ] (g : α → ℝ) (f : α → α → ℝ) : ⟪g, (λ x ↦ (∫ y, f y x ∂μ))⟫ = ∫ y, ⟪g, f y⟫ ∂μ :=
 by
 sorry
 
 /--
   Linearity of inner product for function
 -/
-lemma inner_linear_left (f a b : α → ℝ) (c : ℝ) : ⟪f, fun x ↦ c * a x + b x⟫ = c * ⟪f, fun x ↦ a x⟫ + ⟪f, fun x ↦ b x⟫ := by sorry
+lemma inner_linear_left (f a b : α → ℝ) (c : ℝ) : ⟪f, λ x ↦ c * a x + b x⟫ = c * ⟪f, λ x ↦ a x⟫ + ⟪f, λ x ↦ b x⟫ := by sorry
 
 /--
   ⟪f, ∇k(x, ̇)⟫ = ∇f(x)
@@ -220,12 +219,12 @@ variable [Norm α]
 /--
   Unformal but highly pratical multivariate integration by parts.
 -/
-theorem mv_integration_by_parts (Ω : Set α) (f : α → ℝ) (g grad_f dg : range d → α → ℝ) (h : ∀ x, tends_to_infty (fun (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x in Ω, f x * (∑ i ∈ Set.univ, dg i x) ∂μ = - ∫ x in Ω, (∑ i ∈ Set.univ, grad_f i x * g i x) ∂μ := by sorry
+theorem mv_integration_by_parts (μ : Measure α) (f : α → ℝ) (g grad_f dg : range d → α → ℝ) (h : ∀ x, tends_to_infty (λ (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x, f x * (∑ i ∈ Set.univ, dg i x) ∂μ = - ∫ x, (∑ i ∈ Set.univ, grad_f i x * g i x) ∂μ := by sorry
 
 lemma summable_nonneg_iff_0 {f : ℕ → ℝ} (h_nonneg : ∀ i, 0 <= f i) (s : Summable f) : ∑' i, f i = 0 ↔ ∀ i, f i = 0 := by
   let g := λ i ↦ (f i).toNNReal
 
-  have f_coe : f = fun a => (g a : ℝ) := by {
+  have f_coe : f = λ a => (g a : ℝ) := by {
       ext a
       rw [λ i ↦ Real.coe_toNNReal (f i) (h_nonneg i)]
     }
@@ -255,3 +254,5 @@ lemma summable_nonneg_iff_0 {f : ℕ → ℝ} (h_nonneg : ∀ i, 0 <= f i) (s : 
   intro hf
   simp_rw [hf]
   exact tsum_zero
+
+lemma remove_univ_integral {α : Type} [MeasureSpace α] (μ : Measure α) (f : α → ℝ) : ∫ x in Set.univ, f x ∂μ = ∫ x, f x ∂μ := by simp

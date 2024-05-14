@@ -6,9 +6,7 @@
 - https://github.com/gaetanserre/SBS-Proofs
 -/
 
-import Mathlib
-
-import SBSProofs.Utils
+import Mathlib.Analysis.InnerProductSpace.Basic
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 

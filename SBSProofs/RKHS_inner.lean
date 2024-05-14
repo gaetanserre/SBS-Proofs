@@ -6,7 +6,9 @@
  - https://github.com/gaetanserre/SBS-Proofs
 -/
 
-import Mathlib
+import Mathlib.RingTheory.HopfAlgebra
+import Mathlib.Topology.CompletelyRegular
+import Mathlib.Topology.MetricSpace.Polish
 
 import SBSProofs.Utils
 
@@ -715,7 +717,7 @@ noncomputable instance : NormedAddCommGroup (H v e μ) where
     rw [show Int.negSucc n = -(n + 1) by rfl]
     rw [show Nat.succ n = n + 1 by rfl]
     rw [coe_mul_int_fun f (-(n + 1))]
-    rw [show -((fun (z:ℤ) (f:H v e μ) ↦ (z:ℝ) * f) (↑(n + 1)) f) = (-1 : ℝ) * ((fun (z:ℤ) (f:H v e μ) ↦ (z:ℝ) * f) (↑(n + 1)) f) by rfl]
+    rw [show -((λ (z:ℤ) (f:H v e μ) ↦ (z:ℝ) * f) (↑(n + 1)) f) = (-1 : ℝ) * ((λ (z:ℤ) (f:H v e μ) ↦ (z:ℝ) * f) (↑(n + 1)) f) by rfl]
 
     rw [show (↑(n + 1) : ℤ) = (n : ℤ) + 1 by rfl]
     rw [coe_mul_int_fun f (n + 1)]

@@ -91,26 +91,53 @@ by
 attribute [coe] DensityMeasure.toMeasure
 
 @[ext]
-theorem ext {m1 m2 : DensityMeasure α} (h : ∀ x, m1.d x = m2.d x) : m1 = m2 := by
+theorem ext {μ₁ μ₂ : DensityMeasure α} (h : ∀ x, μ₁.d x = μ₂.d x) : μ₁ = μ₂ := by
   have f_ext := funext h
-  rw [show (λ x ↦ m1.d x) = m1.d by rfl] at f_ext
-  rw [show (λ x ↦ m2.d x) = m2.d by rfl] at f_ext
+  rw [show (λ x ↦ μ₁.d x) = μ₁.d by rfl] at f_ext
+  rw [show (λ x ↦ μ₂.d x) = μ₂.d by rfl] at f_ext
 
-  have eq_measure : m1.toMeasure = m2.toMeasure := by {
-    rw [m1.lebesgue_density, m2.lebesgue_density, f_ext]
+  have eq_measure : μ₁.toMeasure = μ₂.toMeasure := by {
+    rw [μ₁.lebesgue_density, μ₂.lebesgue_density, f_ext]
   }
 
-  have destruct : m1 = {
-      toMeasure := m1.toMeasure,
-        d := m1.d,
-        d_neq_top := m1.d_neq_top,
-        d_measurable := m1.d_measurable,
-      lebesgue_density := m1.lebesgue_density
+  have destruct : μ₁ = {
+      toMeasure := μ₁.toMeasure,
+        d := μ₁.d,
+        d_neq_top := μ₁.d_neq_top,
+        d_measurable := μ₁.d_measurable,
+      lebesgue_density := μ₁.lebesgue_density
       } := rfl
 
   rewrite (config := {occs := .pos [1]}) [destruct]
   simp_rw [eq_measure, f_ext]
 
-end DensityMeasure
+lemma coe_ext_measure (m1 m2 : Measure α) (h : ∀ s, MeasurableSet s → m1 s = m2 s) : m1 = m2 := Measure.ext_iff.mpr h
 
-#minimize_imports
+theorem density_ae_eq_imp_eq_measure (m1 m2 : DensityMeasure α) (h : m1.d =ᵐ[volume] m2.d) : m1.toMeasure = m2.toMeasure := by
+
+  apply coe_ext_measure
+  intro s hs
+  rw [m1.is_density hs, m2.is_density hs]
+
+  have ae_eq_set : ∀ᵐ x, x ∈ s → m1.d x = m2.d x := by {
+    unfold Filter.EventuallyEq at h
+    unfold Filter.Eventually at *
+    have subset : {x | ¬(x ∈ s → m1.d x = m2.d x)} ⊆ {x | (m1.d x ≠ m2.d x)} := by {
+      intro x hx; push_neg at hx
+      exact hx.2
+    }
+    rw [mem_ae_iff] at *
+    rw [show {x | m1.d x = m2.d x}ᶜ = {x | m1.d x ≠ m2.d x} by rfl] at h
+    rw [show {x | x ∈ s → m1.d x = m2.d x}ᶜ = {x | ¬(x ∈ s → m1.d x = m2.d x)} by rfl]
+
+    let A := {x | m1.d x ≠ m2.d x}
+    let B := {x | ¬(x ∈ s → m1.d x = m2.d x)}
+
+    have measure_increasing : volume B <= volume A := volume.mono subset
+    rw [h] at measure_increasing
+    exact nonpos_iff_eq_zero.mp measure_increasing
+  }
+
+  exact set_lintegral_congr_fun hs ae_eq_set
+
+end DensityMeasure

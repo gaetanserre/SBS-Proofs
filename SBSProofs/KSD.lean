@@ -12,7 +12,7 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Integral.Bochner
 
 import SBSProofs.Utils
-import SBSProofs.PushForward
+import SBSProofs.Measure
 import SBSProofs.RKHS
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
@@ -30,18 +30,9 @@ variable {d : ℕ} (hd : d ≠ 0) {Ω : Set (Vector ℝ d)}
 
 variable [MeasureSpace Ω]
 
-variable (μ π ν : Measure Ω) [IsFiniteMeasure μ] [IsFiniteMeasure π] (dμ dπ : Ω → ℝ≥0∞)
+variable (μ π : DensityMeasure Ω) [IsProbabilityMeasure μ.toMeasure] [IsProbabilityMeasure π.toMeasure]
 
-/-
-  μ << π << ν, they both admit density w.r.t. ν.
--/
-variable (_h1 : absolutely_continuous μ π) (_h2 : absolutely_continuous π ν)
-example : absolutely_continuous μ ν := absolutely_continuous_trans _h1 _h2
-
-variable (hμ : is_density μ ν dμ) (hπ : is_density π ν dπ) (mdμ : Measurable dμ) (mdπ : Measurable dπ) (hdμ : ∀x, dμ x ≠ 0 ∧ dμ x ≠ ∞) (hdπ : ∀x, dπ x ≠ 0 ∧ dπ x ≠ ∞)
-
-
-variable [IsProbabilityMeasure μ] [IsProbabilityMeasure π]
+variable (hdμ : ∀x, μ.d x ≠ 0) (hdπ : ∀x, π.d x ≠ 0)
 
 /-
   We define a RKHS of Ω → ℝ functions.
@@ -51,7 +42,7 @@ variable (H₀ : Set (Ω → ℝ)) [NormedAddCommGroup H₀] [InnerProductSpace 
 /--
 We consider that the left-hand side of the equivalence holds for all x. In the future, we want to take into account that it only holds for almost all x w.r.t. μ.
 -/
-def positive_definite_kernel := ∀ (f : range d → Ω → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, f i x * s.k x x' * f i x') ∂μ) ∂μ) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, f i x * s.k x x' * f i x') ∂μ) ∂μ = 0 ↔ ∀i, ∀x, f i x = 0)
+def positive_definite_kernel := ∀ (f : range d → Ω → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, f i x * s.k x x' * f i x') ∂μ.toMeasure) ∂μ.toMeasure) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, f i x * s.k x x' * f i x') ∂μ.toMeasure) ∂μ.toMeasure = 0 ↔ ∀i, ∀x, f i x = 0)
 
 variable (h_kernel_positive : positive_definite_kernel μ H₀)
 
@@ -86,8 +77,11 @@ variable (d_ln_π : range d → Ω → ℝ)
 -/
 variable (ϕ : product_RKHS H₀ hd) (dϕ : range d → Ω → ℝ)
 
-/- We will use this assumption only when the function is trivially integrable (e.g. derivative of integrable functions). -/
-variable (is_integrable_H₀ : ∀ (f : Ω → ℝ), Integrable f μ)
+/- As Ω is supposed to be compact, we will use this assumption only when the function is trivially integrable (e.g. continuous). -/
+axiom is_integrable_H₀ : ∀ (f : Ω → ℝ), Integrable f μ.toMeasure
+axiom is_integrable_H₀_volume : ∀ (f : Ω → ℝ), Integrable f
+axiom is_measurable_H₀ : ∀ (f : Ω → ℝ), Measurable f
+axiom is_measurable_H₀_enn : ∀ (f : Ω → ℝ≥0∞), Measurable f
 
 /-
 d_ln_π_μ : i ↦ x ↦ ∂xⁱ ln (π(x) / μ(x))
@@ -97,7 +91,7 @@ variable (d_ln_π_μ : range d → Ω → ℝ)
 /-
 Simple derivative rule: if the derivative is 0 ∀x, then the function is constant.
 -/
-variable (hd_ln_π_μ : (∀i, ∀x, d_ln_π_μ i x = 0) → (∃ c, ∀ x, log (dμ x / dπ x) = c))
+variable (hd_ln_π_μ : (∀i, ∀x, d_ln_π_μ i x = 0) → (∃ c, ∀ x, log (μ.d x / π.d x) = c))
 
 /-
 dπ' : i ↦ x ↦ ∂xⁱ π(x)
@@ -105,27 +99,27 @@ dπ' : i ↦ x ↦ ∂xⁱ π(x)
 variable (dπ' : range d → Ω → ℝ)
 
 /-
-Simple derivative rule: ∂xⁱ ln (π(x)) * π(x) = ∂xⁱ π(x).
+Log-trick: ∂xⁱ ln (π(x)) * π(x) = ∂xⁱ π(x).
 -/
-variable (hπ' : ∀x, ∀i, ENNReal.toReal (dπ x) * d_ln_π i x = dπ' i x)
+variable (hπ' : ∀x, ∀i, ENNReal.toReal (π.d x) * d_ln_π i x = dπ' i x)
 
 
 variable [Norm Ω]
 /--
   Stein class of measure. f is in the Stein class of μ if, ∀i ∈ Set.univ, lim_(‖x‖ → ∞) μ(x) * ϕ(x)ⁱ = 0.
 -/
-def SteinClass (f : range d → Ω → ℝ) (dμ : Ω → ℝ≥0∞) := ∀ x, tends_to_infty (fun (x : Ω) ↦ ‖x‖) → ∀i, ENNReal.toReal (dμ x) * f i x = 0
+def SteinClass (f : range d → Ω → ℝ) := ∀ x, tends_to_infty (λ (x : Ω) ↦ ‖x‖) → ∀i, ENNReal.toReal (μ.d x) * f i x = 0
 
 
 /-
   Kernel Stein Discrepancy
 -/
-variable (KSD : Measure Ω → Measure Ω → ℝ)
+variable (KSD : DensityMeasure Ω → DensityMeasure Ω → ℝ)
 
 /--
 KSD(μ | π) = ⟪∇ln π/μ, Pμ ∇ln π/μ⟫_L²(μ). We assume here that KSD is also equal to ∫ x, ∑ i ∈ Set.univ, (d_ln_π i x * ϕ i x + dϕ i x) ∂μ.
 -/
-def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, d_ln_π_μ i x * s.k x x' * d_ln_π_μ i x') ∂μ) ∂μ) ∧ (KSD μ π = ∫ x, ∑ i ∈ Set.univ, (d_ln_π i x * (ϕ i).1 x + dϕ i x) ∂μ)
+def is_ksd := KSD μ π = (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, d_ln_π_μ i x * s.k x x' * d_ln_π_μ i x') ∂μ.toMeasure) ∂μ.toMeasure) ∧ (KSD μ π = ∫ x, ∑ i ∈ Set.univ, (d_ln_π i x * (ϕ i).1 x + dϕ i x) ∂μ.toMeasure)
 
 /-
   KSD(μ | π) is originally defined as ‖ϕ^⋆‖²_H, it is therefore non-negative.
@@ -135,7 +129,7 @@ def is_ksd_norm := KSD μ π = ‖ϕ‖^2
 /-
   ϕ is in the Stein class of π
 -/
-variable (hstein : SteinClass (λ i ↦ (ϕ i).1) dπ)
+variable (hstein : SteinClass π (λ i ↦ (ϕ i).1))
 
 /--
   We show that, if ϕ is in the Stein class of π, KSD is a valid discrepancy measure i.e. μ = π ↔ KSD(μ | π) = 0.
@@ -150,45 +144,55 @@ by
     rw [hksd.right]
 
     -- ∑ i, f i + g i = ∑ i, f i + ∑ i, g i.
-    have split_sum : ∀x, ∑ i ∈ Set.univ, (d_ln_π i x * (ϕ i).1 x + dϕ i x) = (∑ i ∈ Set.univ, d_ln_π i x * (ϕ i).1 x) + (∑ i ∈ Set.univ, dϕ i x) := fun x ↦ sum_add_distrib
+    have split_sum : ∀x, ∑ i ∈ Set.univ, (d_ln_π i x * (ϕ i).1 x + dϕ i x) = (∑ i ∈ Set.univ, d_ln_π i x * (ϕ i).1 x) + (∑ i ∈ Set.univ, dϕ i x) := λ x ↦ sum_add_distrib
     simp_rw [split_sum]
 
     -- Split the integral of sum into sum of integral.
-    have h1 : Integrable (fun x ↦ (∑ i ∈ Set.univ, d_ln_π i x * (ϕ i).1 x)) μ := is_integrable_H₀ _
-    have h2 : Integrable (fun x ↦ (∑ i ∈ Set.univ, dϕ i x)) μ := is_integrable_H₀ _
+    have h1 : Integrable (λ x ↦ (∑ i ∈ Set.univ, d_ln_π i x * (ϕ i).1 x)) μ.toMeasure := is_integrable_H₀ μ _
+    have h2 : Integrable (λ x ↦ (∑ i ∈ Set.univ, dϕ i x)) μ.toMeasure := is_integrable_H₀ μ _
     rw [integral_add (h1) h2]
 
     -- Make the `Set.univ` appears for using the density later.
-    have int_univ : ∫ a, ∑ i ∈ Set.univ, d_ln_π i a * (ϕ i).1 a ∂μ = ∫ a in Set.univ, ∑ i ∈ Set.univ, d_ln_π i a * (ϕ i).1 a ∂μ := by simp
+    have int_univ : ∫ a, ∑ i ∈ Set.univ, d_ln_π i a * (ϕ i).1 a ∂μ.toMeasure = ∫ a in Set.univ, ∑ i ∈ Set.univ, d_ln_π i a * (ϕ i).1 a ∂μ.toMeasure := by simp
     rw [int_univ]
 
-    -- Replace μ by π in the integration.∈
-    rw [h]
+    rw [remove_univ_integral μ.toMeasure (λ x ↦ ∑ i ∈ Set.univ, d_ln_π i x * (ϕ i).1 x)]
 
     -- Replace by its density.
-    rw [density_integration π ν dπ hπ (fun x ↦ (∑ i ∈ Set.univ, d_ln_π i x * (ϕ i).1 x)) Set.univ]
+    have hi := is_integrable_H₀ μ (λ x ↦ ∑ i ∈ Set.univ, d_ln_π i x * (ϕ i).1 x)
 
-    -- Get ENNReal.toReal (dπ x) in the sum (a * ∑ b = ∑ b * a).
-    have mul_dist : ∀x, ENNReal.toReal (dπ x) * (∑ i ∈ Set.univ, (fun i ↦ d_ln_π i x * (ϕ i).1 x) i) = ∑ i ∈ Set.univ, (fun i ↦ d_ln_π i x * (ϕ i).1 x) i * ENNReal.toReal (dπ x) := by {
+    rw [μ.density_integration hi (is_measurable_H₀_enn _) (is_measurable_H₀_enn _) (is_integrable_H₀_volume _)]
 
-      have mul_dist_sum : ∀ (a : ℝ), ∀ (f : range d → ℝ), (∑ i ∈ Set.univ, f i) * a = ∑ i ∈ Set.univ, f i * a := λ a f ↦ sum_mul (Set.toFinset Set.univ) (fun i ↦ f i) a
+    -- Replace μ by π in the integration.
+    rw [h]
+
+    -- Get ENNReal.toReal (π.d x) in the sum (a * ∑ b = ∑ b * a).
+    have mul_dist : ∀x, ENNReal.toReal (π.d x) * (∑ i ∈ Set.univ, (λ i ↦ d_ln_π i x * (ϕ i).1 x) i) = ∑ i ∈ Set.univ, (λ i ↦ d_ln_π i x * (ϕ i).1 x) i * ENNReal.toReal (π.d x) := by {
+
+      have mul_dist_sum : ∀ (a : ℝ), ∀ (f : range d → ℝ), (∑ i ∈ Set.univ, f i) * a = ∑ i ∈ Set.univ, f i * a := λ a f ↦ sum_mul (Set.toFinset Set.univ) (λ i ↦ f i) a
       intro x
       rw [mul_comm]
-      exact mul_dist_sum (ENNReal.toReal (dπ x)) (fun i ↦ d_ln_π i x * (ϕ i).1 x)
+      exact mul_dist_sum (ENNReal.toReal (π.d x)) (λ i ↦ d_ln_π i x * (ϕ i).1 x)
     }
     simp_rw [mul_dist]
 
-    -- Make the product ENNReal.toReal (dπ x) * d_ln_π i x appears to use the ln derivative rule.
-    have mul_comm : ∀x, ∀i, d_ln_π i x * (ϕ i).1 x * ENNReal.toReal (dπ x) = ENNReal.toReal (dπ x) * d_ln_π i x * (ϕ i).1 x := fun x i ↦ (mul_rotate (ENNReal.toReal (dπ x)) (d_ln_π i x) ((ϕ i).1 x)).symm
+    -- Make the product ENNReal.toReal (π.d x) * d_ln_π i x appears to use the ln derivative rule.
+    have mul_comm : ∀x, ∀i, d_ln_π i x * (ϕ i).1 x * ENNReal.toReal (π.d x) = ENNReal.toReal (π.d x) * d_ln_π i x * (ϕ i).1 x := λ x i ↦ (mul_rotate (ENNReal.toReal (π.d x)) (d_ln_π i x) ((ϕ i).1 x)).symm
     simp_rw [mul_comm, hπ']
 
     -- Make the `Set.univ` appears to use the density.
-    have int_univ : ∫ a, ∑ i ∈ Set.univ, dϕ i a ∂π = ∫ a in Set.univ, ∑ i ∈ Set.univ, dϕ i a ∂π := by simp
+    have int_univ : ∫ a, ∑ i ∈ Set.univ, dϕ i a ∂π.toMeasure = ∫ a in Set.univ, ∑ i ∈ Set.univ, dϕ i a ∂π.toMeasure := by simp
     rw [int_univ]
-    rw [density_integration π ν dπ hπ (fun x ↦ (∑ i ∈ Set.univ, dϕ i x)) Set.univ]
+
+    rw [←h]
+    rw [remove_univ_integral μ.toMeasure (λ x ↦ ∑ i ∈ Set.univ, dϕ i x)]
+    have hi := is_integrable_H₀ μ (λ x ↦ ∑ i ∈ Set.univ, dϕ i x)
+    rw [μ.density_integration hi (is_measurable_H₀_enn _) (is_measurable_H₀_enn _) (is_integrable_H₀_volume _)]
+    rw [h]
 
     -- Use the integration by parts on the right-hand side integral.
-    rw [mv_integration_by_parts Set.univ (fun x ↦ ENNReal.toReal (dπ x)) (λ i ↦ (ϕ i).1) dπ' dϕ (hstein)]
+
+    rw [mv_integration_by_parts volume (λ x ↦ ENNReal.toReal (π.d x)) (λ i ↦ (ϕ i).1) dπ' dϕ (hstein)]
     simp
   }
   {
@@ -203,57 +207,54 @@ by
     specialize hd_ln_π_μ d_ln_π_μ_eq_0
 
     rcases hd_ln_π_μ with ⟨c, h⟩
-    -- We show that, since dμ x / dπ x ≠ 0 and finite, dμ x = ENNReal.ofReal (Real.exp c) * dπ x.
-    have dμ_propor : ∀x, dμ x = ENNReal.ofReal (Real.exp c) * dπ x := by {
+    -- We show that, since μ.d x / π.d x ≠ 0 and finite, μ.d x = ENNReal.ofReal (Real.exp c) * π.d x.
+    have dμ_propor : ∀x, μ.d x = ENNReal.ofReal (Real.exp c) * π.d x := by {
       intro x
       specialize h x
-      have frac_neq_zero : dμ x / dπ x ≠ 0 := by {
-        have frac_pos : 0 < dμ x / dπ x := ENNReal.div_pos_iff.mpr ⟨(hdμ x).left, (hdπ x).right⟩
+      have frac_neq_zero : μ.d x / π.d x ≠ 0 := by {
+        have frac_pos : 0 < μ.d x / π.d x := ENNReal.div_pos_iff.mpr ⟨hdμ x, π.d_neq_top x⟩
         exact zero_lt_iff.mp frac_pos
       }
 
-      have frac_finite : dμ x / dπ x ≠ ∞ := by {
+      have frac_finite : μ.d x / π.d x ≠ ∞ := by {
         by_contra h
         rw [div_eq_top] at h
         cases h with
           | inl hp => {
             rcases hp with ⟨hpl, hpr⟩
-            exact (hdπ x).left hpr
+            exact hdπ x hpr
           }
           | inr hq => {
             rcases hq with ⟨hql, hqr⟩
-            exact (hdμ x).right hql
+            exact μ.d_neq_top x hql
           }
       }
 
-      have cancel_ln_exp : dμ x / dπ x = ENNReal.ofReal (Real.exp c) := cancel_ln_exp (dμ x / dπ x) frac_neq_zero frac_finite c h
-      simp [←cancel_ln_exp, ENNReal.div_eq_inv_mul, mul_right_comm (dπ x)⁻¹ (dμ x) (dπ x), ENNReal.inv_mul_cancel (hdπ x).left (hdπ x).right]
+      have cancel_ln_exp : μ.d x / π.d x = ENNReal.ofReal (Real.exp c) := cancel_ln_exp (μ.d x / π.d x) frac_neq_zero frac_finite c h
+      simp [←cancel_ln_exp, ENNReal.div_eq_inv_mul, mul_right_comm (π.d x)⁻¹ (μ.d x) (π.d x), ENNReal.inv_mul_cancel (hdπ x) (π.d_neq_top x)]
     }
 
-    -- We show by contradiction that ENNReal.ofReal (Real.exp c) = 1. If it is ≠ 1, this implies a contradiction as dμ x = ENNReal.ofReal (Real.exp c) * dπ x and ∫⁻ x, dμ x ∂ν = 1.
+    -- We show by contradiction that ENNReal.ofReal (Real.exp c) = 1. If it is ≠ 1, this implies a contradiction as μ.d x = ENNReal.ofReal (Real.exp c) * π.d x and ∫⁻ x, μ.d x ∂ν = 1.
     have exp_c_eq_one : ENNReal.ofReal (Real.exp c) = 1 := by {
       by_contra hc; push_neg at hc
-      have univ_eq_one_μ : ∫⁻ x in Set.univ, 1 ∂μ = 1 := by simp
-      have univ_eq_one_π : ∫⁻ x in Set.univ, 1 ∂π = 1 := by simp
+      have univ_eq_one_μ : ∫⁻ x, 1 ∂μ.toMeasure = 1 := by simp
+      have univ_eq_one_π : ∫⁻ x, 1 ∂π.toMeasure = 1 := by simp
 
-      rw [density_lintegration μ ν dμ hμ (fun x ↦ 1) Set.univ] at univ_eq_one_μ
+      rw [μ.density_lintegration (λ x ↦ 1) (is_measurable_H₀_enn (λ x ↦ 1))] at univ_eq_one_μ
       simp_rw [dμ_propor] at univ_eq_one_μ
       simp_rw [mul_one] at univ_eq_one_μ
 
-      rw [density_lintegration π ν dπ hπ (fun x ↦ 1) Set.univ] at univ_eq_one_π
+      rw [π.density_lintegration (λ x ↦ 1) (is_measurable_H₀_enn (λ x ↦ 1))] at univ_eq_one_π
       simp_rw [mul_one] at univ_eq_one_π
 
-      rw [lintegral_const_mul (ENNReal.ofReal (Real.exp c)) (mdπ), univ_eq_one_π, mul_one] at univ_eq_one_μ
+      rw [lintegral_const_mul (ENNReal.ofReal (Real.exp c)) (π.d_measurable), univ_eq_one_π, mul_one] at univ_eq_one_μ
       exfalso
       exact hc univ_eq_one_μ
     }
 
-    -- We rewrite μ = π as ∀s, ∫⁻ x in s, dμ ∂ν = ∀s, ∫⁻ x in s, dπ ∂ν and use dμ = 1 * dπ.
+    -- We rewrite μ = π as ∀s, ∫⁻ x in s, μ.d ∂ν = ∀s, ∫⁻ x in s, π.d ∂ν and use μ.d = 1 * π.d.
     simp_rw [exp_c_eq_one, one_mul] at dμ_propor
-    ext s _hs
-    rw [←set_lintegral_one s, ←set_lintegral_one s]
-    rw [density_lintegration μ ν dμ hμ, density_lintegration π ν dπ hπ]
-    simp_rw [mul_one, dμ_propor]
+    exact DensityMeasure.ext dμ_propor
   }
 
 /--
@@ -261,7 +262,7 @@ by
 -/
 lemma π_unique_fixed_point (hksd : is_ksd hd μ π H₀ d_ln_π ϕ dϕ d_ln_π_μ KSD) (ksd_norm : is_ksd_norm hd μ π H₀ ϕ KSD) : (μ = π → ∀ i, ϕ i = 0) ∧ (μ ≠ π → ∃ i, ϕ i ≠ 0) :=
 by
-  have KSD_discrepancy := KSD_is_valid_discrepancy hd μ π ν dμ dπ hμ hπ mdπ hdμ hdπ H₀ h_kernel_positive d_ln_π ϕ dϕ is_integrable_H₀ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD hstein hksd
+  have KSD_discrepancy := KSD_is_valid_discrepancy hd μ π hdμ hdπ H₀ h_kernel_positive d_ln_π ϕ dϕ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD hstein hksd
   constructor
   {
     -- μ = π → ϕ^* = 0

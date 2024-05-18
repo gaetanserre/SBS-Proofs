@@ -44,8 +44,6 @@ structure DensityMeasure (α : Type*) [MeasureSpace α] extends Measure α where
   d_finite : ∀ s, ∫⁻ x in s, d x ≠ ∞
   lebesgue_density : toMeasure = volume.withDensity d
 
-instance DensityMeasure.instCoeFun : CoeFun (DensityMeasure α) λ _ => Set α → ℝ≥0∞ := ⟨fun m => m.toOuterMeasure⟩
-
 /--
 TODO: Add to Mathlib
 -/
@@ -187,6 +185,8 @@ lemma coe_ae {μ : Measure α} {f g : α → ℝ≥0∞} (h : f =ᵐ[μ] g) : (�
   exact nonpos_iff_eq_zero.mp leq_μ
 
 namespace DensityMeasure
+
+instance instCoeFun : CoeFun (DensityMeasure α) λ _ => Set α → ℝ≥0∞ := ⟨fun m => m.toOuterMeasure⟩
 
 theorem is_density (μ : DensityMeasure α) : ∀ ⦃s⦄, MeasurableSet s → μ.measureOf s = ∫⁻ x in s, μ.d x := by
   intro s hs

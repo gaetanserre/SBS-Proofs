@@ -181,35 +181,41 @@ noncomputable def KL {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFini
 -/
 lemma enn_comp_exp_log (a : ℝ≥0∞) (ha : a ≠ 0) (ha2 : a ≠ ∞) : Real.exp (log a) = ENNReal.toReal a := by
   by_cases h : ENNReal.toReal a = 0
-  {
-    exfalso
+  · exfalso
     have t : a = 0 ∨ a = ∞ := (toReal_eq_zero_iff a).mp h
     cases t with
     | inl hp => exact ha hp
     | inr hq => exact ha2 hq
+
+  push_neg at h
+  have t : ENNReal.toReal a ≠ 0 → ENNReal.toReal a < 0 ∨ 0 < ENNReal.toReal a := by {simp}
+  specialize t h
+  cases t with
+  | inl hp => {
+    have tt : 0 < ENNReal.toReal a := toReal_pos ha ha2
+    linarith
   }
-  {
-    push_neg at h
-    have t : ENNReal.toReal a ≠ 0 → ENNReal.toReal a < 0 ∨ 0 < ENNReal.toReal a := by {simp}
-    specialize t h
-    cases t with
-    | inl hp => {
-      have tt : 0 < ENNReal.toReal a := toReal_pos ha ha2
-      linarith
-    }
-    | inr hq => exact Real.exp_log hq
-  }
+  | inr hq => exact Real.exp_log hq
+
+/--
+ ∀ a ∈ ]0, ∞[, log (exp a) = (a : ℝ).
+-/
+lemma enn_comp_log_exp (a : ℝ) : log (ENNReal.ofReal (Real.exp a)) = a := by
+  unfold log
+  rw [toReal_ofReal (Real.exp_nonneg a)]
+  exact Real.log_exp a
 
 /--
  ∀ a ∈ ]0, ∞[, ln a = (c : ℝ) → a = (exp c : ℝ≥0∞).
 -/
-lemma cancel_ln_exp (a : ℝ≥0∞) (ha : a ≠ 0) (ha2 : a ≠ ∞) (c : ℝ) : log a = c → a = ENNReal.ofReal (Real.exp c) :=
+lemma cancel_log_exp (a : ℝ≥0∞) (ha : a ≠ 0) (ha2 : a ≠ ∞) (c : ℝ) : log a = c → a = ENNReal.ofReal (Real.exp c) :=
 by
   intro h
   rw [←h, enn_comp_exp_log a ha ha2]
   exact Eq.symm (ofReal_toReal ha2)
-
-
+  /- intro h
+  have log_a := enn_comp_log_exp c
+  rwa [h] -/
 
 /--
   Definition of infinite limit at infinity for vector-valued function (we use the order of real numbers on the norm of vectors as an order on ℝᵈ).

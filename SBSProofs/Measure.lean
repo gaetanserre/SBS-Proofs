@@ -6,7 +6,7 @@
 - https://github.com/gaetanserre/SBS-Proofs
 -/
 
-import Mathlib.MeasureTheory.Integral.Bochner
+import Mathlib.MeasureTheory.Function.AEEqOfIntegral
 
 import SBSProofs.Bijection
 
@@ -41,8 +41,10 @@ structure DensityMeasure (α : Type*) [MeasureSpace α] extends Measure α where
   d : α → ℝ≥0∞
   d_neq_top : ∀ x, d x ≠ ⊤
   d_measurable : Measurable d
-  d_finite : ∀ s, ∫⁻ x in s, d x ≠ ∞
+  d_finite : ∫⁻ x, d x ≠ ∞
   lebesgue_density : toMeasure = volume.withDensity d
+
+variable {μ : Measure α}
 
 theorem fun_ae_imp_set_ae {f g : α → β} : f =ᵐ[μ] g ↔ ∀ (s : Set α), ∀ᵐ x ∂ μ, x ∈ s → f x = g x := Iff.intro
     (fun h s ↦ Filter.Eventually.mono h fun x a _ ↦ a)
@@ -59,73 +61,6 @@ theorem fun_ae_imp_set_ae {f g : α → β} : f =ᵐ[μ] g ↔ ∀ (s : Set α),
       unfold Filter.Eventually at *
       rwa [show {x | (fun x ↦ x ∈ Set.univ → f x = g x) x} = B by rfl, B_eq_A] at h
     )
-
-theorem set_lintegral_eq_iff_ae_eq {μ : Measure α} {f g : α → ℝ≥0∞} (hfm : Measurable f) (hgm : Measurable g) (hfi : ∀ s, ∫⁻ x in s, f x ∂μ ≠ ∞) (hgi : ∀ s, ∫⁻ x in s, g x ∂μ ≠ ∞) (hft : ∀ x, f x ≠ ⊤) (hgt : ∀ x, g x ≠ ⊤) : (∀ ⦃s⦄, MeasurableSet s → ∫⁻ x in s, f x ∂μ = ∫⁻ x in s, g x ∂μ) ↔ f =ᵐ[μ] g := by
-  constructor
-  · intro h
-    let A := {x | f x < g x}
-    have hmA : MeasurableSet A := measurableSet_lt hfm hgm
-
-    let B := {x | g x < f x}
-    have hmB : MeasurableSet B := measurableSet_lt hgm hfm
-
-    have union_eq_neq : A ∪ B = {x | f x = g x}ᶜ := by {
-      ext x
-      constructor
-      · intro hx
-        cases hx with
-        | inl hx =>
-          have ineq_coe := (toReal_lt_toReal (hft x) (hgt x)).mpr hx
-          have coe_neq : (f x).toReal ≠ (g x).toReal := ne_of_lt ineq_coe
-          exact λ neq ↦ coe_neq (congrArg ENNReal.toReal neq)
-        | inr hx =>
-          have ineq_coe := (toReal_lt_toReal (hgt x) (hft x)).mpr hx
-          have coe_neq : (f x).toReal ≠ (g x).toReal := (ne_of_lt ineq_coe).symm
-          exact λ neq ↦ coe_neq (congrArg ENNReal.toReal neq)
-      intro hx
-      rw [show A ∪ B = {x | f x < g x ∨ g x < f x} by rfl]
-      rw [show x ∈ {x | f x < g x ∨ g x < f x} ↔ f x < g x ∨ g x < f x by rfl]
-      by_contra h; push_neg at h
-      rcases h with ⟨h1, h2⟩
-      have eq_coe : (f x).toReal = (g x).toReal := by {
-        have := (toReal_le_toReal (hgt x) (hft x)).mpr h1
-        have := (toReal_le_toReal (hft x) (hgt x)).mpr h2
-        linarith
-      }
-      have neq_coe : (f x).toReal ≠ (g x).toReal := by {
-        by_contra hc
-        exact hx ((toReal_eq_toReal_iff' (hft x) (hgt x)).mp hc)
-      }
-      exact neq_coe eq_coe
-    }
-
-    have m_union_eq_0 : μ (A ∪ B) = 0 := by {
-      have mA_eq_0 : μ A = 0 := by {
-        by_contra m_pos; push_neg at m_pos
-
-        have lt_integral : ∫⁻ x in A, f x ∂μ < ∫⁻ x in A, g x ∂μ := set_lintegral_strict_mono hmA m_pos hgm (hfi A) (ae_of_all μ (λ x hx ↦ hx))
-
-        rw [h hmA] at lt_integral
-        have := toReal_strict_mono (hgi A) lt_integral
-        linarith
-      }
-
-      have mB_eq_0 : μ B = 0 := by {
-        by_contra m_pos; push_neg at m_pos
-
-        have lt_integral : ∫⁻ x in B, g x ∂μ < ∫⁻ x in B, f x ∂μ := set_lintegral_strict_mono hmB m_pos hfm (hgi B) (ae_of_all μ (λ x hx ↦ hx))
-
-        rw [h hmB] at lt_integral
-        have := toReal_strict_mono (hgi B) lt_integral
-        linarith
-      }
-      exact measure_union_null mA_eq_0 mB_eq_0
-    }
-
-    rwa [union_eq_neq] at m_union_eq_0
-
-  intro h s hs
-  exact set_lintegral_congr_fun hs (fun_ae_imp_set_ae.mp h s)
 
 lemma coe_ae {μ : Measure α} {f g : α → ℝ≥0∞} (h : f =ᵐ[μ] g) : (λ x ↦ (f x).toReal) =ᵐ[μ] (λ x ↦ (g x).toReal) := by
 
@@ -226,13 +161,16 @@ theorem densities_ae_eq_iff_eq_measure {μ₁ μ₂ : DensityMeasure α} : μ₁
     exact set_lintegral_congr_fun hs (fun_ae_imp_set_ae.mp h s)
 
   intro h
-  have eq_set_lintegral : ∀ s, MeasurableSet s → ∫⁻ x in s, μ₁.d x = ∫⁻ x in s, μ₂.d x := by {
-    intro s hs
+  have eq_set_lintegral : ∀ ⦃s⦄, MeasurableSet s → volume s < ∞ → ∫⁻ x in s, μ₁.d x = ∫⁻ x in s, μ₂.d x := by {
+    intro s hs _
     rw [←μ₁.is_density hs, ←μ₂.is_density hs]
     exact congrFun (congrArg OuterMeasure.measureOf (congrArg Measure.toOuterMeasure h)) s
   }
 
-  exact (set_lintegral_eq_iff_ae_eq μ₁.d_measurable μ₂.d_measurable μ₁.d_finite μ₂.d_finite μ₁.d_neq_top μ₂.d_neq_top).mp eq_set_lintegral
+  have t : AEMeasurable μ₁.d volume := Measurable.aemeasurable μ₁.d_measurable
+  have tt : AEMeasurable μ₂.d volume := Measurable.aemeasurable μ₂.d_measurable
+
+  exact AEMeasurable.ae_eq_of_forall_set_lintegral_eq t tt μ₁.d_finite μ₂.d_finite eq_set_lintegral
 
 
 theorem ae_density_measure_iff_ae_volume {μ : DensityMeasure α} {f g : α → ℝ≥0∞} (h_nonneg : ∀ x, μ.d x ≠ 0) : (f =ᵐ[μ.toMeasure] g) ↔ (f =ᵐ[volume] g) := by

@@ -44,9 +44,6 @@ structure DensityMeasure (α : Type*) [MeasureSpace α] extends Measure α where
   d_finite : ∀ s, ∫⁻ x in s, d x ≠ ∞
   lebesgue_density : toMeasure = volume.withDensity d
 
-/--
-TODO: Add to Mathlib
--/
 theorem fun_ae_imp_set_ae {f g : α → β} : f =ᵐ[μ] g ↔ ∀ (s : Set α), ∀ᵐ x ∂ μ, x ∈ s → f x = g x := Iff.intro
     (fun h s ↦ Filter.Eventually.mono h fun x a _ ↦ a)
     (
@@ -63,9 +60,6 @@ theorem fun_ae_imp_set_ae {f g : α → β} : f =ᵐ[μ] g ↔ ∀ (s : Set α),
       rwa [show {x | (fun x ↦ x ∈ Set.univ → f x = g x) x} = B by rfl, B_eq_A] at h
     )
 
-/--
-TODO: Add to Mathlib
--/
 theorem set_lintegral_eq_iff_ae_eq {μ : Measure α} {f g : α → ℝ≥0∞} (hfm : Measurable f) (hgm : Measurable g) (hfi : ∀ s, ∫⁻ x in s, f x ∂μ ≠ ∞) (hgi : ∀ s, ∫⁻ x in s, g x ∂μ ≠ ∞) (hft : ∀ x, f x ≠ ⊤) (hgt : ∀ x, g x ≠ ⊤) : (∀ ⦃s⦄, MeasurableSet s → ∫⁻ x in s, f x ∂μ = ∫⁻ x in s, g x ∂μ) ↔ f =ᵐ[μ] g := by
   constructor
   · intro h
@@ -132,38 +126,6 @@ theorem set_lintegral_eq_iff_ae_eq {μ : Measure α} {f g : α → ℝ≥0∞} (
 
   intro h s hs
   exact set_lintegral_congr_fun hs (fun_ae_imp_set_ae.mp h s)
-
-/--
-TODO: Add to Mathlib
--/
-lemma positive_measure_imp_positive_lintegral {μ : Measure α} {C : Set α} (hmC : MeasurableSet C) (hm : 0 < μ C) {h : α → ℝ≥0∞} (hneq : ∀ x ∈ C, h x ≠ 0) (hmm : Measurable h) : 0 < ∫⁻ x in C, h x ∂μ := by
-  rw [show ∫⁻ x in C, h x ∂μ = ∫⁻ x, h x ∂μ.restrict C by rfl]
-  have restrict_measure_support : μ.restrict C (Function.support h) = μ (Function.support h ∩ C) := Measure.restrict_apply' hmC
-
-  have inter_eq_C : Function.support h ∩ C = C := Set.inter_eq_self_of_subset_right hneq
-
-  rw [congrArg (↑↑μ) inter_eq_C] at restrict_measure_support
-  rw [←restrict_measure_support] at hm
-
-  rw [lintegral_pos_iff_support hmm]
-  exact hm
-
-theorem ae_mul_fun {β : Type} [HMul β β β] {μ : Measure α} {f g h : α → β} (h_ae : f =ᵐ[μ] g) : ∀ᵐ x ∂μ, f x * h x = g x * h x := by
-
-  have compl_ss : {x | f x * h x = g x * h x}ᶜ ⊆ {x | f x = g x}ᶜ := by {
-    have mul_ss : {x | f x = g x} ⊆ {x | f x * h x = g x * h x} := by {
-      intro x (hx : f x = g x)
-      have rw_eq : f x * h x = g x * h x := by rw [hx]
-      exact rw_eq
-    }
-    exact Set.compl_subset_compl_of_subset mul_ss
-  }
-
-  have leq_μ : μ {x | f x * h x ≠ g x * h x} <= μ {x | f x ≠ g x} := measure_mono compl_ss
-  have  h_ae: μ {x | f x ≠ g x} = 0 := by exact h_ae
-  rw [h_ae] at leq_μ
-
-  exact nonpos_iff_eq_zero.mp leq_μ
 
 lemma coe_ae {μ : Measure α} {f g : α → ℝ≥0∞} (h : f =ᵐ[μ] g) : (λ x ↦ (f x).toReal) =ᵐ[μ] (λ x ↦ (g x).toReal) := by
 

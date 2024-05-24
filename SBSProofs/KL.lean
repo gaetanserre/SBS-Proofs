@@ -135,6 +135,7 @@ by
       rhs
       intro x
       rw [←k x]
+    rfl
   }
 
   rw [k_μ]

@@ -47,24 +47,21 @@ structure DensityMeasure (α : Type*) [MeasureSpace α] extends Measure α where
 /--
 TODO: Add to Mathlib
 -/
-lemma ae_eq_imp_set_ae_eq {μ : Measure α} {f g : α → ℝ≥0∞} (h : f =ᵐ[μ] g) : ∀ (s : Set α), ∀ᵐ x ∂μ, x ∈ s → f x = g x := by
-  intro s
-  unfold Filter.EventuallyEq at h
-  unfold Filter.Eventually at *
-  have subset : {x | ¬(x ∈ s → f x = g x)} ⊆ {x | (f x ≠ g x)} := by {
-    intro x hx; push_neg at hx
-    exact hx.2
-  }
-  rw [mem_ae_iff] at *
-  rw [show {x | f x = g x}ᶜ = {x | f x ≠ g x} by rfl] at h
-  rw [show {x | x ∈ s → f x = g x}ᶜ = {x | ¬(x ∈ s → f x = g x)} by rfl]
-
-  let A := {x | f x ≠ g x}
-  let B := {x | ¬(x ∈ s → f x = g x)}
-
-  have measure_increasing : μ B <= μ A := μ.mono subset
-  rw [h] at measure_increasing
-  exact nonpos_iff_eq_zero.mp measure_increasing
+theorem fun_ae_imp_set_ae {f g : α → β} : f =ᵐ[μ] g ↔ ∀ (s : Set α), ∀ᵐ x ∂ μ, x ∈ s → f x = g x := Iff.intro
+    (fun h s ↦ Filter.Eventually.mono h fun x a _ ↦ a)
+    (
+      by
+      let A := {x | f x = g x}
+      let B := {x | x ∈ Set.univ → f x = g x}
+      intro h
+      have B_eq_A : B = A := by {
+        ext e
+        exact Iff.intro (fun hb ↦ hb (by simp)) (fun ha _ ↦ ha)
+      }
+      specialize h Set.univ
+      unfold Filter.Eventually at *
+      rwa [show {x | (fun x ↦ x ∈ Set.univ → f x = g x) x} = B by rfl, B_eq_A] at h
+    )
 
 /--
 TODO: Add to Mathlib
@@ -96,9 +93,11 @@ theorem set_lintegral_eq_iff_ae_eq {μ : Measure α} {f g : α → ℝ≥0∞} (
       rw [show x ∈ {x | f x < g x ∨ g x < f x} ↔ f x < g x ∨ g x < f x by rfl]
       by_contra h; push_neg at h
       rcases h with ⟨h1, h2⟩
-      have h1_coe := (toReal_le_toReal (hgt x) (hft x)).mpr h1
-      have h2_coe := (toReal_le_toReal (hft x) (hgt x)).mpr h2
-      have eq_coe : (f x).toReal = (g x).toReal := by linarith
+      have eq_coe : (f x).toReal = (g x).toReal := by {
+        have := (toReal_le_toReal (hgt x) (hft x)).mpr h1
+        have := (toReal_le_toReal (hft x) (hgt x)).mpr h2
+        linarith
+      }
       have neq_coe : (f x).toReal ≠ (g x).toReal := by {
         by_contra hc
         exact hx ((toReal_eq_toReal_iff' (hft x) (hgt x)).mp hc)
@@ -132,16 +131,14 @@ theorem set_lintegral_eq_iff_ae_eq {μ : Measure α} {f g : α → ℝ≥0∞} (
     rwa [union_eq_neq] at m_union_eq_0
 
   intro h s hs
-  exact set_lintegral_congr_fun hs (ae_eq_imp_set_ae_eq h s)
+  exact set_lintegral_congr_fun hs (fun_ae_imp_set_ae.mp h s)
 
 /--
 TODO: Add to Mathlib
 -/
-lemma positive_measure_imp_positive_integral {μ : Measure α} {C : Set α} (hmC : MeasurableSet C) (hm : 0 < μ C) {h : α → ℝ≥0∞} (hneq : ∀ x ∈ C, h x ≠ 0) (hmm : Measurable h) : 0 < ∫⁻ x in C, h x ∂μ := by
+lemma positive_measure_imp_positive_lintegral {μ : Measure α} {C : Set α} (hmC : MeasurableSet C) (hm : 0 < μ C) {h : α → ℝ≥0∞} (hneq : ∀ x ∈ C, h x ≠ 0) (hmm : Measurable h) : 0 < ∫⁻ x in C, h x ∂μ := by
   rw [show ∫⁻ x in C, h x ∂μ = ∫⁻ x, h x ∂μ.restrict C by rfl]
   have restrict_measure_support : μ.restrict C (Function.support h) = μ (Function.support h ∩ C) := Measure.restrict_apply' hmC
-
-  have C_ss_support : C ⊆ Function.support h := λ x hC ↦ hneq x hC
 
   have inter_eq_C : Function.support h ∩ C = C := Set.inter_eq_self_of_subset_right hneq
 
@@ -186,13 +183,12 @@ lemma coe_ae {μ : Measure α} {f g : α → ℝ≥0∞} (h : f =ᵐ[μ] g) : (�
 
 namespace DensityMeasure
 
-instance instCoeFun : CoeFun (DensityMeasure α) λ _ => Set α → ℝ≥0∞ := ⟨fun m => m.toOuterMeasure⟩
+instance instCoeFun : CoeFun (DensityMeasure α) λ _ => Set α → ℝ≥0∞ := ⟨fun m => m.toMeasure⟩
 
-theorem is_density (μ : DensityMeasure α) : ∀ ⦃s⦄, MeasurableSet s → μ.measureOf s = ∫⁻ x in s, μ.d x := by
+theorem is_density (μ : DensityMeasure α) : ∀ ⦃s⦄, MeasurableSet s → μ s = ∫⁻ x in s, μ.d x := by
   intro s hs
   rw [←withDensity_apply μ.d hs]
-  have t := μ.lebesgue_density
-  exact congrFun (congrArg OuterMeasure.measureOf (congrArg Measure.toOuterMeasure t)) s
+  exact congrFun (congrArg OuterMeasure.measureOf (congrArg Measure.toOuterMeasure μ.lebesgue_density)) s
 
 lemma density_integration {μ : DensityMeasure α} {f : α → ℝ} (hi : Integrable f μ.toMeasure) (hm_up : Measurable (λ x ↦ ENNReal.ofReal (f x))) (hm_lo : Measurable (λ x ↦ ENNReal.ofReal (-f x))) (hi_mul : Integrable (λ x ↦ (μ.d x).toReal * f x)) : ∫ x, f x ∂μ.toMeasure = ∫ x, ENNReal.toReal (μ.d x) * f x := by
 
@@ -265,7 +261,7 @@ theorem densities_ae_eq_iff_eq_measure {μ₁ μ₂ : DensityMeasure α} : μ₁
     apply coe_ext_measure
     intro s hs
     rw [μ₁.is_density hs, μ₂.is_density hs]
-    exact set_lintegral_congr_fun hs (ae_eq_imp_set_ae_eq h s)
+    exact set_lintegral_congr_fun hs (fun_ae_imp_set_ae.mp h s)
 
   intro h
   have eq_set_lintegral : ∀ s, MeasurableSet s → ∫⁻ x in s, μ₁.d x = ∫⁻ x in s, μ₂.d x := by {

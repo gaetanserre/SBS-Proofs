@@ -139,50 +139,23 @@ theorem ext {μ₁ μ₂ : DensityMeasure α} (h : ∀ x, μ₁.d x = μ₂.d x)
 
 lemma coe_ext_measure (μ₁ μ₂ : Measure α) (h : ∀ s, MeasurableSet s → μ₁ s = μ₂ s) : μ₁ = μ₂ := Measure.ext_iff.mpr h
 
-/--
-TODO: Add to Mathlib
--/
 theorem densities_ae_eq_iff_eq_measure {μ₁ μ₂ : DensityMeasure α} :
     μ₁.d =ᵐ[volume] μ₂.d ↔ μ₁.toMeasure = μ₂.toMeasure := by
-  constructor
-  · intro h
-    rw [μ₁.lebesgue_density, μ₂.lebesgue_density]
-    exact withDensity_congr_ae h
-  intro h
-  have eq_set_lintegral : ∀ ⦃s⦄, MeasurableSet s → volume s < ∞ → ∫⁻ x in s, μ₁.d x = ∫⁻ x in s, μ₂.d x := by {
-    intro s hs _
-    rw [←μ₁.is_density hs, ←μ₂.is_density hs]
-    exact congrFun (congrArg OuterMeasure.measureOf (congrArg Measure.toOuterMeasure h)) s
-  }
-  exact AEMeasurable.ae_eq_of_forall_set_lintegral_eq
+  rw [μ₁.lebesgue_density, μ₂.lebesgue_density]
+  exact (withDensity_eq_iff
     (Measurable.aemeasurable μ₁.d_measurable)
     (Measurable.aemeasurable μ₂.d_measurable)
-    μ₁.d_finite μ₂.d_finite eq_set_lintegral
+    μ₁.d_finite).symm
 
-/--
-TODO: Add to Mathlib
--/
-theorem ae_density_measure_iff_ae_volume {μ : DensityMeasure α} {f g : α → ℝ≥0∞} (h_nonneg : ∀ x, μ.d x ≠ 0) : (f =ᵐ[μ.toMeasure] g) ↔ (f =ᵐ[volume] g) := by
-
-  let s := {x | f x = g x}ᶜ
-
-  have nonneg_eq_univ : {x | μ.d x ≠ 0} = Set.univ := by {
-    ext x
-    constructor
-    · intro _; trivial
-    intro _; exact h_nonneg x
-  }
-
-  constructor
-  · intro (h : μ s = 0)
-    rw [μ.lebesgue_density] at h
-    have extract_density : volume ({x | μ.d x ≠ 0} ∩ s) = 0 := (withDensity_apply_eq_zero μ.d_measurable).mp h
-    rwa [nonneg_eq_univ, Set.univ_inter s] at extract_density
-
-  intro (h : volume s = 0)
-  rw [show (f =ᵐ[μ.toMeasure] g) ↔ (μ {x | f x = g x}ᶜ) = 0 by rfl]
+theorem ae_density_measure_iff_ae_volume {μ : DensityMeasure α} {f g : α → ℝ≥0∞} (h_ae_nonneg : ∀ᵐ x, μ.d x ≠ 0) : (f =ᵐ[μ.toMeasure] g) ↔ (f =ᵐ[volume] g) := by
   rw [μ.lebesgue_density]
-  rw [withDensity_apply_eq_zero μ.d_measurable]
-  rwa [nonneg_eq_univ, Set.univ_inter s]
+  constructor
+  · intro (h : ∀ᵐ x ∂(volume.withDensity μ.d), f x = g x)
+    rw [ae_withDensity_iff μ.d_measurable] at h
+    filter_upwards [h_ae_nonneg, h] with _ hda himp using (himp hda)
+  intro h
+  suffices ∀ᵐ x ∂(volume.withDensity μ.d), f x = g x by exact this
+  rw [ae_withDensity_iff μ.d_measurable]
+  filter_upwards [h] with _ ha _ using ha
 
 end DensityMeasure

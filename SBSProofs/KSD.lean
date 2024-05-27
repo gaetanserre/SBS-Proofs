@@ -257,7 +257,7 @@ by
 
     rw [μ.density_lintegration (λ x ↦ 1) (is_measurable_H₀_enn (λ x ↦ 1))] at univ_eq_one_μ
 
-    have ae_μ_to_ae_volume := (DensityMeasure.ae_density_measure_iff_ae_volume hdμ).mp dμ_propor
+    have ae_μ_to_ae_volume := (DensityMeasure.ae_density_measure_iff_ae_volume (ae_of_all _ hdμ)).mp dμ_propor
 
     simp_rw [mul_one] at univ_eq_one_μ
     rw [lintegral_congr_ae ae_μ_to_ae_volume] at univ_eq_one_μ
@@ -272,7 +272,7 @@ by
 
   -- We rewrite μ = π as ∀s, ∫⁻ x in s, μ.d ∂ν = ∀s, ∫⁻ x in s, π.d ∂ν and use μ.d = 1 * π.d.
   simp_rw [exp_c_eq_one, one_mul] at dμ_propor
-  have d_volume_propor : ∀ᵐ x, μ.d x = π.d x := (μ.ae_density_measure_iff_ae_volume hdμ).mp dμ_propor
+  have d_volume_propor : ∀ᵐ x, μ.d x = π.d x := (μ.ae_density_measure_iff_ae_volume (ae_of_all _ hdμ)).mp dμ_propor
   exact DensityMeasure.densities_ae_eq_iff_eq_measure.mp d_volume_propor
 
 /--

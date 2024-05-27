@@ -46,21 +46,11 @@ structure DensityMeasure (α : Type*) [MeasureSpace α] extends Measure α where
 
 variable {μ : Measure α}
 
-theorem fun_ae_imp_set_ae {f g : α → β} : f =ᵐ[μ] g ↔ ∀ (s : Set α), ∀ᵐ x ∂ μ, x ∈ s → f x = g x := Iff.intro
-    (fun h s ↦ Filter.Eventually.mono h fun x a _ ↦ a)
-    (
-      by
-      let A := {x | f x = g x}
-      let B := {x | x ∈ Set.univ → f x = g x}
-      intro h
-      have B_eq_A : B = A := by {
-        ext e
-        exact Iff.intro (fun hb ↦ hb (by simp)) (fun ha _ ↦ ha)
-      }
-      specialize h Set.univ
-      unfold Filter.Eventually at *
-      rwa [show {x | (fun x ↦ x ∈ Set.univ → f x = g x) x} = B by rfl, B_eq_A] at h
-    )
+theorem fun_ae_imp_set_ae {f g : α → β} :
+    f =ᵐ[μ] g ↔ ∀ (s : Set α), ∀ᵐ x ∂ μ, x ∈ s → f x = g x :=
+  Iff.intro
+  (λ h s ↦ by filter_upwards [h] with _ ha _ using ha)
+  (λ h ↦ by filter_upwards [h Set.univ] with _ ha using (ha (by simp)))
 
 lemma coe_ae {μ : Measure α} {f g : α → ℝ≥0∞} (h : f =ᵐ[μ] g) : (λ x ↦ (f x).toReal) =ᵐ[μ] (λ x ↦ (g x).toReal) := by
 
@@ -122,7 +112,7 @@ theorem density_lintegration {μ : DensityMeasure α} (f : α → ℝ≥0∞) (h
 by
   rw [μ.lebesgue_density]
   rw [lintegral_withDensity_eq_lintegral_mul volume μ.d_measurable hm]
-  simp_rw [show ∀ x, (μ.d * f) x = μ.d x * f x by simp]
+  simp only [Pi.mul_apply]
 
 @[ext]
 theorem ext {μ₁ μ₂ : DensityMeasure α} (h : ∀ x, μ₁.d x = μ₂.d x) : μ₁ = μ₂ := by
@@ -152,27 +142,26 @@ lemma coe_ext_measure (μ₁ μ₂ : Measure α) (h : ∀ s, MeasurableSet s →
 /--
 TODO: Add to Mathlib
 -/
-theorem densities_ae_eq_iff_eq_measure {μ₁ μ₂ : DensityMeasure α} : μ₁.d =ᵐ[volume] μ₂.d ↔ μ₁.toMeasure = μ₂.toMeasure := by
+theorem densities_ae_eq_iff_eq_measure {μ₁ μ₂ : DensityMeasure α} :
+    μ₁.d =ᵐ[volume] μ₂.d ↔ μ₁.toMeasure = μ₂.toMeasure := by
   constructor
   · intro h
-    apply coe_ext_measure
-    intro s hs
-    rw [μ₁.is_density hs, μ₂.is_density hs]
-    exact set_lintegral_congr_fun hs (fun_ae_imp_set_ae.mp h s)
-
+    rw [μ₁.lebesgue_density, μ₂.lebesgue_density]
+    exact withDensity_congr_ae h
   intro h
   have eq_set_lintegral : ∀ ⦃s⦄, MeasurableSet s → volume s < ∞ → ∫⁻ x in s, μ₁.d x = ∫⁻ x in s, μ₂.d x := by {
     intro s hs _
     rw [←μ₁.is_density hs, ←μ₂.is_density hs]
     exact congrFun (congrArg OuterMeasure.measureOf (congrArg Measure.toOuterMeasure h)) s
   }
+  exact AEMeasurable.ae_eq_of_forall_set_lintegral_eq
+    (Measurable.aemeasurable μ₁.d_measurable)
+    (Measurable.aemeasurable μ₂.d_measurable)
+    μ₁.d_finite μ₂.d_finite eq_set_lintegral
 
-  have t : AEMeasurable μ₁.d volume := Measurable.aemeasurable μ₁.d_measurable
-  have tt : AEMeasurable μ₂.d volume := Measurable.aemeasurable μ₂.d_measurable
-
-  exact AEMeasurable.ae_eq_of_forall_set_lintegral_eq t tt μ₁.d_finite μ₂.d_finite eq_set_lintegral
-
-
+/--
+TODO: Add to Mathlib
+-/
 theorem ae_density_measure_iff_ae_volume {μ : DensityMeasure α} {f g : α → ℝ≥0∞} (h_nonneg : ∀ x, μ.d x ≠ 0) : (f =ᵐ[μ.toMeasure] g) ↔ (f =ᵐ[volume] g) := by
 
   let s := {x | f x = g x}ᶜ

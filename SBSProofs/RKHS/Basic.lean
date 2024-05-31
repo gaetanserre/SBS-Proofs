@@ -29,7 +29,7 @@ set_option maxHeartbeats 4000000
 class RKHS {E F : Type*} [RCLike F] (H : Set (E → F)) [NormedAddCommGroup H] [InnerProductSpace F H] where
   k : E → E → F
   memb : ∀ (x : E), k x ∈ H
-  repro : ∀ (hf : f ∈ H), ∀ (x : E), f x = inner (⟨f, hf⟩ : H) ⟨k x, memb x⟩
+  repro : ∀ f, (hf : f ∈ H) → ∀ (x : E), f x = inner (⟨f, hf⟩ : H) ⟨k x, memb x⟩
 
 def product_RKHS {α : Type*} (H : Set (α → ℝ)) [NormedAddCommGroup H] [InnerProductSpace ℝ H] [RKHS H] {d : ℕ} (hd : d ≠ 0) := range d → H
 

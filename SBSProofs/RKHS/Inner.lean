@@ -11,6 +11,7 @@ import Mathlib.Topology.CompletelyRegular
 import Mathlib.Topology.MetricSpace.Polish
 
 import SBSProofs.Utils
+import SBSProofs.RKHS.Basic
 
 open Classical MeasureTheory
 
@@ -23,7 +24,7 @@ variable {d : ℕ} {Ω : Set (Vector ℝ d)} [MeasureSpace Ω]
 
 def L2 (μ : Measure Ω) [IsFiniteMeasure μ] := {f : Ω → ℝ | Memℒp f 2 μ}
 
-def eigen := {e : ℕ → ℝ // ∀ i, 0 <= e i}
+def eigen := {v : ℕ → ℝ // ∀ i, 0 <= v i}
 
 def f_repr (v : eigen) (e : ℕ → Ω → ℝ) (f : Ω → ℝ) (a : ℕ → ℝ) := (f = λ x ↦ (∑' i, (v.1 i) * (a i) * (e i x))) ∧ (∀ x, Summable (λ i ↦ (v.1 i) * (a i) * (e i x)))
 
@@ -810,3 +811,43 @@ smul_left := by {
   rw [show r • f = r * f by rfl]
   exact inner_mul_left f g r
 }
+
+
+/- --- MERCER --- -/
+/-
+  Given the Mercer's theorem, we prove that H, endowed with k is a RKHS.
+-/
+
+def mercer (v : eigen) (e : ℕ → Ω → ℝ) (k : Ω → Ω → ℝ) := ∀ s, (k s = λ t ↦ ∑' i, v.1 i * e i s * e i t) ∧ (∀ t, Summable (fun i ↦ v.1 i * e i s * e i t))
+
+lemma k_repr {v : eigen} {e : ℕ → Ω → ℝ} {k : Ω → Ω → ℝ} (h_mercer : mercer v e k) : ∀ s, f_repr v e (k s) (λ i ↦ e i s) := λ s ↦ ⟨(h_mercer s).1, λ t ↦ (h_mercer s).2 t⟩
+
+lemma k_summable {v : eigen} {e : ℕ → Ω → ℝ} {k : Ω → Ω → ℝ} (h_mercer : mercer v e k) : ∀ s, Summable (λ i ↦ (v.1 i) * (e i s)^2) := by
+  intro s
+  simp_rw [show ∀ i, v.1 i * (e i s)^2 = v.1 i * (e i s) * (e i s) by intro i; ring]
+  exact (h_mercer s).2 s
+
+lemma k_i_H {v : eigen} {e : ℕ → Ω → ℝ} {k : Ω → Ω → ℝ} (h_mercer : mercer v e k) (hk_l2 : ∀ s, k s ∈ L2 μ) : ∀ s, k s ∈ H v e μ :=
+  λ s ↦ ⟨hk_l2 s, (λ i ↦ e i s), k_repr h_mercer s, k_summable h_mercer s⟩
+
+lemma k_repro {v : eigen} {e : ℕ → Ω → ℝ} {k : Ω → Ω → ℝ}
+    (h_mercer : mercer v e k) (hk_l2 : ∀ s, k s ∈ L2 μ) :
+    ∀ f, (hf : f ∈ H v e μ) → ∀ x, f x = inner (⟨f, hf⟩ : H v e μ) ⟨k x, k_i_H h_mercer hk_l2 x⟩ := by
+  intro f hf x
+  let f_H : H v e μ := ⟨f, hf⟩
+  let k_H : H v e μ := ⟨k x, k_i_H h_mercer hk_l2 x⟩
+  rw [show inner f_H k_H = H_inner f_H k_H by rfl]
+  unfold H_inner
+  let a_f := (set_repr_ne f_H).some
+  have : (set_repr_ne k_H).some = (λ i ↦ e i x) :=
+    unique_choice ⟨k_repr h_mercer x, k_summable h_mercer x⟩
+  rw [this]
+  suffices f = fun x ↦ ∑' (i : ℕ), v.1 i * a_f i * e i x by exact congrFun this x
+  exact (Set.Nonempty.some_mem (set_repr_ne f_H)).1.1
+
+variable (k : Ω → Ω → ℝ) (v : eigen) (e : ℕ → Ω → ℝ) (h_mercer : mercer v e k) (hk_l2 : ∀ s, k s ∈ L2 μ)
+
+instance : RKHS (H v e μ) where
+  k := k
+  memb := k_i_H h_mercer hk_l2
+  repro := k_repro h_mercer hk_l2

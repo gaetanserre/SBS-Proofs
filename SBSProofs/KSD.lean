@@ -13,7 +13,7 @@ import Mathlib.MeasureTheory.Integral.Bochner
 
 import SBSProofs.Utils
 import SBSProofs.Measure
-import SBSProofs.RKHS
+import SBSProofs.RKHS.Basic
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 

@@ -1,7 +1,7 @@
 ### SBS Proofs
 Lean 4 proofs associated with the paper [Stein Boltzmann Sampling: A Variational Approach for Global Optimization](https://arxiv.org/abs/2402.04689) by G. Serré, A. Kalogeratos, and N. Vayatis.
 
-We formalized the definition of a generic RKHS and the induced product RKHS in [RKHS.lean](SBSProofs/RKHS.lean). We created the `DensityMeasure` typeclass, that encapsulates a measure and its density w.r.t. the Lebesgue measure, and we proved classical measure theory results using either this typeclass or standard Lean's measure that was not available yet in Mathlib. See [Measure.lean](SBSProofs/Measure.lean) for the definition of the typeclass and the proofs.
+We formalized the definition of a generic RKHS and the induced product RKHS in [RKHS.Basic.lean](SBSProofs/RKHS/Basic.lean). We created the `DensityMeasure` typeclass, that encapsulates a measure and its density w.r.t. the Lebesgue measure, and we proved classical measure theory results using either this typeclass or standard Lean's measure that was not available yet in Mathlib. See [Measure.lean](SBSProofs/Measure.lean) for the definition of the typeclass and the proofs.
 
 #### Usage
 - Install Lean. See instruction [here](https://leanprover-community.github.io/get_started.html);

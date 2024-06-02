@@ -204,10 +204,7 @@ lemma zero_summable : Summable (λ i ↦ (v.1 i) * (0 : ℝ)^2) := by
     ring
   }
   rw [zero_fun]
-  have hf : ∀ b ∉ (∅ : Finset ℕ), (λ (i : ℕ) ↦ (0 : ℝ)) b = 0 := by {
-    intro b b_not_in
-    rfl
-  }
+  have hf : ∀ b ∉ (∅ : Finset ℕ), (λ (i : ℕ) ↦ (0 : ℝ)) b = 0 := λ _ _ ↦ rfl
   exact summable_of_ne_finset_zero hf
 
 lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e zero a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2) := ⟨memℒp_const 0, (λ _ ↦ 0), zero_repr, zero_summable⟩

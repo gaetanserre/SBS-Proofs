@@ -91,7 +91,7 @@ variable (d_ln_π_μ : range d → Ω → ℝ)
 /-
 Simple derivative rule: if the derivative is 0 ∀x, then the function is constant.
 -/
-variable (hd_ln_π_μ : ∀ ν, (∀i, ∀ᵐ x ∂ν, d_ln_π_μ i x = 0) → (∃ c, ∀ᵐ x ∂ν, log (μ.d x / π.d x) = c))
+variable (hd_ln_π_μ : ∀ (ν : Measure Ω), (∀i, ∀ᵐ x ∂ν, d_ln_π_μ i x = 0) → (∃ c, ∀ᵐ x ∂ν, log (μ.d x / π.d x) = c))
 
 /-
 dπ' : i ↦ x ↦ ∂xⁱ π(x)

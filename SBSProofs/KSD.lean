@@ -20,7 +20,6 @@ local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 open scoped RealInnerProductSpace
 open BigOperators Finset ENNReal NNReal MeasureTheory RKHS
 
-set_option trace.Meta.Tactic.simp.rewrite true
 set_option maxHeartbeats 400000
 
 /-
@@ -220,11 +219,11 @@ by
           rw [div_eq_top] at h
           cases h with
             | inl hp => {
-              rcases hp with ⟨hpl, hpr⟩
+              rcases hp with ⟨_, hpr⟩
               exact hdπ x hpr
             }
             | inr hq => {
-              rcases hq with ⟨hql, hqr⟩
+              rcases hq with ⟨hql, _⟩
               exact μ.d_neq_top x hql
             }
         }
@@ -252,17 +251,17 @@ by
   -- We show by contradiction that ENNReal.ofReal (Real.exp c) = 1. If it is ≠ 1, this implies a contradiction as μ.d x = ENNReal.ofReal (Real.exp c) * π.d x and ∫⁻ x, μ.d x ∂ν = 1.
   have exp_c_eq_one : ENNReal.ofReal (Real.exp c) = 1 := by {
     by_contra hc; push_neg at hc
-    have univ_eq_one_μ : ∫⁻ x, 1 ∂μ.toMeasure = 1 := by simp
-    have univ_eq_one_π : ∫⁻ x, 1 ∂π.toMeasure = 1 := by simp
+    have univ_eq_one_μ : ∫⁻ _, 1 ∂μ.toMeasure = 1 := by simp
+    have univ_eq_one_π : ∫⁻ _, 1 ∂π.toMeasure = 1 := by simp
 
-    rw [μ.density_lintegration (λ x ↦ 1) (is_measurable_H₀_enn (λ x ↦ 1))] at univ_eq_one_μ
+    rw [μ.density_lintegration (λ _ ↦ 1) (is_measurable_H₀_enn (λ _ ↦ 1))] at univ_eq_one_μ
 
     have ae_μ_to_ae_volume := (DensityMeasure.ae_density_measure_iff_ae_volume (ae_of_all _ hdμ)).mp dμ_propor
 
     simp_rw [mul_one] at univ_eq_one_μ
     rw [lintegral_congr_ae ae_μ_to_ae_volume] at univ_eq_one_μ
 
-    rw [π.density_lintegration (λ x ↦ 1) (is_measurable_H₀_enn (λ x ↦ 1))] at univ_eq_one_π
+    rw [π.density_lintegration (λ _ ↦ 1) (is_measurable_H₀_enn (λ _ ↦ 1))] at univ_eq_one_π
     simp_rw [mul_one] at univ_eq_one_π
 
     rw [lintegral_const_mul (ENNReal.ofReal (Real.exp c)) (π.d_measurable), univ_eq_one_π, mul_one] at univ_eq_one_μ

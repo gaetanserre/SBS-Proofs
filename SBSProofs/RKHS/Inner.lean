@@ -17,7 +17,6 @@ open Classical MeasureTheory
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
-set_option trace.Meta.Tactic.simp.rewrite true
 set_option maxHeartbeats 600000
 
 variable {d : ℕ} {Ω : Set (Vector ℝ d)} [MeasureSpace Ω]
@@ -190,7 +189,7 @@ lemma zero_repr : f_repr v e zero (λ _ ↦ 0) := by
     simp_rw [summand_zero, tsum_zero]
     rfl
   intro x
-  have null_function : (λ i ↦ (v.1 i) * (a i) * (e i x)) = (λ (i : ℕ) ↦ (0 : ℝ)) := by {
+  have null_function : (λ i ↦ (v.1 i) * (a i) * (e i x)) = (λ (_ : ℕ) ↦ (0 : ℝ)) := by {
     ext i
     rw [show a i = 0 by rfl]
     ring
@@ -199,12 +198,12 @@ lemma zero_repr : f_repr v e zero (λ _ ↦ 0) := by
   exact summable_zero
 
 lemma zero_summable : Summable (λ i ↦ (v.1 i) * (0 : ℝ)^2) := by
-  have zero_fun : (λ i ↦ v.1 i * (0 : ℝ)^2) = (λ (i : ℕ) ↦ (0 : ℝ)) := by {
+  have zero_fun : (λ i ↦ v.1 i * (0 : ℝ)^2) = (λ (_ : ℕ) ↦ (0 : ℝ)) := by {
     ext i
     ring
   }
   rw [zero_fun]
-  have hf : ∀ b ∉ (∅ : Finset ℕ), (λ (i : ℕ) ↦ (0 : ℝ)) b = 0 := λ _ _ ↦ rfl
+  have hf : ∀ b ∉ (∅ : Finset ℕ), (λ (_ : ℕ) ↦ (0 : ℝ)) b = 0 := λ _ _ ↦ rfl
   exact summable_of_ne_finset_zero hf
 
 lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e zero a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2) := ⟨memℒp_const 0, (λ _ ↦ 0), zero_repr, zero_summable⟩
@@ -217,7 +216,7 @@ lemma zero_unique_repr : (set_repr_ne (0 : H v e μ)).some = (λ i ↦ 0) := by
   have a_in_repr : a ∈ set_repr (0 : H v e μ) := by {
     --have tmp := zero_repr
     refine ⟨(zero_repr : f_repr v e (0 : H v e μ).1 a), ?_⟩
-    have null_function : (λ i ↦ v.1 i * (a i)^2) = λ (i : ℕ) ↦ (0 : ℝ) := by {
+    have null_function : (λ i ↦ v.1 i * (a i)^2) = λ (_ : ℕ) ↦ (0 : ℝ) := by {
       ext i
       rw [show a i = 0 by rfl]
       ring
@@ -365,7 +364,7 @@ lemma inner_zero_eq_zero : inner f 0 = (0 : ℝ) := by
 
   have summand_eq_zero : ∀ i, v.1 i * (set_repr_ne f).some i * (λ i ↦ 0) i = 0 := by {
     intro i
-    rw [show (λ (i : ℕ) ↦ (0 : ℝ)) i = 0 by rfl]
+    rw [show (λ (_ : ℕ) ↦ (0 : ℝ)) i = 0 by rfl]
     ring
   }
   simp_rw [summand_eq_zero]
@@ -407,7 +406,7 @@ lemma null_inner_imp_null_f : inner f f = (0 : ℝ) → f = 0 := by
   ext x
   rw [show (0 : H v e μ).1 = zero by rfl]
   rw [show zero x = 0 by rfl]
-  rcases (set_repr_ne f).some_mem with ⟨⟨ha_r, ha_s⟩, _⟩
+  rcases (set_repr_ne f).some_mem with ⟨⟨ha_r, _⟩, _⟩
   rw [ha_r, show (set_repr_ne f).some = a by rfl]
 
   have summand_eq_0 : ∀ i, (v.1 i) * (a i) * (e i x) = 0 := by {
@@ -829,18 +828,17 @@ lemma k_i_H {v : eigen} {e : ℕ → Ω → ℝ} {k : Ω → Ω → ℝ} (h_merc
 
 lemma k_repro {v : eigen} {e : ℕ → Ω → ℝ} {k : Ω → Ω → ℝ}
     (h_mercer : mercer v e k) (hk_l2 : ∀ s, k s ∈ L2 μ) :
-    ∀ f, (hf : f ∈ H v e μ) → ∀ x, f x = inner (⟨f, hf⟩ : H v e μ) ⟨k x, k_i_H h_mercer hk_l2 x⟩ := by
-  intro f hf x
-  let f_H : H v e μ := ⟨f, hf⟩
+    ∀ (f : H v e μ), ∀ x, f.1 x = inner f ⟨k x, k_i_H h_mercer hk_l2 x⟩ := by
+  intro f x
   let k_H : H v e μ := ⟨k x, k_i_H h_mercer hk_l2 x⟩
-  rw [show inner f_H k_H = H_inner f_H k_H by rfl]
+  rw [show inner f k_H = H_inner f k_H by rfl]
   unfold H_inner
-  let a_f := (set_repr_ne f_H).some
+  let a_f := (set_repr_ne f).some
   have : (set_repr_ne k_H).some = (λ i ↦ e i x) :=
     unique_choice ⟨k_repr h_mercer x, k_summable h_mercer x⟩
   rw [this]
   suffices f = fun x ↦ ∑' (i : ℕ), v.1 i * a_f i * e i x by exact congrFun this x
-  exact (Set.Nonempty.some_mem (set_repr_ne f_H)).1.1
+  exact (Set.Nonempty.some_mem (set_repr_ne f)).1.1
 
 variable (k : Ω → Ω → ℝ) (v : eigen) (e : ℕ → Ω → ℝ) (h_mercer : mercer v e k) (hk_l2 : ∀ s, k s ∈ L2 μ)
 

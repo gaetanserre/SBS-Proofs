@@ -13,7 +13,6 @@ local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 open scoped RealInnerProductSpace
 open BigOperators Finset
 
-set_option trace.Meta.Tactic.simp.rewrite true
 set_option maxHeartbeats 4000000
 
 /-=====================================RKHS SECTION=====================================-/
@@ -29,9 +28,9 @@ set_option maxHeartbeats 4000000
 class RKHS {E F : Type*} [RCLike F] (H : Set (E → F)) [NormedAddCommGroup H] [InnerProductSpace F H] where
   k : E → E → F
   memb : ∀ (x : E), k x ∈ H
-  repro : ∀ f, (hf : f ∈ H) → ∀ (x : E), f x = inner (⟨f, hf⟩ : H) ⟨k x, memb x⟩
+  repro : ∀ (f : H), ∀ (x : E), f.1 x = inner f ⟨k x, memb x⟩
 
-def product_RKHS {α : Type*} (H : Set (α → ℝ)) [NormedAddCommGroup H] [InnerProductSpace ℝ H] [RKHS H] {d : ℕ} (hd : d ≠ 0) := range d → H
+def product_RKHS {α : Type*} (H : Set (α → ℝ)) [NormedAddCommGroup H] [InnerProductSpace ℝ H] [RKHS H] {d : ℕ} (_ : d ≠ 0) := range d → H
 
 namespace RKHS
 

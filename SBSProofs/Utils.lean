@@ -14,8 +14,6 @@ open Finset ENNReal NNReal BigOperators MeasureTheory
 
 local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
-set_option trace.Meta.Tactic.simp.rewrite true
-
 variable {α : Type*}
 
 variable [NormedAddCommGroup (α → ℝ)] [InnerProductSpace ℝ (α → ℝ)]
@@ -127,19 +125,19 @@ by
   rcases sup_coe with ⟨c, sup_coe⟩
 
   /- The sum is bounded from above by the sum of the majorant -/
-  have sum_le : ∑ i ∈ range d, (f i : ℝ≥0∞) < ∑ i ∈ range d, (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (nonempty_range_iff.mpr hd) sup_coe
+  have sum_le : ∑ i ∈ range d, (f i : ℝ≥0∞) < ∑ _ ∈ range d, (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (nonempty_range_iff.mpr hd) sup_coe
 
   /- Same as above, with coercion -/
-  have sum_coe : ∑ i ∈ range d, (c : ℝ≥0∞) = ∑ i ∈ range d, c := coe_finset_sum.symm
+  have sum_coe : ∑ _ ∈ range d, (c : ℝ≥0∞) = ∑ _ ∈ range d, c := coe_finset_sum.symm
 
   /- Sum of constant = constant -/
-  have sum_simpl : ∑ i ∈ range d, c = d • c := (nsmul_eq_sum_const c d).symm
+  have sum_simpl : ∑ _ ∈ range d, c = d • c := (nsmul_eq_sum_const c d).symm
 
   use (d • c)
   rw [ENNReal.coe_smul d c]
 
-  calc ∑ i ∈ range d, (f i: ℝ≥0∞) < ∑ i ∈ range d, (c : ℝ≥0∞) := sum_le
-  _ = ∑ i ∈ range d, c := sum_coe
+  calc ∑ i ∈ range d, (f i: ℝ≥0∞) < ∑ _ ∈ range d, (c : ℝ≥0∞) := sum_le
+  _ = ∑ _ ∈ range d, c := sum_coe
   _ = d • c := by {
     rw [sum_simpl]
     exact ENNReal.coe_smul d c

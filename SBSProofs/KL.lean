@@ -13,8 +13,6 @@ import SBSProofs.Utils
 
 open ENNReal
 
-set_option trace.Meta.Tactic.simp.rewrite true
-
 open MeasureTheory MeasureTheory.Measure
 
 variable {α β : Type*} [MeasureSpace α] [MeasureSpace β] [NormedAddCommGroup α] [NormedSpace ℝ α] [FiniteDimensional ℝ α] [BorelSpace α]

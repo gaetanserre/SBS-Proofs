@@ -117,9 +117,6 @@ by
 @[ext]
 theorem ext {μ₁ μ₂ : DensityMeasure α} (h : ∀ x, μ₁.d x = μ₂.d x) : μ₁ = μ₂ := by
   have f_ext := funext h
-  rw [show (λ x ↦ μ₁.d x) = μ₁.d by rfl] at f_ext
-  rw [show (λ x ↦ μ₂.d x) = μ₂.d by rfl] at f_ext
-
   have eq_measure : μ₁.toMeasure = μ₂.toMeasure := by {
     rw [μ₁.lebesgue_density, μ₂.lebesgue_density, f_ext]
   }

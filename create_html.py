@@ -12,5 +12,5 @@ lean_files = [
 for lean_file in lean_files:
     # Call Alectryon on each Lean file
     os.system(
-        f"alectryon --frontend lean4 {lean_file} --lake lakefile.lean --webpage-style windowed --output-directory html"
+        f"alectryon --frontend lean4 {lean_file} --lake lakefile.toml --webpage-style windowed --output-directory html"
     )

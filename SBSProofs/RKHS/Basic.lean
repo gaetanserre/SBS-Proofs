@@ -44,7 +44,7 @@ instance : Inner ℝ (product_RKHS H hd) where
 instance : Norm (product_RKHS H hd) where
   norm := λ f ↦ inner f f
 
-lemma norm_eq_zero_iff (f : product_RKHS H hd) : ‖f‖ = 0 ↔ ∀ i, f i = 0 := by
+/- lemma norm_eq_zero_iff (f : product_RKHS H hd) : ‖f‖ = 0 ↔ ∀ i, f i = 0 := by
   constructor
   · intro norm_eq_0
     rw [show ‖f‖ = inner f f by rfl] at norm_eq_0
@@ -67,6 +67,6 @@ lemma norm_eq_zero_iff (f : product_RKHS H hd) : ‖f‖ = 0 ↔ ∀ i, f i = 0 
     exact inner_zero_right 0
   }
   rw [sum_congr rfl inner_eq_0]
-  exact sum_const_zero
+  exact sum_const_zero -/
 
 end RKHS

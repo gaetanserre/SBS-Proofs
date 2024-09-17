@@ -277,7 +277,7 @@ by
 /--
   π is the only fixed point of Φₜ(μ). We proved that by showing that, if μ = π, ϕ^* = 0 and ϕ^* ≠ 0 otherwise.
 -/
-lemma π_unique_fixed_point (hksd : is_ksd hd μ π H₀ d_ln_π ϕ dϕ d_ln_π_μ KSD) (ksd_norm : is_ksd_norm hd μ π H₀ ϕ KSD) : (μ.toMeasure = π.toMeasure → ‖ϕ‖ = 0) ∧ (μ.toMeasure ≠ π.toMeasure → ‖ϕ‖ ≠ 0) :=
+lemma π_unique_fixed_point (hksd : is_ksd hd μ π H₀ d_ln_π ϕ dϕ d_ln_π_μ KSD) (ksd_norm : is_ksd_norm hd μ π H₀ ϕ KSD) : μ.toMeasure = π.toMeasure ↔ ‖ϕ‖ = 0 :=
 by
   have KSD_discrepancy := KSD_is_valid_discrepancy hd μ π hdμ hdπ H₀ h_kernel_positive d_ln_π ϕ dϕ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD hstein hksd
   constructor
@@ -289,10 +289,9 @@ by
     exact KSD_discrepancy.mp μ_eq_π
   }
   {
-    -- μ ≠ π → ϕ^* ≠ 0
-    intro μ_neq_π
+    -- ϕ^* ≠ 0 → μ = π
+    intro phi_norm
     by_contra h;
-
-    rw [←sq_eq_zero_iff, ←ksd_norm] at h
-    exact μ_neq_π (KSD_discrepancy.mpr h)
+    rw [←sq_eq_zero_iff, ←ksd_norm] at phi_norm
+    exact h (KSD_discrepancy.mpr phi_norm)
   }

@@ -203,8 +203,9 @@ by
 
   rcases hd_ln_π_μ with ⟨c, h⟩
 
-  -- We show that, since, for almost all x, log (μ.d x / π.d x) = c, then μ.d x = exp(x) * π.d x. We show that the two sets are equal to show that the right-hand side one of of null measure.
+  -- We show that, since, for almost all x, log (μ.d x / π.d x) = c, then μ.d x = exp(c) * π.d x.
   have dμ_propor : ∀ᵐ x ∂μ.toMeasure, μ.d x = ENNReal.ofReal (Real.exp c) * π.d x := by {
+    -- We show that the two sets are equal to show that the complement of right-hand side one is of null measure.
     have eq_sets : {x | log (μ.d x / π.d x) = c} = {x | μ.d x = ENNReal.ofReal (Real.exp c) * π.d x} := by {
       ext x
       constructor
@@ -265,14 +266,13 @@ by
     simp_rw [mul_one] at univ_eq_one_π
 
     rw [lintegral_const_mul (ENNReal.ofReal (Real.exp c)) (π.d_measurable), univ_eq_one_π, mul_one] at univ_eq_one_μ
-    exfalso
     exact hc univ_eq_one_μ
   }
 
   -- We rewrite μ = π as ∀s, ∫⁻ x in s, μ.d ∂ν = ∀s, ∫⁻ x in s, π.d ∂ν and use μ.d = 1 * π.d.
   simp_rw [exp_c_eq_one, one_mul] at dμ_propor
-  have d_volume_propor : ∀ᵐ x, μ.d x = π.d x := (μ.ae_density_measure_iff_ae_volume (ae_of_all _ hdμ)).mp dμ_propor
-  exact DensityMeasure.densities_ae_eq_iff_eq_measure.mp d_volume_propor
+  refine DensityMeasure.densities_ae_eq_iff_eq_measure.mp ?_
+  exact (μ.ae_density_measure_iff_ae_volume (ae_of_all _ hdμ)).mp dμ_propor
 
 /--
   π is the only fixed point of Φₜ(μ). We proved that by showing that, if μ = π, ϕ^* = 0 and ϕ^* ≠ 0 otherwise.

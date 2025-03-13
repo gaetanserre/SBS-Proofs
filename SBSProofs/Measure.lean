@@ -14,15 +14,19 @@ open ENNReal MeasureTheory
 
 set_option maxHeartbeats 400000
 
-variable {α β : Type*} [MeasureSpace α] [MeasureSpace β]
+variable {α β : Type*} [MeasureSpace α]
 
 /-
   Definition of pushforward measure
 -/
 
-def measure_set_of_pushforward_measure (μ : Measure α) (p_μ : Measure β) (f : β → α) := ∀ (B : Set β), p_μ B = μ (f '' B)
+def measure_set_of_pushforward_measure [MeasureSpace β]
+    (μ : Measure α) (p_μ : Measure β) (f : β → α) :=
+  ∀ (B : Set β), p_μ B = μ (f '' B)
 
-def push_forward_integration (μ : Measure α) (p_μ : Measure β) (T : α → β) (T_inv : β → α) := ∀ (φ : β → ℝ), ∀ (B : Set β), ∫ x in B, φ x ∂p_μ = ∫ x in T_inv '' B, (φ ∘ T) x ∂μ
+def push_forward_integration [MeasureSpace β]
+    (μ : Measure α) (p_μ : Measure β) (T : α → β) (T_inv : β → α) :=
+  ∀ (φ : β → ℝ), ∀ (B : Set β), ∫ x in B, φ x ∂p_μ = ∫ x in T_inv '' B, (φ ∘ T) x ∂μ
 
 structure Pushforward_Measure (α β : Type*) [MeasureSpace α] [MeasureSpace β] where
   p_μ : Measure β
@@ -50,7 +54,7 @@ theorem fun_ae_imp_set_ae {f g : α → β} :
     f =ᵐ[μ] g ↔ ∀ (s : Set α), ∀ᵐ x ∂ μ, x ∈ s → f x = g x :=
   Iff.intro
   (λ h s ↦ by filter_upwards [h] with _ ha _ using ha)
-  (λ h ↦ by filter_upwards [h Set.univ] with _ ha using (ha (by simp)))
+  (λ h ↦ by filter_upwards [h Set.univ] with _ ha using (ha (trivial)))
 
 lemma coe_ae {μ : Measure α} {f g : α → ℝ≥0∞} (h : f =ᵐ[μ] g) : (λ x ↦ (f x).toReal) =ᵐ[μ] (λ x ↦ (g x).toReal) := by
 
@@ -62,9 +66,9 @@ lemma coe_ae {μ : Measure α} {f g : α → ℝ≥0∞} (h : f =ᵐ[μ] g) : (�
     exact Set.compl_subset_compl_of_subset eq_ss
   }
 
-  have leq_μ : μ {x | (f x).toReal = (g x).toReal}ᶜ  <= μ {x | f x = g x}ᶜ := measure_mono compl_ss
+  have leq_μ : μ {x | (f x).toReal = (g x).toReal}ᶜ <= μ {x | f x = g x}ᶜ := measure_mono compl_ss
 
-  have  h_ae: μ {x | f x ≠ g x} = 0 := by exact h
+  have h_ae: μ {x | f x ≠ g x} = 0 := h
   rw [h] at leq_μ
   exact nonpos_iff_eq_zero.mp leq_μ
 
@@ -77,7 +81,11 @@ theorem is_density (μ : DensityMeasure α) : ∀ ⦃s⦄, MeasurableSet s → �
   rw [←withDensity_apply μ.d hs]
   exact congrFun (congrArg OuterMeasure.measureOf (congrArg Measure.toOuterMeasure μ.lebesgue_density)) s
 
-lemma density_integration {μ : DensityMeasure α} {f : α → ℝ} (hi : Integrable f μ.toMeasure) (hm_up : Measurable (λ x ↦ ENNReal.ofReal (f x))) (hm_lo : Measurable (λ x ↦ ENNReal.ofReal (-f x))) (hi_mul : Integrable (λ x ↦ (μ.d x).toReal * f x)) : ∫ x, f x ∂μ.toMeasure = ∫ x, ENNReal.toReal (μ.d x) * f x := by
+lemma density_integration {μ : DensityMeasure α} {f : α → ℝ} (hi : Integrable f μ.toMeasure)
+    (hm_up : Measurable (λ x ↦ ENNReal.ofReal (f x)))
+    (hm_lo : Measurable (λ x ↦ ENNReal.ofReal (-f x)))
+    (hi_mul : Integrable (λ x ↦ (μ.d x).toReal * f x)) :
+    ∫ x, f x ∂μ.toMeasure = ∫ x, ENNReal.toReal (μ.d x) * f x := by
 
   rw [integral_eq_lintegral_pos_part_sub_lintegral_neg_part hi, μ.lebesgue_density]
   rw [lintegral_withDensity_eq_lintegral_mul volume μ.d_measurable hm_up]
@@ -98,7 +106,8 @@ lemma density_integration {μ : DensityMeasure α} {f : α → ℝ} (hi : Integr
   }
   simp_rw [←enn_up_coe]
 
-  have enn_lo_coe : ∀ a, ENNReal.ofReal (-((μ.d a).toReal * (f a))) = μ.d a * ENNReal.ofReal (-f a) := by {
+  have enn_lo_coe :
+      ∀ a, ENNReal.ofReal (-((μ.d a).toReal * (f a))) = μ.d a * ENNReal.ofReal (-f a) := by {
     intro a
     rw [show -((μ.d a).toReal * (f a)) = (μ.d a).toReal * (-f a) by ring]
     rw (config := {occs := .pos [2]}) [←ofReal_toReal_eq_iff.mpr (μ.d_neq_top a)]
@@ -108,7 +117,8 @@ lemma density_integration {μ : DensityMeasure α} {f : α → ℝ} (hi : Integr
 
   rw[←integral_eq_lintegral_pos_part_sub_lintegral_neg_part hi_mul]
 
-theorem density_lintegration {μ : DensityMeasure α} (f : α → ℝ≥0∞) (hm : Measurable f) : ∫⁻ x, f x ∂μ.toMeasure = ∫⁻ x, μ.d x * f x :=
+theorem density_lintegration {μ : DensityMeasure α} (f : α → ℝ≥0∞) (hm : Measurable f) :
+    ∫⁻ x, f x ∂μ.toMeasure = ∫⁻ x, μ.d x * f x :=
 by
   rw [μ.lebesgue_density]
   rw [lintegral_withDensity_eq_lintegral_mul volume μ.d_measurable hm]
@@ -134,7 +144,8 @@ theorem ext {μ₁ μ₂ : DensityMeasure α} (h : ∀ x, μ₁.d x = μ₂.d x)
   simp_rw [eq_measure, f_ext]
 
 
-lemma coe_ext_measure (μ₁ μ₂ : Measure α) (h : ∀ s, MeasurableSet s → μ₁ s = μ₂ s) : μ₁ = μ₂ := Measure.ext_iff.mpr h
+lemma coe_ext_measure (μ₁ μ₂ : Measure α) (h : ∀ s, MeasurableSet s → μ₁ s = μ₂ s) : μ₁ = μ₂ :=
+  Measure.ext_iff.mpr h
 
 theorem densities_ae_eq_iff_eq_measure {μ₁ μ₂ : DensityMeasure α} :
     μ₁.d =ᵐ[volume] μ₂.d ↔ μ₁.toMeasure = μ₂.toMeasure := by
@@ -144,7 +155,8 @@ theorem densities_ae_eq_iff_eq_measure {μ₁ μ₂ : DensityMeasure α} :
     (Measurable.aemeasurable μ₂.d_measurable)
     μ₁.d_finite).symm
 
-theorem ae_density_measure_iff_ae_volume {μ : DensityMeasure α} {f g : α → ℝ≥0∞} (h_ae_nonneg : ∀ᵐ x, μ.d x ≠ 0) : (f =ᵐ[μ.toMeasure] g) ↔ (f =ᵐ[volume] g) := by
+theorem ae_density_measure_iff_ae_volume {μ : DensityMeasure α} {f g : α → ℝ≥0∞}
+    (h_ae_nonneg : ∀ᵐ x, μ.d x ≠ 0) : (f =ᵐ[μ.toMeasure] g) ↔ (f =ᵐ[volume] g) := by
   rw [μ.lebesgue_density]
   constructor
   · intro (h : ∀ᵐ x ∂(volume.withDensity μ.d), f x = g x)

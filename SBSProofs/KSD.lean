@@ -130,6 +130,7 @@ def is_ksd_norm := KSD μ.toMeasure π.toMeasure = ‖ϕ‖^2
 -/
 variable (hstein : SteinClass π (λ i ↦ (ϕ i).1))
 
+include hπ' h_kernel_positive hstein hd_ln_π_μ hdπ hdμ in
 /--
   We show that, if ϕ is in the Stein class of π, KSD is a valid discrepancy measure i.e. μ = π ↔ KSD(μ | π) = 0.
 -/
@@ -274,6 +275,7 @@ by
   refine DensityMeasure.densities_ae_eq_iff_eq_measure.mp ?_
   exact (μ.ae_density_measure_iff_ae_volume (ae_of_all _ hdμ)).mp dμ_propor
 
+include hd_ln_π_μ dπ' hπ' hstein hdμ hdπ h_kernel_positive
 /--
   π is the only fixed point of Φₜ(μ). We proved that by showing that, if μ = π, ϕ^* = 0 and ϕ^* ≠ 0 otherwise.
 -/

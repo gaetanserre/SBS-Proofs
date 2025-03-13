@@ -6,9 +6,7 @@
  - https://github.com/gaetanserre/SBS-Proofs
 -/
 
-import Mathlib.RingTheory.HopfAlgebra
-import Mathlib.Topology.CompletelyRegular
-import Mathlib.Topology.MetricSpace.Polish
+import Mathlib
 
 import SBSProofs.Utils
 import SBSProofs.RKHS.Basic
@@ -21,7 +19,7 @@ set_option maxHeartbeats 600000
 
 variable {d : ℕ} {Ω : Set (Vector ℝ d)} [MeasureSpace Ω]
 
-def L2 (μ : Measure Ω) [IsFiniteMeasure μ] := {f : Ω → ℝ | Memℒp f 2 μ}
+def L2 (μ : Measure Ω) [IsFiniteMeasure μ] := {f : Ω → ℝ | MemLp f 2 μ}
 
 def eigen := {v : ℕ → ℝ // ∀ i, 0 <= v i}
 
@@ -115,7 +113,7 @@ lemma mul_summable (a : ℝ) : Summable (λ i ↦ v.1 i * (λ i ↦ a * (set_rep
 
 lemma mul_in_H (a : ℝ) : (λ x ↦ a * f.1 x) ∈ (H v e μ) := by
   let g := λ x ↦ a * f.1 x
-  have g_in_L2 : g ∈ L2 μ := Memℒp.const_mul (f.2).1 a
+  have g_in_L2 : g ∈ L2 μ := MemLp.const_mul (f.2).1 a
   let h := (set_repr_ne f).some
   let g_h := λ i ↦ a * h i
   refine ⟨g_in_L2, g_h, mul_repr f a, mul_summable f a⟩
@@ -136,7 +134,7 @@ namespace Group
 
 variable {v : eigen} {e : ℕ → Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (f g : H v e μ)
 
-lemma add_in_L2 : (λ x ↦ f.1 x + g.1 x) ∈ L2 μ := Memℒp.add (f.2.1) (g.2.1)
+lemma add_in_L2 : (λ x ↦ f.1 x + g.1 x) ∈ L2 μ := MemLp.add (f.2.1) (g.2.1)
 
 lemma add_summable : Summable (λ i ↦ v.1 i * ((set_repr_ne f).some i + (set_repr_ne g).some i)^2) := by
   let a_f := (set_repr_ne f).some
@@ -150,8 +148,8 @@ lemma add_summable : Summable (λ i ↦ v.1 i * ((set_repr_ne f).some i + (set_r
   exact ((product_summable f f).add ((product_summable f g).mul_left 2)).add (product_summable g g)
 
 lemma add_repr : f_repr v e (λ x ↦ f.1 x + g.1 x) (λ i ↦ (set_repr_ne f).some i + (set_repr_ne g).some i) := by
-  let a_f := (set_repr_ne f).some
-  let a_g := (set_repr_ne g).some
+  set a_f := (set_repr_ne f).some
+  set a_g := (set_repr_ne g).some
 
   obtain ⟨af_repr, _⟩ := (set_repr_ne f).some_mem
   obtain ⟨ag_repr, _⟩ := (set_repr_ne g).some_mem
@@ -177,17 +175,18 @@ lemma add_repr : f_repr v e (λ x ↦ f.1 x + g.1 x) (λ i ↦ (set_repr_ne f).s
 
 def zero : Ω → ℝ := λ _ ↦ 0
 
+omit [MeasureSpace ↑Ω] in
 lemma zero_repr : f_repr v e zero (λ _ ↦ 0) := by
   let a : ℕ → ℝ := λ _ ↦ 0
   constructor
   · ext x
-    have summand_zero : ∀ i, v.1 i * a i * e i x = 0 := by {
+    /- have summand_zero : ∀ i, v.1 i * a i * e i x = 0 := by {
       intro i
       rw [show v.1 i * a i * e i x = v.1 i * 0 * e i x by rfl]
       ring
-    }
-    simp_rw [summand_zero, tsum_zero]
-    rfl
+    } -/
+    simp only [mul_zero, zero_mul, zero]
+    exact tsum_zero.symm
   intro x
   have null_function : (λ i ↦ (v.1 i) * (a i) * (e i x)) = (λ (_ : ℕ) ↦ (0 : ℝ)) := by {
     ext i
@@ -206,12 +205,12 @@ lemma zero_summable : Summable (λ i ↦ (v.1 i) * (0 : ℝ)^2) := by
   have hf : ∀ b ∉ (∅ : Finset ℕ), (λ (_ : ℕ) ↦ (0 : ℝ)) b = 0 := λ _ _ ↦ rfl
   exact summable_of_ne_finset_zero hf
 
-lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e zero a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2) := ⟨memℒp_const 0, (λ _ ↦ 0), zero_repr, zero_summable⟩
+lemma zero_in_H : zero ∈ L2 μ ∧ ∃ (a : ℕ → ℝ), (f_repr v e zero a) ∧ Summable (λ i ↦ (v.1 i) * (a i)^2) := ⟨memLp_const 0, (λ _ ↦ 0), zero_repr, zero_summable⟩
 
 instance : Zero (H v e μ) where
   zero := ⟨zero, zero_in_H⟩
 
-lemma zero_unique_repr : (set_repr_ne (0 : H v e μ)).some = (λ i ↦ 0) := by
+lemma zero_unique_repr : (set_repr_ne (0 : H v e μ)).some = (λ _ ↦ 0) := by
   let a : ℕ → ℝ := λ _ ↦ 0
   have a_in_repr : a ∈ set_repr (0 : H v e μ) := by {
     --have tmp := zero_repr
@@ -315,17 +314,17 @@ lemma inner_mul_left (a : ℝ) : inner (a * f) g = a * inner f g := by
   exact tsum_mul_left
 
 lemma H_inner_add_left (h : H v e μ) : (inner (f + g) h : ℝ) = inner f h + inner g h := by
-  let a_f := (set_repr_ne f).some
-  let a_g := (set_repr_ne g).some
-  let a_h := (set_repr_ne h).some
-  let a_fg := λ i ↦ a_f i + a_g i
-
-  have a_fg_repr : a_fg ∈ set_repr (f + g) := ⟨add_repr f g, add_summable f g⟩
   rw [show inner (f + g) h = H_inner (f + g) h by rfl]
   unfold H_inner
+
+  set a_f := (set_repr_ne f).some
+  set a_g := (set_repr_ne g).some
+  set a_h := (set_repr_ne h).some
+  set a_fg := λ i ↦ a_f i + a_g i
+
+  have a_fg_repr : a_fg ∈ set_repr (f + g) := ⟨add_repr f g, add_summable f g⟩
   rw [unique_choice a_fg_repr]
   simp_rw [show ∀ i, v.1 i * a_fg i * a_h i = v.1 i * (a_f i + a_g i) * a_h i by intro i; rfl]
-
   simp_rw [show ∀ i, v.1 i * (a_f i + a_g i) * a_h i = v.1 i * a_f i * a_h i + v.1 i * a_g i * a_h i by intro i; ring]
 
   rw [tsum_add (product_summable f h) (product_summable g h)]
@@ -341,7 +340,7 @@ lemma inner_symmetric : (inner f g : ℝ) = inner g f := by
 lemma inner_nonneg : (0 : ℝ) <= inner f f := by
   rw [show inner f f = H_inner f f by rfl]
   unfold H_inner
-  let a := (set_repr_ne f).some
+  set a := (set_repr_ne f).some
   have sq : ∀ i, v.1 i * a i * a i = (v.1 i) * (a i)^2 := by {
     intro i
     ring
@@ -375,7 +374,7 @@ lemma null_inner_imp_null_f : inner f f = (0 : ℝ) → f = 0 := by
   rw [show inner f f = H_inner f f by rfl] at inner_eq_0
   unfold H_inner at inner_eq_0
 
-  let a := (set_repr_ne f).some
+  set a := (set_repr_ne f).some
 
   have sq_summand : ∀ i, v.1 i * a i * a i = v.1 i * (a i)^2 := λ i ↦ by ring
   simp_rw [sq_summand] at inner_eq_0
@@ -494,7 +493,7 @@ lemma H_cauchy_schwarz : inner f g <= ‖f‖ * ‖g‖ := by
 
     have sq_ineq : (inner f g)^2 <= (‖f‖ * ‖g‖)^2 := by {
       rw [show (‖f‖ * ‖g‖)^2 = ‖f‖^2 * ‖g‖^2 by ring]
-      rw [←(mul_inv_le_iff' (pow_two_pos_of_ne_zero hg))]
+      rw [←(mul_inv_le_iff₀ (pow_two_pos_of_ne_zero hg))]
       rwa [←sub_nonneg]
     }
     --rw [←sq_abs (inner f g)] at sq_ineq
@@ -591,11 +590,12 @@ lemma dist_rw (a b : H v e μ) : (dist a b) = Real.sqrt (∑' i, v.1 i * ((set_r
   let b_r := (set_repr_ne b).some
   simp_rw [show ∀ i, v.1 i * repr i * repr i = v.1 i * (repr i)^2 by intro i; ring]
   simp_rw[show ∀ i, v.1 i * (repr i)^2 = v.1 i * (a_r i - b_r i)^2 by intro i; ring]
+  rfl
 
 lemma H_dist_comm (a b : H v e μ) : dist a b = dist b a := by
   rw [dist_rw a b, dist_rw b a]
-  let a_r := (set_repr_ne a).some
-  let b_r := (set_repr_ne b).some
+  set a_r := (set_repr_ne a).some
+  set b_r := (set_repr_ne b).some
   simp_rw [show ∀ i, v.1 i * (a_r i - b_r i)^2 = v.1 i * (b_r i - a_r i)^2 by intro i; ring]
 
 lemma H_dist_nonneg (a b : H v e μ) : 0 <= dist a b := by
@@ -668,14 +668,14 @@ noncomputable instance : NormedAddCommGroup (H v e μ) where
   nsmul := λ n f ↦ (n : ℝ) * f
   neg := λ f ↦ -f
   zsmul := λ z f ↦ (z : ℝ) * f
-  add_left_neg := Group.H_add_left_neg
   add_comm := Group.H_add_comm
   dist_self := Dist.H_dist_self
   dist_comm := Dist.H_dist_comm
   dist_triangle := Dist.H_dist_triangle
   edist_dist := λ f g ↦ rfl
   eq_of_dist_eq_zero := Dist.H_eq_of_dist_eq_zero
-  dist_eq := λ x y ↦ by rfl
+  dist_eq := λ x y ↦ rfl
+  neg_add_cancel := λ x ↦ Group.H_add_left_neg x
   nsmul_zero := by {
     intro f
     rw [coe_mul_nat_fun f 0]
@@ -702,11 +702,10 @@ noncomputable instance : NormedAddCommGroup (H v e μ) where
   zsmul_succ' := by {
     intro n f
     rw [show Nat.succ n = n + 1 by rfl]
-    rw [coe_mul_int_fun f (Int.ofNat (n + 1))]
-    rw [show (Int.ofNat (n + 1) : ℝ) = ↑(n + 1) by rfl]
+    rw [coe_mul_int_fun f ((n + 1) : ℕ)]
+    rw [show ((((n + 1) : ℕ) : ℤ) : ℝ) = ↑(n + 1) by rfl]
     rw [cast_nat_succ n]
-    rw [coe_mul_int_fun f (Int.ofNat n)]
-    rw [show (Int.ofNat n : ℝ) = (n : ℝ) by rfl]
+    rw [coe_mul_int_fun f n]
     exact mul_succ_eq f n
   }
   zsmul_neg' := by {
@@ -816,8 +815,10 @@ smul_left := by {
 
 def mercer (v : eigen) (e : ℕ → Ω → ℝ) (k : Ω → Ω → ℝ) := ∀ s, (k s = λ t ↦ ∑' i, v.1 i * e i s * e i t) ∧ (∀ t, Summable (fun i ↦ v.1 i * e i s * e i t))
 
+omit [MeasureSpace ↑Ω] in
 lemma k_repr {v : eigen} {e : ℕ → Ω → ℝ} {k : Ω → Ω → ℝ} (h_mercer : mercer v e k) : ∀ s, f_repr v e (k s) (λ i ↦ e i s) := λ s ↦ ⟨(h_mercer s).1, λ t ↦ (h_mercer s).2 t⟩
 
+omit [MeasureSpace ↑Ω] in
 lemma k_summable {v : eigen} {e : ℕ → Ω → ℝ} {k : Ω → Ω → ℝ} (h_mercer : mercer v e k) : ∀ s, Summable (λ i ↦ (v.1 i) * (e i s)^2) := by
   intro s
   simp_rw [show ∀ i, v.1 i * (e i s)^2 = v.1 i * (e i s) * (e i s) by intro i; ring]

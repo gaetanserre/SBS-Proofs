@@ -17,7 +17,6 @@ local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 variable {α : Type*}
 
 variable [NormedAddCommGroup (α → ℝ)] [InnerProductSpace ℝ (α → ℝ)]
---variable [NormedAddCommGroup (ℕ → α → ℝ)] [InnerProductSpace ℝ (ℕ → α → ℝ)]
 variable [MeasurableSpace α]
 
 /--
@@ -71,9 +70,9 @@ by
 
 lemma coe_nnreal_le {a b : ℝ≥0} (h : a ≤ b) : (a : ℝ≥0∞) ≤ (b : ℝ≥0∞) := Iff.mpr coe_le_coe h
 
-lemma nn_norm_eq_norm {α : Type*} [NormedAddCommGroup α] [InnerProductSpace ℝ α] (a : α) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
+lemma nn_norm_eq_norm {α : Type*} [NormedAddCommGroup α] [InnerProductSpace ℝ α] (a : α) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_enorm a).symm
 
-lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_coe_nnnorm a).symm
+lemma nn_norm_eq_norm_re (a : ℝ) : ‖a‖₊ = ENNReal.ofReal ‖a‖ := (ofReal_norm_eq_enorm a).symm
 
 lemma enn_square {a : ℝ} (h : 0 ≤ a) : ENNReal.ofReal (a) ^ 2 = ENNReal.ofReal (a ^ 2) :=
 by
@@ -82,6 +81,7 @@ by
 
 
 variable {d : ℕ} (hd : d ≠ 0)
+include hd in
 /--
   A finite sum of finite elements is finite.
 -/
@@ -166,9 +166,6 @@ by
 
 /-==============-/
 
-variable [MeasureSpace ℝ≥0] [NormedAddCommGroup ℝ≥0∞] [NormedSpace ℝ ℝ≥0∞] [LocallyFiniteOrder ℝ≥0]
-
-
 /- Def of ℝ≥0∞ coerced log. -/
 noncomputable def log (a : ℝ≥0∞) := Real.log (ENNReal.toReal a)
 
@@ -220,6 +217,7 @@ by
 -/
 def tends_to_infty {α : Type*} [Norm α] (f : α → ℝ) := ∀ c > 0, ∃ (x : α), ∀ (x':α), ‖x‖ ≤ ‖x'‖ → c < f x
 variable [Norm α]
+omit [NormedAddCommGroup (α → ℝ)] [InnerProductSpace ℝ (α → ℝ)] in
 /--
   Unformal but highly pratical multivariate integration by parts.
 -/

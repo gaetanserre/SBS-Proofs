@@ -9,6 +9,8 @@ lean_files = [
     if os.path.splitext(f)[1] == ".lean"
 ]
 
+os.system("lake build")
+
 for lean_file in lean_files:
     # Call Alectryon on each Lean file
     os.system(

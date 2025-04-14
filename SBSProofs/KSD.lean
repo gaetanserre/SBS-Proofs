@@ -6,10 +6,12 @@
 - https://github.com/gaetanserre/SBS-Proofs
 -/
 
-import Mathlib.Data.Real.EReal
+import Mathlib.Data.EReal.Basic
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-import Mathlib.MeasureTheory.Integral.Bochner
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Integral.Bochner.L1
+import Mathlib.MeasureTheory.Integral.Bochner.VitaliCaratheodory
 
 import SBSProofs.Utils
 import SBSProofs.Measure
@@ -41,7 +43,7 @@ variable (H₀ : Set (Ω → ℝ)) [NormedAddCommGroup H₀] [InnerProductSpace 
 /--
 We consider that the left-hand side of the equivalence holds for all x. In the future, we want to take into account that it only holds for almost all x w.r.t. μ.
 -/
-def positive_definite_kernel := ∀ (f : range d → Ω → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, f i x * s.k x x' * f i x') ∂μ.toMeasure) ∂μ.toMeasure) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, f i x * s.k x x' * f i x') ∂μ.toMeasure) ∂μ.toMeasure = 0 ↔ ∀i, ∀ᵐ x ∂ μ.toMeasure, f i x = 0)
+def positive_definite_kernel := ∀ (f : Fin d → Ω → ℝ), (0 ≤ ∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, f i x * s.k x x' * f i x') ∂μ.toMeasure) ∂μ.toMeasure) ∧ (∫ x in Set.univ, (∫ x' in Set.univ, (∑ i ∈ Set.univ, f i x * s.k x x' * f i x') ∂μ.toMeasure) ∂μ.toMeasure = 0 ↔ ∀i, ∀ᵐ x ∂ μ.toMeasure, f i x = 0)
 
 variable (h_kernel_positive : positive_definite_kernel μ H₀)
 
@@ -53,30 +55,30 @@ Here, we prove that KSD(μ | π) is a valid discrepancy measure and that π is t
 /-
   From here, as the derivative of multivariate function are hard to define and to manipulate (defining the gradient, the divergence...), we define the gradient of *f* as follows:
   f  : Ω → ℝ
-  df : range d → Ω → ℝ
+  df : Fin d → Ω → ℝ
        i ↦ x ↦ ∂xⁱ f(x)
 
   For vector-valued function, we defined them as follows:
-  f  : range d → Ω → ℝ
+  f  : Fin d → Ω → ℝ
        i ↦ x ↦ f(x)ⁱ
-  df : range d → Ω → ℝ
+  df : Fin d → Ω → ℝ
        i ↦ x ↦ ∂xⁱ f(x)ⁱ
 
   Also, we assume some simple lemmas using the above formalism. Sometimes, these lemmas are not rigorously defined but, in our framework, it is more than enough.
 -/
 
 /- dk : x ↦ i ↦ y ↦ ∂xⁱ k(x, y) -/
-variable (dk : Ω → range d → Ω → ℝ)
+variable (dk : Ω → Fin d → Ω → ℝ)
 
 /- d_ln_π : i ↦ x ↦ ∂xⁱ ln (μ(x) / π(x)) -/
-variable (d_ln_π : range d → Ω → ℝ)
+variable (d_ln_π : Fin d → Ω → ℝ)
 
 /-
   Definition of the steepest direction ϕ and its derivative.
 -/
-variable (ϕ : product_RKHS H₀ hd) (dϕ : range d → Ω → ℝ)
+variable (ϕ : product_RKHS H₀ hd) (dϕ : Fin d → Ω → ℝ)
 
-/- As Ω is supposed to be compact, we will use this assumption only when the function is trivially integrable (e.g. continuous). -/
+/- As Ω is supposed to be compact, we will use this assumption only when the function is trivially integrable (e.g. continuous on compact). -/
 axiom is_integrable_H₀ : ∀ (f : Ω → ℝ), Integrable f μ.toMeasure
 axiom is_integrable_H₀_volume : ∀ (f : Ω → ℝ), Integrable f
 axiom is_measurable_H₀ : ∀ (f : Ω → ℝ), Measurable f
@@ -85,7 +87,7 @@ axiom is_measurable_H₀_enn : ∀ (f : Ω → ℝ≥0∞), Measurable f
 /-
 d_ln_π_μ : i ↦ x ↦ ∂xⁱ ln (π(x) / μ(x))
 -/
-variable (d_ln_π_μ : range d → Ω → ℝ)
+variable (d_ln_π_μ : Fin d → Ω → ℝ)
 
 /-
 Simple derivative rule: if the derivative is 0 ∀x, then the function is constant.
@@ -95,7 +97,7 @@ variable (hd_ln_π_μ : ∀ (ν : Measure Ω), (∀i, ∀ᵐ x ∂ν, d_ln_π_μ
 /-
 dπ' : i ↦ x ↦ ∂xⁱ π(x)
 -/
-variable (dπ' : range d → Ω → ℝ)
+variable (dπ' : Fin d → Ω → ℝ)
 
 /-
 Log-trick: ∂xⁱ ln (π(x)) * π(x) = ∂xⁱ π(x).
@@ -107,7 +109,7 @@ variable [Norm Ω]
 /--
   Stein class of measure. f is in the Stein class of μ if, ∀i ∈ Set.univ, lim_(‖x‖ → ∞) μ(x) * ϕ(x)ⁱ = 0.
 -/
-def SteinClass (f : range d → Ω → ℝ) := ∀ x, tends_to_infty (λ (x : Ω) ↦ ‖x‖) → ∀i, ENNReal.toReal (μ.d x) * f i x = 0
+def SteinClass (f : Fin d → Ω → ℝ) := ∀ x, tends_to_infty (λ (x : Ω) ↦ ‖x‖) → ∀i, ENNReal.toReal (μ.d x) * f i x = 0
 
 
 /-
@@ -168,7 +170,7 @@ by
     -- Get ENNReal.toReal (π.d x) in the sum (a * ∑ b = ∑ b * a).
     have mul_dist : ∀x, ENNReal.toReal (π.d x) * (∑ i ∈ Set.univ, (λ i ↦ d_ln_π i x * (ϕ i).1 x) i) = ∑ i ∈ Set.univ, (λ i ↦ d_ln_π i x * (ϕ i).1 x) i * ENNReal.toReal (π.d x) := by {
 
-      have mul_dist_sum : ∀ (a : ℝ), ∀ (f : range d → ℝ), (∑ i ∈ Set.univ, f i) * a = ∑ i ∈ Set.univ, f i * a := λ a f ↦ sum_mul (Set.toFinset Set.univ) (λ i ↦ f i) a
+      have mul_dist_sum : ∀ (a : ℝ), ∀ (f : Fin d → ℝ), (∑ i ∈ Set.univ, f i) * a = ∑ i ∈ Set.univ, f i * a := λ a f ↦ sum_mul (Set.toFinset Set.univ) (λ i ↦ f i) a
       intro x
       rw [mul_comm]
       exact mul_dist_sum (ENNReal.toReal (π.d x)) (λ i ↦ d_ln_π i x * (ϕ i).1 x)
@@ -279,7 +281,7 @@ include hd_ln_π_μ dπ' hπ' hstein hdμ hdπ h_kernel_positive
 /--
   π is the only fixed point of Φₜ(μ). We proved that by showing that, if μ = π, ϕ^* = 0 and ϕ^* ≠ 0 otherwise.
 -/
-lemma π_unique_fixed_point (hksd : is_ksd hd μ π H₀ d_ln_π ϕ dϕ d_ln_π_μ KSD) (ksd_norm : is_ksd_norm hd μ π H₀ ϕ KSD) : μ.toMeasure = π.toMeasure ↔ ‖ϕ‖ = 0 :=
+lemma π_unique_fixed_point (hksd : is_ksd hd μ π H₀ d_ln_π ϕ dϕ d_ln_π_μ KSD) (ksd_norm : is_ksd_norm hd μ π H₀ ϕ KSD) : μ.toMeasure = π.toMeasure ↔ ∀ i, ϕ i = 0 :=
 by
   have KSD_discrepancy := KSD_is_valid_discrepancy hd μ π hdμ hdπ H₀ h_kernel_positive d_ln_π ϕ dϕ d_ln_π_μ hd_ln_π_μ dπ' hπ' KSD hstein hksd
   constructor
@@ -288,11 +290,13 @@ by
     intro μ_eq_π
 
     rw [ksd_norm, sq_eq_zero_iff] at KSD_discrepancy
+    rw [←norm_eq_zero_iff]
     exact KSD_discrepancy.mp μ_eq_π
   }
   {
     -- ϕ^* ≠ 0 → μ = π
     intro phi_norm
+    rw [←norm_eq_zero_iff] at phi_norm
     by_contra h;
     rw [←sq_eq_zero_iff, ←ksd_norm] at phi_norm
     exact h (KSD_discrepancy.mpr phi_norm)

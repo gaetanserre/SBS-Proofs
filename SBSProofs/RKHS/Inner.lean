@@ -6,10 +6,11 @@
  - https://github.com/gaetanserre/SBS-Proofs
 -/
 
-import Mathlib
-
-import SBSProofs.Utils
+import Mathlib.Analysis.Normed.Field.Instances
+import Mathlib.Data.Real.StarOrdered
+import Mathlib.Topology.MetricSpace.Polish
 import SBSProofs.RKHS.Basic
+import SBSProofs.Utils
 
 open Classical MeasureTheory
 
@@ -161,7 +162,7 @@ lemma add_repr : f_repr v e (λ x ↦ f.1 x + g.1 x) (λ i ↦ (set_repr_ne f).s
     simp_rw [summand_distrib x]
 
     rw [
-      tsum_add (af_repr.2 x) (ag_repr.2 x),
+      Summable.tsum_add (af_repr.2 x) (ag_repr.2 x),
       ←congrFun af_repr.1 x,
       ←congrFun ag_repr.1 x
     ]
@@ -213,7 +214,6 @@ instance : Zero (H v e μ) where
 lemma zero_unique_repr : (set_repr_ne (0 : H v e μ)).some = (λ _ ↦ 0) := by
   let a : ℕ → ℝ := λ _ ↦ 0
   have a_in_repr : a ∈ set_repr (0 : H v e μ) := by {
-    --have tmp := zero_repr
     refine ⟨(zero_repr : f_repr v e (0 : H v e μ).1 a), ?_⟩
     have null_function : (λ i ↦ v.1 i * (a i)^2) = λ (_ : ℕ) ↦ (0 : ℝ) := by {
       ext i
@@ -327,7 +327,7 @@ lemma H_inner_add_left (h : H v e μ) : (inner (f + g) h : ℝ) = inner f h + in
   simp_rw [show ∀ i, v.1 i * a_fg i * a_h i = v.1 i * (a_f i + a_g i) * a_h i by intro i; rfl]
   simp_rw [show ∀ i, v.1 i * (a_f i + a_g i) * a_h i = v.1 i * a_f i * a_h i + v.1 i * a_g i * a_h i by intro i; ring]
 
-  rw [tsum_add (product_summable f h) (product_summable g h)]
+  rw [Summable.tsum_add (product_summable f h) (product_summable g h)]
   rfl
 
 lemma inner_symmetric : (inner f g : ℝ) = inner g f := by
@@ -450,7 +450,7 @@ lemma distrib_H_norm (t : ℝ) : ‖f + t*g‖^2 = ‖f‖^2 + (2 : ℝ) * t * i
 
   have add_summable : Summable (λ i ↦ v.1 i * a_f i * a_f i + ((2:ℝ) * t) * (v.1 i * a_f i * a_g i)) :=(product_summable f f).add ((product_summable f g).mul_left ((2:ℝ) * t))
 
-  rw [tsum_add add_summable ((product_summable g g).mul_left (t^2))]
+  rw [Summable.tsum_add add_summable ((product_summable g g).mul_left (t^2))]
 
   have tsum_to_norm (h : H v e μ) : ∑' i, v.1 i * (set_repr_ne h).some i * (set_repr_ne h).some i = (norm h)^2 := by {
     rw [show ∑' i, v.1 i * (set_repr_ne h).some i * (set_repr_ne h).some i = H_inner h h by rfl]
@@ -458,7 +458,7 @@ lemma distrib_H_norm (t : ℝ) : ‖f + t*g‖^2 = ‖f‖^2 + (2 : ℝ) * t * i
     rw [inner_eq_sq_norm h]
   }
 
-  rw [tsum_add (product_summable f f) ((product_summable f g).mul_left ((2:ℝ) * t))]
+  rw [Summable.tsum_add (product_summable f f) ((product_summable f g).mul_left ((2:ℝ) * t))]
 
   have const_out : ∑' i, t^2 * (v.1 i * a_g i * a_g i) =  t^2 * ∑' i, v.1 i * a_g i * a_g i := tsum_mul_left
   rw [const_out, tsum_to_norm f, tsum_to_norm g]
@@ -678,7 +678,6 @@ noncomputable instance : NormedAddCommGroup (H v e μ) where
   neg_add_cancel := λ x ↦ Group.H_add_left_neg x
   nsmul_zero := by {
     intro f
-    rw [coe_mul_nat_fun f 0]
     rw [show ((0 : ℕ) : ℝ) = (0 : ℝ) by simp]
     ext x
     rw [show ((0:ℝ) * f).1 x = (0:ℝ) * f.1 x by rfl]
@@ -687,12 +686,11 @@ noncomputable instance : NormedAddCommGroup (H v e μ) where
   }
   nsmul_succ := by {
     intro n f
-    rw [coe_mul_nat_fun f (n+1), cast_nat_succ n, coe_mul_nat_fun f n]
+    rw [cast_nat_succ n]
     exact mul_succ_eq f n
   }
   zsmul_zero' := by {
     intro f
-    rw [coe_mul_int_fun f 0]
     rw [Int.cast_zero]
     ext x
     rw [show ((0 : ℝ) * f).1 x = 0 * f.1 x by rfl]
@@ -702,17 +700,14 @@ noncomputable instance : NormedAddCommGroup (H v e μ) where
   zsmul_succ' := by {
     intro n f
     rw [show Nat.succ n = n + 1 by rfl]
-    rw [coe_mul_int_fun f ((n + 1) : ℕ)]
     rw [show ((((n + 1) : ℕ) : ℤ) : ℝ) = ↑(n + 1) by rfl]
     rw [cast_nat_succ n]
-    rw [coe_mul_int_fun f n]
     exact mul_succ_eq f n
   }
   zsmul_neg' := by {
     intro n f
     rw [show Int.negSucc n = -(n + 1) by rfl]
     rw [show Nat.succ n = n + 1 by rfl]
-    rw [coe_mul_int_fun f (-(n + 1))]
     rw [show -((λ (z:ℤ) (f:H v e μ) ↦ (z:ℝ) * f) (↑(n + 1)) f) = (-1 : ℝ) * ((λ (z:ℤ) (f:H v e μ) ↦ (z:ℝ) * f) (↑(n + 1)) f) by rfl]
 
     rw [show (↑(n + 1) : ℤ) = (n : ℤ) + 1 by rfl]
@@ -794,7 +789,7 @@ norm_sq_eq_inner := by {
 }
 conj_symm := by {
   intro f g
-  rw [inner_symmetric f g]
+  rw [show H_inner f g = inner f g by rfl, inner_symmetric f g]
   rfl
 }
 add_left := by {
@@ -806,7 +801,6 @@ smul_left := by {
   rw [show r • f = r * f by rfl]
   exact inner_mul_left f g r
 }
-
 
 /- --- MERCER --- -/
 /-

@@ -7,7 +7,9 @@
 -/
 
 import Mathlib.Analysis.InnerProductSpace.Basic
-import Mathlib.MeasureTheory.Integral.Bochner
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Integral.Bochner.L1
+import Mathlib.MeasureTheory.Integral.Bochner.VitaliCaratheodory
 
 open scoped RealInnerProductSpace
 open Finset ENNReal NNReal BigOperators MeasureTheory
@@ -82,66 +84,6 @@ by
 
 variable {d : ℕ} (hd : d ≠ 0)
 include hd in
-/--
-  A finite sum of finite elements is finite.
--/
-theorem finite_sum (f : ℕ → ℝ≥0) : ∃ (C : ℝ≥0), ∑ i ∈ range d, (f i : ℝ≥0∞) < C :=
-by
-  /- We begin to show that each element of the sum is bounded from above. -/
-  have sup_el : ∀ i ∈ range d, ∃ c, (f i) < c := λ i _ ↦ exists_gt (f i)
-
-  /- We find the argmax of the set {f i | ∀ i ∈ range d} using the *exist_max_image_finset* lemma. -/
-  have max : ∃ j ∈ range d, ∀ i ∈ range d, f i ≤ f j := by {
-    have max := exist_max_image_finset (range d) (nonempty_range_iff.mpr hd) (λ i ↦ f i)
-    rcases max with ⟨j, jin, max⟩
-    use j
-  }
-
-  /- We show that the majorant of the biggest element majors every element of the sum  -/
-  have sup : ∃ c, ∀ i ∈ range d, f i < c := by {
-    rcases max with ⟨j, jin, max⟩
-    choose C sup_el using sup_el
-    use (C j jin)
-    intros i iin
-    specialize max i iin
-    specialize sup_el j jin
-    calc (f i) ≤ (f j) := max
-    _ < C j jin := sup_el
-  }
-
-  /- Same as above, with coercion -/
-  have sup_coe : ∃ (c:ℝ≥0), ∀ (i : ℕ), i ∈ range d → (f i : ℝ≥0∞) < c := by {
-    rcases sup with ⟨C, sup⟩
-    use C
-    intros i iin
-    specialize sup i iin
-    have coe_lt : ∀ (a b : ℝ≥0), (a < b) → (a : ℝ≥0∞) < (b : ℝ≥0∞) := by {
-      intros a b h
-      exact Iff.mpr coe_lt_coe h
-    }
-    exact coe_lt (f i) C sup
-  }
-
-  rcases sup_coe with ⟨c, sup_coe⟩
-
-  /- The sum is bounded from above by the sum of the majorant -/
-  have sum_le : ∑ i ∈ range d, (f i : ℝ≥0∞) < ∑ _ ∈ range d, (c : ℝ≥0∞) := sum_lt_sum_of_nonempty (nonempty_range_iff.mpr hd) sup_coe
-
-  /- Same as above, with coercion -/
-  have sum_coe : ∑ _ ∈ range d, (c : ℝ≥0∞) = ∑ _ ∈ range d, c := coe_finset_sum.symm
-
-  /- Sum of constant = constant -/
-  have sum_simpl : ∑ _ ∈ range d, c = d • c := (nsmul_eq_sum_const c d).symm
-
-  use (d • c)
-  rw [ENNReal.coe_smul d c]
-
-  calc ∑ i ∈ range d, (f i: ℝ≥0∞) < ∑ _ ∈ range d, (c : ℝ≥0∞) := sum_le
-  _ = ∑ _ ∈ range d, c := sum_coe
-  _ = d • c := by {
-    rw [sum_simpl]
-    exact ENNReal.coe_smul d c
-  }
 
 /-ASSUMED LEMMAS-/
 /--
@@ -221,7 +163,7 @@ omit [NormedAddCommGroup (α → ℝ)] [InnerProductSpace ℝ (α → ℝ)] in
 /--
   Unformal but highly pratical multivariate integration by parts.
 -/
-theorem mv_integration_by_parts (μ : Measure α) (f : α → ℝ) (g grad_f dg : range d → α → ℝ) (h : ∀ x, tends_to_infty (λ (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x, f x * (∑ i ∈ Set.univ, dg i x) ∂μ = - ∫ x, (∑ i ∈ Set.univ, grad_f i x * g i x) ∂μ := by sorry
+theorem mv_integration_by_parts (μ : Measure α) (f : α → ℝ) (g grad_f dg : Fin d → α → ℝ) (h : ∀ x, tends_to_infty (λ (x : α) ↦ ‖x‖) → ∀i, f x * g i x = 0) : ∫ x, f x * (∑ i ∈ Set.univ, dg i x) ∂μ = - ∫ x, (∑ i ∈ Set.univ, grad_f i x * g i x) ∂μ := by sorry
 
 lemma summable_nonneg_iff_0 {f : ℕ → ℝ} (h_nonneg : ∀ i, 0 <= f i) (s : Summable f) : ∑' i, f i = 0 ↔ ∀ i, f i = 0 := by
   let g := λ i ↦ (f i).toNNReal
@@ -248,7 +190,7 @@ lemma summable_nonneg_iff_0 {f : ℕ → ℝ} (h_nonneg : ∀ i, 0 <= f i) (s : 
       exact NNReal.coe_eq_zero.mp coe_tsum
     }
 
-    have g_eq_0 := (tsum_eq_zero_iff coe_summable).mp coe_sum_eq_0
+    have g_eq_0 := (Summable.tsum_eq_zero_iff coe_summable).mp coe_sum_eq_0
     intro i
     specialize g_eq_0 i
     rw [f_coe]

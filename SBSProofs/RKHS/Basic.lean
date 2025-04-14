@@ -30,7 +30,7 @@ class RKHS {E F : Type*} [RCLike F] (H : Set (E → F)) [NormedAddCommGroup H] [
   memb : ∀ (x : E), k x ∈ H
   repro : ∀ (f : H), ∀ (x : E), f.1 x = inner f ⟨k x, memb x⟩
 
-def product_RKHS {α : Type*} (H : Set (α → ℝ)) [NormedAddCommGroup H] [InnerProductSpace ℝ H] [RKHS H] {d : ℕ} (_ : d ≠ 0) := range d → H
+def product_RKHS {α : Type*} (H : Set (α → ℝ)) [NormedAddCommGroup H] [InnerProductSpace ℝ H] [RKHS H] {d : ℕ} (_ : d ≠ 0) := Fin d → H
 
 namespace RKHS
 
@@ -39,34 +39,32 @@ variable {α : Type*} {H : Set (α → ℝ)} [NormedAddCommGroup H] [InnerProduc
 variable {d : ℕ} {hd : d ≠ 0}
 
 instance : Inner ℝ (product_RKHS H hd) where
-  inner := λ f g ↦ ∑ i ∈ Set.univ, inner (f i) (g i)
+  inner := λ f g ↦ ∑ i, inner (f i) (g i)
 
 instance : Norm (product_RKHS H hd) where
   norm := λ f ↦ inner f f
 
-/- lemma norm_eq_zero_iff (f : product_RKHS H hd) : ‖f‖ = 0 ↔ ∀ i, f i = 0 := by
+lemma norm_eq_zero_iff (f : product_RKHS H hd) : ‖f‖ = 0 ↔ ∀ i, f i = 0 := by
   constructor
   · intro norm_eq_0
     rw [show ‖f‖ = inner f f by rfl] at norm_eq_0
-    rw [show inner f f = ∑ i ∈ Set.univ, inner (f i) (f i) by rfl] at norm_eq_0
+    rw [show inner f f = ∑ i, inner (f i) (f i) by rfl] at norm_eq_0
     simp_rw [λ i ↦ real_inner_self_eq_norm_sq (f i)] at norm_eq_0
 
-    have sq_norm_nonneg : ∀ i ∈ Set.toFinset (Set.univ), (0 : ℝ) <= ‖f i‖^2 := λ i _ ↦ sq_nonneg (‖f i‖)
     intro i
-    have sq_norm_eq_0 := (sum_eq_zero_iff_of_nonneg sq_norm_nonneg).mp norm_eq_0 i (Set.mem_toFinset.mpr (by trivial))
-
-    have norm_eq_0 : ‖f i‖ = (0 : ℝ) := sq_eq_zero_iff.mp sq_norm_eq_0
-    exact normAddGroupNorm.proof_1 H (f i) norm_eq_0
+    suffices h : ‖f i‖^2 = 0 from norm_eq_zero.mp <| sq_eq_zero_iff.mp h
+    have sq_norm_nonneg : ∀ i ∈ univ, (0 : ℝ) <= ‖f i‖^2 := λ i _ ↦ sq_nonneg (‖f i‖)
+    exact (sum_eq_zero_iff_of_nonneg sq_norm_nonneg).mp norm_eq_0 i (mem_univ i)
 
   intro hf
   rw [show ‖f‖ = inner f f by rfl]
-  rw [show inner f f = ∑ i ∈ Set.univ, inner (f i) (f i) by rfl]
-  have inner_eq_0 : ∀ i ∈ Set.toFinset (Set.univ), inner (f i) (f i) = (0 : ℝ) := by {
+  rw [show inner f f = ∑ i, inner (f i) (f i) by rfl]
+  have inner_eq_0 : ∀ i ∈ univ, inner (f i) (f i) = (0 : ℝ) := by {
     intro i _
     rw [hf i]
     exact inner_zero_right 0
   }
   rw [sum_congr rfl inner_eq_0]
-  exact sum_const_zero -/
+  exact sum_const_zero
 
 end RKHS
